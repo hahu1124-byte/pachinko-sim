@@ -3,204 +3,169 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EVANGELION Sim -Pattern Link-</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>EVANGELION Sim -15 Special-</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&display=swap');
-        body { background: #050505; color: white; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        header { width: 100%; height: 50px; background: #000; border-bottom: 2px solid #d00000; display: flex; align-items: center; padding: 0 15px; box-sizing: border-box; }
-        .menu-btn { background: #d00000; color: white; border: 1px solid #ff4444; padding: 5px 10px; cursor: pointer; font-weight: bold; font-size: 0.8rem; border-radius: 3px; margin-right: 5px; }
-        .logo-main { flex-grow: 1; text-align: center; font-family: 'Shippori Mincho B1', serif; font-size: 1rem; color: #d00000; text-shadow: 0 0 5px #d00000; }
-        .main-content { flex-grow: 1; display: flex; flex-direction: column; align-items: center; padding: 10px; width: 100%; box-sizing: border-box; }
-        .machine { width: 100%; max-width: 400px; background: #111; border: 2px solid #d00000; border-radius: 10px; padding: 15px; box-sizing: border-box; position: relative; }
-        .screen { background: #000; height: 130px; border-radius: 5px; border: 1px solid #444; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 10px; position: relative; overflow: hidden; }
-        .digit { font-size: 3rem; font-weight: 900; font-family: 'Shippori Mincho B1', serif; width: 50px; text-align: center; }
-        .gold { color: #ffeb3b; text-shadow: 0 0 15px #ffeb3b; } .odd { color: #ff4444; } .even { color: #4444ff; }
-        .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-bottom: 4px; width: 100%; }
-        .stat-item { background: #000; border: 1px solid #333; padding: 4px 1px; text-align: center; border-radius: 3px; }
-        .stat-label { font-size: 0.5rem; color: #888; display: block; }
-        .stat-val { font-size: 0.8rem; font-weight: bold; color: #d00000; font-family: monospace; }
-        .control-layout { display: flex; gap: 5px; width: 100%; margin-top: 8px; }
-        .side-mini-btns { display: flex; flex-direction: column; gap: 4px; width: 50px; }
-        .mini-btn { flex: 1; font-size: 0.7rem; font-weight: bold; border: 1px solid #444; background: #222; color: #888; cursor: pointer; border-radius: 3px; }
-        .mini-btn.active { background: #d00000; color: white; border-color: #ff4444; }
-        .btn-auto { flex: 1; background: #d00000; color: white; border: 2px solid #ff4444; padding: 12px; font-size: 0.9rem; cursor: pointer; font-weight: bold; border-radius: 5px; }
-        .btn-stop { background: #444 !important; border-color: #666 !important; }
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 2000; flex-direction: column; padding: 20px; box-sizing: border-box; }
-        .log { width: 100%; max-width: 400px; height: 100px; background: #000; margin-top: 10px; padding: 10px; border-radius: 5px; font-size: 0.7rem; color: #ff4444; overflow-y: auto; border: 1px solid #333; font-family: monospace; }
+        body { background: #000; color: white; font-family: sans-serif; margin: 0; overflow: hidden; }
+        
+        /* レバブル演出 */
+        @keyframes viberation {
+            0% { transform: translate(0,0); }
+            10% { transform: translate(-3px, 3px); }
+            20% { transform: translate(3px, -3px); }
+            100% { transform: translate(0,0); }
+        }
+        .vibrate { animation: viberation 0.08s infinite; }
+
+        /* インパクトフラッシュ演出 */
+        @keyframes flash {
+            0% { background: #000; }
+            50% { background: #fff; }
+            100% { background: #000; }
+        }
+        .flash-active { animation: flash 0.05s 15; }
+
+        .machine { width: 100%; max-width: 400px; margin: 20px auto; background: #111; border: 3px solid #d00000; border-radius: 20px; padding: 20px; position: relative; box-shadow: 0 0 30px #d00000; }
+        
+        .screen { background: #000; height: 160px; border-radius: 10px; border: 2px solid #444; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; margin-bottom: 15px; }
+        .digit { font-size: 4rem; font-weight: 900; font-family: 'Shippori Mincho B1', serif; width: 65px; text-align: center; z-index: 10; }
+        .gold { color: #ffeb3b; text-shadow: 0 0 20px #ffeb3b; } .odd { color: #ff4444; } .even { color: #4444ff; }
+
+        .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 5px; }
+        .stat-item { background: #000; border: 1px solid #333; padding: 6px; text-align: center; border-radius: 5px; }
+        .stat-label { font-size: 0.6rem; color: #888; display: block; }
+        .stat-val { font-size: 0.9rem; font-weight: bold; color: #d00000; font-family: monospace; }
+
+        .control-layout { display: flex; gap: 8px; margin-top: 10px; }
+        .btn-auto { flex: 1; background: #d00000; color: white; border: 2px solid #ff4444; padding: 15px; font-weight: bold; border-radius: 10px; cursor: pointer; font-size: 1rem; }
+        .active-btn { background: #444 !important; border-color: #666 !important; }
+        
+        .full-auto-btn { width: 50px; background: #222; color: #888; border: 1px solid #444; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        .full-auto-btn.on { background: #d00000; color: white; border-color: #ff4444; box-shadow: 0 0 10px #d00000; }
+
+        .log { height: 120px; background: #000; margin-top: 15px; padding: 12px; font-size: 0.75rem; color: #ff4444; overflow-y: auto; border: 1px solid #333; font-family: 'Courier New', Courier, monospace; line-height: 1.4; }
     </style>
 </head>
-<body>
+<body id="body">
 
-<header>
-    <button class="menu-btn" onclick="openMenu('machine')">機種</button>
-    <button class="menu-btn" onclick="openMenu('data')" style="background:#0066cc;">データ</button>
-    <div class="logo-main" id="machine-title">エヴァ15 未来への咆哮</div>
-</header>
-
-<div class="main-content">
-    <div class="machine">
-        <div class="screen">
-            <div style="display:flex; justify-content:center; gap:10px;">
-                <div id="d1" class="digit">1</div><div id="d2" class="digit">2</div><div id="d3" class="digit">3</div>
-            </div>
-            <div id="sub-display" style="position:absolute; bottom:5px; right:10px; color:#d00000; font-size:0.6rem; font-weight:bold;">READY</div>
-        </div>
-
-        <div class="stat-grid">
-            <div class="stat-item"><span class="stat-label">大当り</span><span id="hits" class="stat-val">0</span></div>
-            <div class="stat-item"><span class="stat-label">連チャン</span><span id="rush-count" class="stat-val">0</span></div>
-            <div class="stat-item"><span class="stat-label">現在回転</span><span id="current-rot" class="stat-val">0</span></div>
-            <div class="stat-item"><span class="stat-label">収支(円)</span><span id="balance" class="stat-val">0</span></div>
-        </div>
-        <div class="stat-grid">
-            <div class="stat-item"><span class="stat-label">最高連</span><span id="max-rush" class="stat-val">0</span></div>
-            <div class="stat-item"><span class="stat-label">初当り</span><span id="first-hits" class="stat-val">0</span></div>
-            <div class="stat-item"><span class="stat-label">RUSH突入</span><span id="rush-in" class="stat-val">0</span></div>
-            <div class="stat-item"><span class="stat-label">最大ハマ</span><span id="max-hamari" class="stat-val">0</span></div>
-        </div>
-        
-        <div class="control-layout">
-            <div class="side-mini-btns">
-                <button class="mini-btn" id="full-auto-toggle" onclick="toggleFullAuto()">全</button>
-                <button class="mini-btn" id="gyakkyo-toggle" onclick="toggleGyakkyo()">逆</button>
-            </div>
-            <div class="main-btns">
-                <button class="btn-auto" id="btn-slow" onclick="toggleAuto('slow')">低速オート</button>
-                <button class="btn-auto" id="btn-fast" onclick="toggleAuto('fast')">高速オート</button>
-            </div>
-        </div>
+<div class="machine" id="machine">
+    <div class="screen" id="screen">
+        <div id="d1" class="digit">1</div><div id="d2" class="digit">2</div><div id="d3" class="digit">3</div>
+        <div id="sub-mode" style="position:absolute; bottom:8px; right:12px; color:#d00000; font-weight:bold; font-size:0.7rem;">READY</div>
     </div>
-    <div class="log" id="log">> 作戦開始<br></div>
+
+    <div class="stat-grid">
+        <div class="stat-item"><span class="stat-label">大当り</span><span id="hits" class="stat-val">0</span></div>
+        <div class="stat-item"><span class="stat-label">連チャン</span><span id="rush-count" class="stat-val">0</span></div>
+        <div class="stat-item"><span class="stat-label">現在回転</span><span id="current-rot" class="stat-val">0</span></div>
+        <div class="stat-item"><span class="stat-label">収支(円)</span><span id="balance" class="stat-val">0</span></div>
+    </div>
+
+    <div class="control-layout">
+        <button class="full-auto-btn" id="full-auto" onclick="toggleFullAuto()">全</button>
+        <button class="btn-auto" id="btn-fast" onclick="toggleAuto()">高速オート 開始/停止</button>
+    </div>
+    <div class="log" id="log">> エヴァ15：システム正常<br></div>
 </div>
 
 <script>
-    const MACHINES = { 'EVA15': { normal: 319.7, st: 99.4, st_taps: 163, j_taps: 100 } };
-    let currentSpec = MACHINES['EVA15'];
-    let hits=0, rushCount=0, currentCount=0, totalBall=0, firstHits=0, rushIn=0, maxRush=0, maxHamari=0;
-    let mode='NORMAL', rRemaining=0, isAuto=false, autoSpeed='slow', isFullAuto=false;
-    let autoTimer = null, isAnimating = false;
+    let hits=0, rushCount=0, currentCount=0, totalBall=0;
+    let mode='通常', rRemaining=0, isAuto=false, isFullAuto=false, isAnimating=false;
+    let timer = null;
 
-    function toggleFullAuto() { isFullAuto = !isFullAuto; document.getElementById('full-auto-toggle').classList.toggle('active', isFullAuto); }
-    function toggleAuto(speed) {
-        if (isAuto && autoSpeed === speed) { isAuto=false; clearTimeout(autoTimer); } 
-        else { isAuto=true; autoSpeed=speed; startProcess(); }
-        updateButtons();
+    function toggleFullAuto() {
+        isFullAuto = !isFullAuto;
+        document.getElementById('full-auto').classList.toggle('on', isFullAuto);
     }
-    function updateButtons() {
-        document.querySelectorAll('.btn-auto').forEach(b => b.classList.remove('btn-stop'));
-        if(isAuto) document.getElementById(autoSpeed==='slow'?'btn-slow':'btn-fast').classList.add('btn-stop');
+
+    function toggleAuto() {
+        isAuto = !isAuto;
+        document.getElementById('btn-fast').classList.toggle('active-btn', isAuto);
+        if(isAuto) startProcess();
     }
 
     async function startProcess() {
-        if (!isAuto || isAnimating) return;
-        if(mode==='NORMAL') totalBall -= 12.5;
+        if(!isAuto || isAnimating) return;
+        
+        if(mode==='通常') totalBall -= 12.5;
         currentCount++;
         
-        let prob = (mode === 'ST' ? currentSpec.st : currentSpec.normal);
+        let prob = (mode==='ST' ? 99.4 : 319.7);
         let isHit = Math.random() < (1 / prob);
+        
+        // 激アツ演出抽選（実機15風）
+        let hasVibe = isHit && Math.random() < 0.75; 
+        let hasFlash = isHit && Math.random() < 0.25;
 
         if (isHit) {
             isAnimating = true;
-            hits++;
-            if(currentCount > maxHamari) maxHamari = currentCount;
-
-            let isSt = false;
-            let finalDigit = 2; // デフォルト偶数
-
-            if (mode === 'NORMAL') {
-                firstHits++;
-                isSt = Math.random() < 0.59; // 突入率59%
-                if (isSt) {
-                    // ST確定の時：1,3,5,7,9のいずれか
-                    const odds = [1,3,5,7,9];
-                    finalDigit = odds[Math.floor(Math.random() * odds.length)];
-                } else {
-                    // 通常の時：2,4,6,8のいずれか
-                    const evens = [2,4,6,8];
-                    finalDigit = evens[Math.floor(Math.random() * evens.length)];
-                }
-            } else {
-                // ST中・時短中の当りはすべてST確定
-                isSt = true;
-                const odds = [1,3,5,7,9];
-                finalDigit = odds[Math.floor(Math.random() * odds.length)];
-                if (mode === 'JITITAN') rushIn++;
+            if (hasVibe) {
+                document.getElementById('machine').classList.add('vibrate');
+                addLog("!! レバブル発生 !!");
             }
+            if (hasFlash) {
+                document.getElementById('screen').classList.add('flash-active');
+                addLog("⚡ インパクトフラッシュ ⚡");
+            }
+            
+            await new Promise(r => setTimeout(r, isFullAuto ? 50 : 1500));
+            
+            document.getElementById('machine').classList.remove('vibrate');
+            document.getElementById('screen').classList.remove('flash-active');
 
-            // 演出：図柄を揃える
-            await performHitAnimation(finalDigit);
-
-            if (isSt) {
-                if(mode==='NORMAL') rushIn++;
-                mode = 'ST'; rRemaining = currentSpec.st_taps; rushCount++;
-                if(rushCount > maxRush) maxRush = rushCount;
+            let isSt = (mode !== '通常') || (Math.random() < 0.59);
+            let digit = isSt ? [1,3,5,7,9][Math.floor(Math.random()*5)] : [2,4,6,8][Math.floor(Math.random()*4)];
+            
+            setDigit(digit);
+            if(isSt) {
+                mode='ST'; rRemaining=163; rushCount++;
                 totalBall += 1400;
-                addLog(`【${finalDigit}】大当り! RUSH突入`);
+                addLog(`【${digit}】大当り! RUSH突入 (${currentCount}回転)`);
             } else {
-                mode = 'JITITAN'; rRemaining = currentSpec.j_taps; rushCount = 0;
+                mode='時短'; rRemaining=100; rushCount=0;
                 totalBall += 400;
-                addLog(`【${finalDigit}】大当り(通常) 時短へ`);
+                addLog(`【${digit}】大当り! 時短100回 (${currentCount}回転)`);
             }
-            currentCount = 0;
+            currentCount=0;
             isAnimating = false;
-        } else if(mode !== 'NORMAL') {
-            rRemaining--;
-            if(rRemaining <= 0) {
-                addLog(`${mode === 'ST' ? 'RUSH' : '時短'}終了`);
-                mode = 'NORMAL'; rushCount = 0;
-                if(!isFullAuto) isAuto = false;
+        } else {
+            // ハズレ変動
+            if(mode!=='通常') {
+                rRemaining--;
+                if(rRemaining<=0) { 
+                    addLog(`${mode}終了`); 
+                    mode='通常'; rushCount=0; 
+                    if(!isFullAuto) isAuto=false; 
+                }
             }
         }
-        
+
         updateUI();
-        updateButtons();
-        if(isAuto) autoTimer = setTimeout(startProcess, isFullAuto ? 5 : (autoSpeed==='fast' ? 40 : 800));
+        if(isAuto) timer = setTimeout(startProcess, isFullAuto ? 1 : 50);
     }
 
-    async function performHitAnimation(digit) {
-        const d1 = document.getElementById('d1'), d2 = document.getElementById('d2'), d3 = document.getElementById('d3');
-        // 高速回転
-        let count = 0;
-        const spin = setInterval(() => {
-            [d1,d2,d3].forEach(el => setDigitStyle(el, Math.floor(Math.random()*9)+1));
-            count++;
-        }, 50);
-
-        await new Promise(r => setTimeout(r, isFullAuto ? 10 : 1000));
-        clearInterval(spin);
-
-        // 図柄停止
-        setDigitStyle(d1, digit);
-        setDigitStyle(d3, digit);
-        await new Promise(r => setTimeout(r, isFullAuto ? 10 : 500));
-        setDigitStyle(d2, digit);
-        await new Promise(r => setTimeout(r, isFullAuto ? 10 : 800));
-    }
-
-    function setDigitStyle(el, num) {
-        el.innerText = num;
-        if(num == 7) el.className = 'digit gold';
-        else if(num % 2 !== 0) el.className = 'digit odd';
-        else el.className = 'digit even';
+    function setDigit(d) {
+        [1,2,3].forEach(i => {
+            const el = document.getElementById('d'+i);
+            el.innerText = d;
+            el.className = 'digit ' + (d==7?'gold':(d%2!=0?'odd':'even'));
+        });
     }
 
     function updateUI() {
         document.getElementById('hits').innerText = hits;
-        document.getElementById('rush-count').innerText = rushCount;
         document.getElementById('current-rot').innerText = currentCount;
-        document.getElementById('max-rush').innerText = maxRush;
-        document.getElementById('first-hits').innerText = firstHits;
-        document.getElementById('rush-in').innerText = rushIn;
-        document.getElementById('max-hamari').innerText = maxHamari;
-        const b = Math.floor(totalBall * 4);
-        const balEl = document.getElementById('balance');
-        balEl.innerText = b.toLocaleString();
-        balEl.style.color = b >= 0 ? "#4caf50" : "#ff4444";
-        document.getElementById('sub-display').innerText = mode==='ST' ? `ST:${rRemaining}` : (mode==='JITITAN' ? `時短:${rRemaining}` : "通常");
+        document.getElementById('rush-count').innerText = rushCount;
+        const bal = Math.floor(totalBall*4);
+        document.getElementById('balance').innerText = bal.toLocaleString();
+        document.getElementById('sub-mode').innerText = mode==='通常' ? "通常" : `${mode}:${rRemaining}`;
     }
 
-    function addLog(m) { const l = document.getElementById('log'); l.innerHTML = `> ${m}<br>${l.innerHTML}`; }
+    function addLog(m) {
+        const l = document.getElementById('log');
+        l.innerHTML = `> ${m}<br>${l.innerHTML}`;
+        l.scrollTop = 0;
+    }
 </script>
 </body>
 </html>
