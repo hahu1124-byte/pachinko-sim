@@ -28,10 +28,18 @@
         @keyframes vibration { 0% { transform: translate(0,0); } 25% { transform: translate(-4px, 4px); } 50% { transform: translate(4px, -4px); } 75% { transform: translate(-4px, -4px); } 100% { transform: translate(0,0); } }
         .flash-active { animation: flash-white 0.05s 20; }
         @keyframes flash-white { 0%, 100% { background: #000; } 50% { background: #fff; } }
-        .heso-overlay { position: absolute; bottom: 10px; display: flex; align-items: flex-end; gap: 10px; }
+        
+        /* 保留表示部分の修正 */
+        .heso-overlay { position: absolute; bottom: 10px; display: flex; align-items: center; gap: 8px; }
         .heso-ball { width: 10px; height: 10px; background: #222; border-radius: 50%; border: 1px solid #555; transition: all 0.2s; }
-        .heso-current { width: 13.0px; height: 13.0px; margin-right: 5px; border-width: 2px; } 
-        .heso-migi { border-radius: 2px !important; width: 15.6px !important; height: 15.6px !important; border: 1.5px solid #fff; }
+        
+        /* 当該保留（一番左）のスタイル：1.3倍に調整 */
+        .heso-current { width: 13px !important; height: 13px !important; border-width: 2px !important; margin-right: 5px; }
+        
+        /* 右打ち中（ST/時短）の形状変化 */
+        .heso-migi { border-radius: 2px !important; width: 12px; height: 12px; border: 1.2px solid #fff; }
+        .heso-migi.heso-current { width: 15.6px !important; height: 15.6px !important; border-width: 2px !important; }
+
         .heso-on { background: #888; }
         .heso-red { background: radial-gradient(circle, #ff4444, #880000); box-shadow: 0 0 8px #ff0000; border-color: #f00; }
         .heso-green { background: radial-gradient(circle, #44ff44, #008800); box-shadow: 0 0 8px #00ff00; border-color: #0f0; }
@@ -39,6 +47,7 @@
         .heso-blink { background: #fff; animation: blink-ball 0.3s infinite; box-shadow: 0 0 8px #fff; border-color: #fff; }
         .heso-rainbow { animation: rainbow-bg 0.5s infinite; box-shadow: 0 0 10px #fff; border-color: #fff; }
         @keyframes blink-ball { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        
         .effect-text { position: absolute; color: white; font-weight: bold; font-size: 2.2rem; z-index: 5; text-shadow: 0 0 10px #000; background: rgba(0,0,0,0.7); padding: 5px 15px; border-radius: 5px; display: none; text-align: center; }
         .stat-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-top: 12px; }
         .stat-item { background: #000; border: 1px solid #333; padding: 5px 0; text-align: center; border-radius: 4px; }
@@ -57,7 +66,6 @@
         #modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; justify-content: center; align-items: center; }
         #modal-content { background: #111; border: 2px solid #8a2be2; width: 92%; max-width: 400px; padding: 15px; border-radius: 12px; }
         .graph-area { background: #000; height: 160px; margin-bottom: 15px; }
-        @keyframes rainbow-border { 0% { border-color: #f00; box-shadow: 0 0 15px #f00; } 20% { border-color: #ff0; box-shadow: 0 0 15px #ff0; } 40% { border-color: #0f0; box-shadow: 0 0 15px #0f0; } 60% { border-color: #0ff; box-shadow: 0 0 15px #0ff; } 80% { border-color: #00f; box-shadow: 0 0 15px #00f; } 100% { border-color: #f0f; box-shadow: 0 0 15px #f0f; } }
     </style>
 </head>
 <body>
@@ -100,7 +108,7 @@
                 <button class="btn-auto" id="btn-fast" onclick="toggleAuto('fast')">高速オート</button>
             </div>
         </div>
-        <div class="log" id="log">> ST中の占有率を調整しました（虹10%, 赤33%, 緑5%, 青5%, 点滅5%）。</div>
+        <div class="log" id="log">> 当該保留の強調サイズを1.3倍に調整しました。</div>
     </div>
     
 <script>
@@ -329,6 +337,7 @@
 </script>
 </body>
 </html>
+
 
 
 
