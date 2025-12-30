@@ -15,30 +15,29 @@
         .logo-main { flex-grow: 1; text-align: center; font-family: 'Shippori Mincho B1', serif; font-size: 1rem; color: #d00000; text-shadow: 0 0 5px #d00000; margin-right: 40px; }
 
         .main-content { flex-grow: 1; display: flex; flex-direction: column; align-items: center; padding: 10px; width: 100%; overflow-y: auto; box-sizing: border-box; }
-        .machine { width: 100%; max-width: 400px; background: #111; border: 2px solid #d00000; border-radius: 10px; padding: 15px; box-sizing: border-box; }
+        .machine { width: 100%; max-width: 400px; background: #111; border: 2px solid #d00000; border-radius: 10px; padding: 15px; box-sizing: border-box; margin-bottom: 10px; }
         
-        /* 液晶画面：3つの数字 */
-        .screen { background: #000; height: 160px; border-radius: 5px; border: 1px solid #444; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; position: relative; overflow: hidden; box-shadow: inset 0 0 20px #d0000055; }
+        .screen { background: #000; height: 150px; border-radius: 5px; border: 1px solid #444; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; position: relative; overflow: hidden; box-shadow: inset 0 0 20px #d0000055; }
         .reels { display: flex; gap: 15px; z-index: 2; }
-        .digit { font-size: 4rem; font-weight: 900; font-family: 'Shippori Mincho B1', serif; width: 60px; text-align: center; }
+        .digit { font-size: 3.5rem; font-weight: 900; font-family: 'Shippori Mincho B1', serif; width: 50px; text-align: center; }
         
         .flash-overlay { position: absolute; top:0; left:0; width:100%; height:100%; pointer-events: none; z-index: 3; display: none; }
         .is-hitting { display: block; animation: rainbow 0.1s linear infinite; opacity: 0.6; }
         @keyframes rainbow { 0%{background:red;} 20%{background:orange;} 40%{background:yellow;} 60%{background:white;} 80%{background:purple;} 100%{background:red;} }
 
-        .spec-table { width: 100%; margin-bottom: 10px; border-collapse: collapse; font-size: 0.7rem; background: #1a1a1a; }
-        .spec-table th, .spec-table td { border: 1px solid #333; padding: 4px; text-align: center; }
-        .spec-table th { color: #ff4444; }
+        /* 記録エリア */
+        .record-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 10px; font-size: 0.7rem; color: #ffeb3b; }
+        .record-item { border: 1px border: 1px solid #555; padding: 3px; background: #1a1a1a; text-align: center; }
 
         .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 10px; }
         .stat-item { background: #000; border: 1px solid #333; padding: 5px; text-align: center; }
-        .stat-val { display: block; font-size: 0.85rem; font-weight: bold; color: #d00000; }
+        .stat-val { display: block; font-size: 0.8rem; font-weight: bold; color: #d00000; }
         .stat-label { font-size: 0.5rem; color: #666; }
 
         #btn { background: #d00000; color: white; border: 2px solid #ff4444; padding: 12px; font-size: 1.1rem; cursor: pointer; width: 100%; font-weight: bold; font-family: 'Shippori Mincho B1', serif; }
         #btn.active { background: #333; color: #666; border-color: #444; }
 
-        .log { width: 100%; max-width: 400px; height: 80px; background: #000; margin-top: 10px; padding: 8px; border-radius: 5px; font-size: 0.7rem; color: #ff4444; overflow-y: auto; box-sizing: border-box; border: 1px solid #333; font-family: monospace; }
+        .log { width: 100%; max-width: 400px; height: 150px; background: #000; margin-top: 10px; padding: 10px; border-radius: 5px; font-size: 0.75rem; color: #ff4444; overflow-y: auto; box-sizing: border-box; border: 1px solid #333; font-family: monospace; }
     </style>
 </head>
 <body>
@@ -58,6 +57,11 @@
 
 <div class="main-content">
     <div class="machine">
+        <div class="record-grid">
+            <div class="record-item">MAX連: <span id="max-rush">0</span></div>
+            <div class="record-item">MAX出玉: <span id="max-payout">0</span></div>
+        </div>
+
         <div class="screen">
             <div id="flash" class="flash-overlay"></div>
             <div class="reels">
@@ -68,15 +72,10 @@
             <div id="sub-display" style="position:absolute; bottom:10px; color:#d00000; font-size:0.6rem; font-weight:bold;">STANDBY</div>
         </div>
 
-        <table class="spec-table">
-            <tr><th>通常</th><td style="color:#fff">1/319.7</td><th>右打</th><td style="color:#fff">1/99.4</td></tr>
-            <tr><th>突入</th><td style="color:#fff">約70%</td><th>継続</th><td style="color:#fff">約81%</td></tr>
-        </table>
-
         <div class="stat-grid">
             <div class="stat-item"><span class="stat-label">大当り</span><span id="hits" class="stat-val">0</span></div>
             <div class="stat-item"><span class="stat-label">連チャン</span><span id="rush-count" class="stat-val">0</span></div>
-            <div class="stat-item"><span class="stat-label">回転数</span><span id="current-rot" class="stat-val">0</span></div>
+            <div class="stat-item"><span class="stat-label">現在回転</span><span id="current-rot" class="stat-val">0</span></div>
             <div class="stat-item"><span class="stat-label">収支</span><span id="balance" class="stat-val">0</span></div>
         </div>
 
@@ -86,8 +85,19 @@
 </div>
 
 <script>
-    const SPEC = { normal_prob: 319.7, st_prob: 99.4, st_taps: 163, jititan_taps: 100, st_rush_rate: 0.59, payout: 1500 };
-    let hits = 0, rushCount = 0, investment = 0, totalReturn = 0, currentCount = 0;
+    const SPEC = { 
+        normal_prob: 319.7, 
+        st_prob: 99.4, 
+        st_taps: 163, 
+        jititan_taps: 100, 
+        st_rush_rate: 0.59, 
+        payout_3r: 420,  // 通常時実出玉
+        payout_10r: 1400 // 右打ち実出玉
+    };
+
+    let hits = 0, rushCount = 0, currentCount = 0, investment = 0;
+    let totalBall = 0, sessionBall = 0; // 持ち玉, 今回の大当りでの一撃出玉
+    let maxRush = 0, maxPayout = 0;
     let mode = 'NORMAL', stRemaining = 0, isAuto = false, isAnimating = false, autoTimer = null;
 
     function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
@@ -112,7 +122,7 @@
     async function startProcess() {
         if (!isAuto || isAnimating) return;
         
-        investment += 20;
+        investment += 20; // 1回転20円(1k/50回相当)
         currentCount++;
         updateUI();
 
@@ -127,15 +137,18 @@
             if (mode !== 'NORMAL') {
                 stRemaining--;
                 if (stRemaining <= 0) {
-                    addLog(`警告：${(mode === 'ST') ? "ST" : "時短"}スルー`);
-                    mode = 'NORMAL'; rushCount = 0; currentCount = 0;
+                    addLog(`警告：${(mode === 'ST') ? "ST" : "時短"}スルー (一撃 ${sessionBall}玉)`);
+                    // 記録更新
+                    if (rushCount > maxRush) maxRush = rushCount;
+                    if (sessionBall > maxPayout) maxPayout = sessionBall;
+                    
+                    mode = 'NORMAL'; rushCount = 0; currentCount = 0; sessionBall = 0;
                     updateUI();
                     stopAuto();
                     return;
                 }
             }
-            // オート継続
-            if (isAuto) autoTimer = setTimeout(startProcess, 100);
+            if (isAuto) autoTimer = setTimeout(startProcess, 50);
         }
     }
 
@@ -144,72 +157,78 @@
             isAnimating = true;
             const d1 = document.getElementById('d1'), d2 = document.getElementById('d2'), d3 = document.getElementById('d3');
             let count = 0;
-            
             let shuffle = setInterval(() => {
                 d1.innerText = Math.floor(Math.random()*10);
                 d2.innerText = Math.floor(Math.random()*10);
                 d3.innerText = Math.floor(Math.random()*10);
                 count++;
-                if (count > 5) {
+                if (count > 4) {
                     clearInterval(shuffle);
-                    // リーチ演出判定
                     let l = isHit ? 7 : Math.floor(Math.random()*10);
-                    let r = l;
-                    d1.innerText = l; d3.innerText = r;
-                    
-                    // リーチなら中をゆっくり
+                    d1.innerText = l; d3.innerText = l;
                     let midCount = 0;
                     let midShuffle = setInterval(() => {
                         d2.innerText = Math.floor(Math.random()*10);
                         midCount++;
-                        if (midCount > 10) {
+                        if (midCount > 8) {
                             clearInterval(midShuffle);
                             d2.innerText = isHit ? l : (l + 1) % 10;
                             isAnimating = false;
                             resolve();
                         }
-                    }, 100);
+                    }, 80);
                 }
-            }, 50);
+            }, 40);
         });
     }
 
     function handleHit() {
         hits++;
-        totalReturn += SPEC.payout;
+        let getBall = (mode === 'NORMAL') ? SPEC.payout_3r : SPEC.payout_10r;
+        totalBall += getBall;
+        sessionBall += getBall;
+
         document.getElementById('flash').classList.add('is-hitting');
         
         if (mode === 'NORMAL') {
             if (Math.random() < SPEC.st_rush_rate) {
                 mode = 'ST'; stRemaining = SPEC.st_taps; rushCount = 1;
-                addLog(`覚醒：大当り(ST突入)`);
+                addLog(`覚醒：大当り(ST突入) +${getBall}玉`);
             } else {
                 mode = 'JITITAN'; stRemaining = SPEC.jititan_taps;
-                addLog(`捕捉：大当り(時短100)`);
+                addLog(`捕捉：大当り(時短100) +${getBall}玉`);
             }
         } else {
             mode = 'ST'; stRemaining = SPEC.st_taps; rushCount++;
-            addLog(`継続：${rushCount}連目`);
+            addLog(`継続：${rushCount}連目 +${getBall}玉`);
         }
         currentCount = 0;
         updateUI();
 
         setTimeout(() => {
             document.getElementById('flash').classList.remove('is-hitting');
-            // 右打ち中ならオート継続、通常からなら一度止める（お好みで）
             if (isAuto && (mode === 'ST' || mode === 'JITITAN')) {
                 startProcess();
             } else {
                 stopAuto();
             }
-        }, 2000);
+        }, 1500);
     }
 
     function updateUI() {
         document.getElementById('hits').innerText = hits;
         document.getElementById('rush-count').innerText = rushCount;
         document.getElementById('current-rot').innerText = currentCount;
-        document.getElementById('balance').innerText = (totalReturn - investment).toLocaleString();
+        
+        // 収支計算 (持ち玉4円換算 - 投資額)
+        let balance = (totalBall * 4) - investment;
+        const balEl = document.getElementById('balance');
+        balEl.innerText = balance.toLocaleString();
+        balEl.style.color = balance >= 0 ? "#4caf50" : "#d00000";
+
+        document.getElementById('max-rush').innerText = maxRush;
+        document.getElementById('max-payout').innerText = maxPayout.toLocaleString();
+
         const sub = document.getElementById('sub-display');
         sub.innerText = (mode === 'ST') ? `IMPACT RUSH残り: ${stRemaining}` : (mode === 'JITITAN') ? `チャンスタイム残り: ${stRemaining}` : "通常時：作戦待機中";
     }
@@ -217,6 +236,7 @@
     function addLog(msg) {
         const log = document.getElementById('log');
         log.innerHTML = `> ${msg}<br>` + log.innerHTML;
+        log.scrollTop = 0;
     }
 </script>
 </body>
