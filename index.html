@@ -15,7 +15,7 @@
         .machine { width: 100%; background: #111; border: 2px solid #d00000; border-radius: 15px; padding: 12px; position: relative; box-sizing: border-box; }
         .screen { background: #000; height: 300px; border-radius: 10px; border: 2px solid #444; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; width: 100%; }
         .digit-container { display: flex; gap: 5px; }
-        .digit { font-size: 8.5rem; font-weight: 900; font-family: 'Shippori Mincho B1', serif; width: 110px; text-align: center; }
+        .digit { font-size: 12.75rem; font-weight: 900; font-family: 'Shippori Mincho B1', serif; width: 165px; text-align: center; } /* 1.5倍サイズ */
         .mode-display { position: absolute; bottom: 35px; right: 15px; color: #d00000; font-weight: bold; font-size: 0.9rem; text-shadow: 0 0 5px #000; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 3px; border-right: 3px solid #d00000; text-align: right; min-width: 90px; }
         .gold { color: #ffeb3b; text-shadow: 0 0 30px #ffeb3b; }
         .odd { color: #ff4444; text-shadow: 0 0 20px #ff4444; }
@@ -35,7 +35,7 @@
         .effect-text { position: absolute; color: white; font-weight: bold; font-size: 2.2rem; z-index: 5; text-shadow: 0 0 10px #000; background: rgba(0,0,0,0.7); padding: 5px 15px; border-radius: 5px; display: none; text-align: center; }
         .stat-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-top: 12px; }
         .stat-item { background: #000; border: 1px solid #333; padding: 5px 0; text-align: center; border-radius: 4px; }
-        .stat-val { font-size: 0.8rem; font-weight: bold; font-family: monospace; }
+        .stat-val { font-size: 1.2rem; font-weight: bold; font-family: monospace; } /* 1.5倍サイズ */
         .val-white { color: #ffffff; }
         .val-red { color: #ff4444; }
         .val-blue { color: #4444ff; }
@@ -46,7 +46,7 @@
         .side-btn.active { background: #d00000; color: #fff; border-color: #ff4444; }
         .btn-auto { flex: 1; background: #d00000; color: white; border: 1px solid #ff4444; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 1rem; }
         .btn-stop { background: #444 !important; border-color: #666 !important; }
-        .log { width: 100%; max-width: 440px; height: 290px; background: #000; margin-top: 10px; padding: 10px; font-size: 0.77rem; color: #ff4444; overflow-y: auto; border: 1px solid #333; font-family: monospace; box-sizing: border-box; line-height: 1.4; }
+        .log { width: 100%; max-width: 440px; height: 435px; background: #000; margin-top: 10px; padding: 10px; font-size: 1.15rem; color: #ff4444; overflow-y: auto; border: 1px solid #333; font-family: monospace; box-sizing: border-box; line-height: 1.4; } /* 1.5倍サイズ */
         #modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; justify-content: center; align-items: center; }
         #modal-content { background: #111; border: 2px solid #d00000; width: 92%; max-width: 400px; padding: 15px; border-radius: 12px; }
         .graph-area { background: #000; height: 160px; margin-bottom: 15px; }
@@ -86,7 +86,7 @@
                 <button class="btn-auto" id="btn-fast" onclick="toggleAuto('fast')">高速オート</button>
             </div>
         </div>
-        <div class="log" id="log">> 右打ち中（ST・時短）の大当りはすべて7図柄揃いになります。</div>
+        <div class="log" id="log">> </div>
     </div>
 
 <script>
@@ -105,9 +105,8 @@
         const roll = () => Math.random() * 100;
 
         if (isHit) {
-            if (roll() < 1.0) { // 全回転 1%
-                res.name.push("全回転"); res.text="全回転"; res.isSure=true; res.isFullSpin=true; res.lamp=true;
-            } else {
+            if (roll() < 1.0) { res.name.push("全回転"); res.text="全回転"; res.isSure=true; res.isFullSpin=true; res.lamp=true; }
+            else {
                 let hasVibe = false;
                 if (roll() < 3.0) { res.name.push("虹レバ"); res.lamp=true; hasVibe=true; }
                 else if (roll() < 15.0) { res.name.push("赤レバ"); hasVibe=true; }
@@ -126,21 +125,13 @@
             if (roll() < 0.0017) { res.name.push("赤レバ"); res.vibe=true; }
             else if (roll() < 0.023) { res.name.push("白レバ"); res.vibe=true; }
             else if (roll() < 0.0087) { res.isRedHold=true; res.name.push("赤保留"); }
-            else if (roll() < 0.018) { res.name.push("レイ背景"); res.text="レイ背景"; }
-            else if (roll() < 0.067) { res.name.push("次回予告"); res.text="次回予告"; }
             else if (roll() < 0.150) { res.name.push("金系"); }
             if (res.name.length > 0) res.heavy = true;
         }
-
         let names = res.name;
-        if (names.some(n => ["虹レバ", "インフラ", "カヲル", "さよなら", "全回転"].includes(n)) || names.length >= 3) {
-            res.trust = 100; res.isSure = true; 
-        } else if (names.length === 2) {
-            let combined = 1 - ((1 - (TRUST_MAP[names[0]]||0)) * (1 - (TRUST_MAP[names[1]]||0)));
-            res.trust = Math.max(96.0, combined * 100);
-        } else if (names.length === 1) {
-            res.trust = (TRUST_MAP[names[0]] || 0) * 100;
-        }
+        if (names.some(n => ["虹レバ", "インフラ", "カヲル", "さよなら", "全回転"].includes(n)) || names.length >= 3) { res.trust = 100; res.isSure = true; } 
+        else if (names.length === 2) { let combined = 1 - ((1 - (TRUST_MAP[names[0]]||0)) * (1 - (TRUST_MAP[names[1]]||0))); res.trust = Math.max(96.0, combined * 100); } 
+        else if (names.length === 1) { res.trust = (TRUST_MAP[names[0]] || 0) * 100; }
         res.displayName = names.join("+") || "弱予告";
         return res;
     }
@@ -188,25 +179,31 @@
                 currentRushHits++; addLog(`>> ${lcdCount}回転 【135】 暴走! → ST突入`);
                 totalBall += 420; mode='ST'; rRem=SPECS.st; rushCount=currentRushHits; 
             } else { 
-                let d, is10R = false, nextM = '時短', isShokaku = false;
+                let d, is10R = false, nextM = '時短', isShokaku = false, logDigit = "";
                 
-                if (mode !== '通常') { // 右打ち中（ST or 時短）
-                    d = 7; is10R = true; nextM = 'ST'; isShokaku = (Math.random() < 0.5); // 50%で昇格挙動
+                if (mode !== '通常') { // 右打ち中
+                    logDigit = [2,4,6,8][Math.floor(Math.random()*4)]; // ログには偶数を記録
+                    d = 7; is10R = true; nextM = 'ST'; isShokaku = true;
                 } else { // 通常時
-                    if (eff.isFullSpin) { d = 7; is10R = true; nextM = 'ST'; }
+                    if (eff.isFullSpin) { d = 7; is10R = true; nextM = 'ST'; logDigit = "7"; }
                     else if (eff.isSure) {
-                        if (rand < 15) { d = 7; is10R = true; nextM = 'ST'; }
-                        else { d = [1,3,5,9][Math.floor(Math.random()*4)]; nextM = 'ST'; }
+                        if (rand < 15) { d = 7; is10R = true; nextM = 'ST'; logDigit = "7"; }
+                        else { d = [1,3,5,9][Math.floor(Math.random()*4)]; nextM = 'ST'; logDigit = d; }
                     } else {
-                        if (rand < 2) { d = 7; is10R = true; nextM = 'ST'; } 
-                        else if (rand < 35) { d = [1,3,5,9][Math.floor(Math.random()*4)]; nextM = 'ST'; }
-                        else if (rand < 55) { d = [2,4,6,8][Math.floor(Math.random()*4)]; nextM = 'ST'; isShokaku = true; }
-                        else { d = [2,4,6,8][Math.floor(Math.random()*4)]; nextM = '時短'; }
+                        if (rand < 2) { d = 7; is10R = true; nextM = 'ST'; logDigit = "7"; } 
+                        else if (rand < 35) { d = [1,3,5,9][Math.floor(Math.random()*4)]; nextM = 'ST'; logDigit = d; }
+                        else if (rand < 55) { logDigit = [2,4,6,8][Math.floor(Math.random()*4)]; d = logDigit; nextM = 'ST'; isShokaku = true; }
+                        else { d = [2,4,6,8][Math.floor(Math.random()*4)]; nextM = '時短'; logDigit = d; }
                     }
                 }
                 
-                let displayD = isShokaku ? [2,4,6,8][Math.floor(Math.random()*4)] : d;
-                [1,2,3].forEach(i => { const el=document.getElementById('d'+i); el.innerText=displayD; el.className='digit '+(displayD===7?'gold':(displayD%2!==0?'odd':'even')); }); 
+                // ログ出力（昇格前の図柄を表示）
+                let logMsg = `>> ${mode} ${lcdCount}回転 【${logDigit}】 大当り!(${is10R?'10R':'3R'})`;
+                if(isShokaku) logMsg += " (昇格)";
+                addLog(logMsg);
+
+                // 一旦図柄を表示（昇格前）
+                [1,2,3].forEach(i => { const el=document.getElementById('d'+i); el.innerText=logDigit; el.className='digit '+(logDigit==7?'gold':(logDigit%2!==0?'odd':'even')); }); 
                 
                 if (isShokaku) {
                     await new Promise(r => setTimeout(r, 1200));
@@ -214,7 +211,7 @@
                     await new Promise(r => setTimeout(r, 1000));
                     
                     if (mode === '通常') {
-                        let candidates = [displayD-1, displayD+1].filter(n => n > 0 && n < 10 && n !== 7 && n % 2 !== 0);
+                        let candidates = [logDigit-1, logDigit+1].filter(n => n > 0 && n < 10 && n !== 7 && n % 2 !== 0);
                         d = candidates.length ? candidates[Math.floor(Math.random() * candidates.length)] : 1;
                         [1,2,3].forEach(i => { const el=document.getElementById('d'+i); el.innerText=d; el.className='digit odd'; });
                     } else { // 右打ちは必ず7へ
@@ -225,14 +222,8 @@
                 }
 
                 currentRushHits++; 
-                if(mode==='通常' || mode==='時短') { 
-                    addLog(`>> ${mode} ${lcdCount}回転 【${d}】 大当り!(${is10R?'10R':'3R'}) → ST突入`);
-                    mode='ST'; rRem=SPECS.st; rushCount = (mode==='時短') ? hits : 1; 
-                } else { 
-                    rushCount = currentRushHits; is10R = true;
-                    addLog(`>> ${mode} ${lcdCount}回転 【${d}】 10R当り!`); 
-                    mode='ST'; rRem=SPECS.st; 
-                } 
+                if(mode==='通常' || mode==='時短') { mode='ST'; rRem=SPECS.st; rushCount = (mode==='時短') ? hits : 1; } 
+                else { rushCount = currentRushHits; mode='ST'; rRem=SPECS.st; } 
                 totalBall += (is10R ? 1400 : 420); 
             } 
             updateUI(); await new Promise(r => setTimeout(r, 1800)); lcdCount=0; document.getElementById('lamp').classList.remove('lamp-active'); 
@@ -257,6 +248,7 @@
 </script>
 </body>
 </html>
+
 
 
 
