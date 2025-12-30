@@ -86,8 +86,9 @@
                 <button class="btn-auto" id="btn-fast" onclick="toggleAuto('fast')">高速オート</button>
             </div>
         </div>
-        <div class="log" id="log">> 右打ち中のログから「(昇格)」を削除しました。</div>
+        <div class="log" id="log">> 連チャン終了時に終了したモード名を表示するようにしました。</div>
     </div>
+
 
 <script>
     const SPECS = { n: 319.7, s: 99.4, st: 163, jt: 100 };
@@ -138,12 +139,17 @@
 
     async function startProcess() {
         if(!isAuto || isAnim) return;
+        
+        // --- 連チャン終了判定（ここを修正） ---
         if(mode !== '通常' && rRem <= 0) { 
-            addLog(`【連チャン終了】 ${currentRushHits}回`); 
-            let pm = mode; mode = '通常'; rushCount = 0; currentRushHits = 0; 
-            lcdCount = (pm==='ST') ? 0 : 100;
-            updateUI(); if(!optAll) { isAuto = false; resetBtns(); return; } 
+            addLog(`${mode} 【連チャン終了】 ${currentRushHits}回`); 
+            let prevMode = mode; 
+            mode = '通常'; rushCount = 0; currentRushHits = 0; 
+            lcdCount = (prevMode==='ST') ? 0 : 100;
+            updateUI(); 
+            if(!optAll) { isAuto = false; resetBtns(); return; } 
         }
+
         let prob = (mode==='ST') ? SPECS.s : SPECS.n;
         let isHit = Math.random() < (1 / prob);
         let eff = selectEffect(isHit);
@@ -197,7 +203,6 @@
                     }
                 }
                 
-                // ログ出力（右打ち中は昇格の記述を削除）
                 let logMsg = `>> ${mode} ${lcdCount}回転 【${logDigit}】 ${is10R?'10R':'3R'}当り!`;
                 if(isShokaku && mode === '通常') logMsg += " (昇格)";
                 addLog(logMsg);
@@ -221,7 +226,10 @@
                 }
 
                 currentRushHits++; 
-                if(mode==='通常' || mode==='時短') { mode='ST'; rRem=SPECS.st; rushCount = (mode==='時短') ? hits : 1; } 
+                if(mode==='通常' || mode==='時短') { 
+                    if(nextM === 'ST') { mode='ST'; rRem=SPECS.st; } else { mode='時短'; rRem=SPECS.jt; }
+                    rushCount = (mode==='時短' && nextM==='ST') ? hits : (nextM==='ST' ? 1 : 0); 
+                } 
                 else { rushCount = currentRushHits; mode='ST'; rRem=SPECS.st; } 
                 totalBall += (is10R ? 1400 : 420); 
             } 
@@ -247,6 +255,7 @@
 </script>
 </body>
 </html>
+
 
 
 
