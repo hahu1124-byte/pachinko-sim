@@ -60,7 +60,10 @@
         .side-btn.active { background: #8a2be2; color: #fff; border-color: #a450ff; }
         .btn-auto { flex: 1; background: #8a2be2; color: white; border: 1px solid #a450ff; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 1rem; }
         .btn-stop { background: #444 !important; border-color: #666 !important; }
-        .log { width: 100%; max-width: 440px; height: 290px; background: #000; margin-top: 10px; padding: 10px; font-size: 0.77rem; color: #a450ff; overflow-y: auto; border: 1px solid #333; font-family: monospace; box-sizing: border-box; line-height: 1.4; } 
+        
+        /* 履歴ログ: 文字色を白色に変更 */
+        .log { width: 100%; max-width: 440px; height: 290px; background: #000; margin-top: 10px; padding: 10px; font-size: 0.77rem; color: #ffffff; overflow-y: auto; border: 1px solid #333; font-family: monospace; box-sizing: border-box; line-height: 1.4; } 
+        
         #modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; justify-content: center; align-items: center; }
         #modal-content { background: #111; border: 2px solid #8a2be2; width: 92%; max-width: 400px; padding: 15px; border-radius: 12px; }
         .graph-area { background: #000; height: 160px; margin-bottom: 15px; }
@@ -110,7 +113,7 @@
                 <button class="btn-auto" id="btn-fast" onclick="toggleAuto('fast')">高速オート</button>
             </div>
         </div>
-        <div class="log" id="log">> 筐体カラーを紫色に変更しました。レバブル時はその色に発光します。</div>
+        <div class="log" id="log">> 履歴ログの文字色を白色に設定しました。</div>
     </div>
 
 
@@ -188,7 +191,6 @@
             addLog(`${mode} ${lcdCount}回【${eff.displayName}】信頼度:${eff.trust.toFixed(1)}%`); 
             if(eff.vibe) {
                 machineEl.classList.add('vibrate'); 
-                // レバブル色設定
                 if(eff.vibeColor === "white") { machineEl.style.borderColor = "#fff"; machineEl.style.boxShadow = "0 0 20px #fff"; }
                 else if(eff.vibeColor === "red") { machineEl.style.borderColor = "#f00"; machineEl.style.boxShadow = "0 0 20px #f00"; }
                 else if(eff.vibeColor === "rainbow") { machineEl.style.animation = "vibration 0.05s infinite, rainbow-border 0.3s infinite"; }
@@ -203,13 +205,8 @@
         await new Promise(r => setTimeout(r, spinTime));
         clearInterval(spin);
         
-        // レバブル・色リセット
-        machineEl.classList.remove('vibrate'); 
-        machineEl.style.borderColor = ""; 
-        machineEl.style.boxShadow = ""; 
-        machineEl.style.animation = ""; 
-        document.getElementById('screen').classList.remove('flash-active'); 
-        document.getElementById('effect-overlay').style.display = 'none';
+        machineEl.classList.remove('vibrate'); machineEl.style.borderColor = ""; machineEl.style.boxShadow = ""; machineEl.style.animation = ""; 
+        document.getElementById('screen').classList.remove('flash-active'); document.getElementById('effect-overlay').style.display = 'none';
         
         if(isHit) { 
             isAnim=true; hits++; historyData.push(currentRot); historyLabels.push(hits); currentRot = 0;
@@ -236,15 +233,15 @@
                         else { d = [2,4,6,8][Math.floor(Math.random()*4)]; nextM = '時短'; logDigit = d; }
                     }
                 }
+                
                 let logMsg = `>> ${mode} ${lcdCount}回転 【${logDigit}】 ${is10R?'10R':'3R'}当り!`;
                 if(isShokaku && mode === '通常') logMsg += " (昇格)";
                 addLog(logMsg);
+
                 [1,2,3].forEach(i => { const el=document.getElementById('d'+i); el.innerText=logDigit; el.className='digit '+(logDigit==7?'gold':(logDigit%2!==0?'odd':'even')); }); 
                 if (isShokaku) {
                     await new Promise(r => setTimeout(r, 1200));
-                    machineEl.classList.add('vibrate');
-                    // 昇格時の色は赤固定
-                    machineEl.style.borderColor = "#f00"; machineEl.style.boxShadow = "0 0 20px #f00";
+                    machineEl.classList.add('vibrate'); machineEl.style.borderColor = "#f00"; machineEl.style.boxShadow = "0 0 20px #f00";
                     await new Promise(r => setTimeout(r, 1000));
                     machineEl.classList.remove('vibrate'); machineEl.style.borderColor = ""; machineEl.style.boxShadow = "";
                     if (mode === '通常') {
@@ -252,8 +249,7 @@
                         d = candidates.length ? candidates[Math.floor(Math.random() * candidates.length)] : 1;
                         [1,2,3].forEach(i => { const el=document.getElementById('d'+i); el.innerText=d; el.className='digit odd'; });
                     } else { 
-                        d = 7;
-                        [1,2,3].forEach(i => { const el=document.getElementById('d'+i); el.innerText=d; el.className='digit gold'; });
+                        d = 7; [1,2,3].forEach(i => { const el=document.getElementById('d'+i); el.innerText=d; el.className='digit gold'; });
                     }
                 }
                 currentRushHits++; 
@@ -285,6 +281,7 @@
 </script>
 </body>
 </html>
+
 
 
 
