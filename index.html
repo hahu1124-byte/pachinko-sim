@@ -20,6 +20,7 @@
         .gold { color: #ffeb3b; text-shadow: 0 0 30px #ffeb3b; }
         .odd { color: #ff4444; text-shadow: 0 0 20px #ff4444; }
         .even { color: #4444ff; text-shadow: 0 0 20px #4444ff; }
+        .beast { color: #00ff00; text-shadow: 0 0 20px #0f0; }
         .hidden-lamp { position: absolute; top: 12px; right: 20px; width: 15px; height: 15px; background: #222; border-radius: 50%; border: 1px solid #444; z-index: 10; }
         .lamp-active { animation: rainbow-bg 0.3s infinite; box-shadow: 0 0 20px #fff; }
         @keyframes rainbow-bg { 0% { background: #f00; } 20% { background: #ff0; } 40% { background: #0f0; } 60% { background: #0ff; } 80% { background: #00f; } 100% { background: #f0f; } }
@@ -32,6 +33,7 @@
         .heso-red { background: radial-gradient(circle, #ff4444, #880000); box-shadow: 0 0 8px #ff0000; border-color: #f00; }
         .heso-on { background: #888; }
         .effect-text { position: absolute; color: white; font-weight: bold; font-size: 2.2rem; z-index: 5; text-shadow: 0 0 10px #000; background: rgba(0,0,0,0.7); padding: 5px 15px; border-radius: 5px; display: none; text-align: center; }
+        .shokaku-text { color: #ff0000 !important; font-size: 3rem !important; animation: vibration 0.1s infinite; z-index: 20; }
         .stat-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-top: 12px; }
         .stat-item { background: #000; border: 1px solid #333; padding: 5px 0; text-align: center; border-radius: 4px; }
         .stat-val { font-size: 0.8rem; font-weight: bold; font-family: monospace; }
@@ -63,6 +65,7 @@
             <div id="lamp" class="hidden-lamp"></div>
             <div class="screen" id="screen">
                 <div id="effect-overlay" class="effect-text"></div>
+                <div id="shokaku-overlay" class="effect-text shokaku-text">昇格...!!</div>
                 <div class="digit-container">
                     <div id="d1" class="digit odd">3</div><div id="d2" class="digit odd">5</div><div id="d3" class="digit gold">7</div>
                 </div>
@@ -85,7 +88,7 @@
                 <button class="btn-auto" id="btn-fast" onclick="toggleAuto('fast')">高速オート</button>
             </div>
         </div>
-        <div class="log" id="log">> 奇数の20%分を「偶数からの昇格」に振り分けました。</div>
+        <div class="log" id="log">> 昇格演出を修正：偶数揃いから±1動いて奇数図柄（3R）へ。</div>
     </div>
 
 <script>
@@ -107,12 +110,12 @@
             if (roll() < 1.0) { // 全回転 1%
                 res.name.push("全回転"); res.text="全回転"; res.isSure=true; res.isFullSpin=true; res.lamp=true;
             } else {
-                let hasVibe = false, hasRay = false;
+                let hasVibe = false;
                 if (roll() < 3.0) { res.name.push("虹レバ"); res.lamp=true; hasVibe=true; }
                 else if (roll() < 15.0) { res.name.push("赤レバ"); hasVibe=true; }
                 else if (roll() < 66.7) { res.name.push("白レバ"); hasVibe=true; }
-                if (roll() < 3.0) { res.name.push("さよなら"); res.text="さよなら"; hasRay=true; }
-                else if (roll() < 33.3) { res.name.push("レイ背景"); res.text="レイ背景"; hasRay=true; }
+                if (roll() < 3.0) { res.name.push("さよなら"); res.text="さよなら"; }
+                else if (roll() < 33.3) { res.name.push("レイ背景"); res.text="レイ背景"; }
                 if (roll() < 25.0) { res.isRedHold=true; res.name.push("赤保留"); }
                 if (roll() < 40.0) { res.name.push("次回予告"); res.text = res.text || "次回予告"; }
                 if (roll() < 5.0)  { res.name.push("インフラ"); res.flash=true; res.lamp=true; }
@@ -187,22 +190,37 @@
                 currentRushHits++; addLog(`>> ${lcdCount}回転 【135】 暴走! → ST突入`);
                 totalBall += 420; mode='ST'; rRem=SPECS.st; rushCount=currentRushHits; 
             } else { 
-                let d, is10R = false, nextM = '時短';
+                let d, is10R = false, nextM = '時短', isShokaku = false;
                 if (eff.isFullSpin) { d = 7; is10R = true; nextM = 'ST'; }
                 else if (eff.isSure) {
                     if (rand < 15) { d = 7; is10R = true; nextM = 'ST'; }
                     else { d = [1,3,5,9][Math.floor(Math.random()*4)]; nextM = 'ST'; }
                 } else {
-                    if (rand < 2) { d = 7; is10R = true; nextM = 'ST'; } // 7揃い 2%
-                    else if (rand < 35) { d = [1,3,5,9][Math.floor(Math.random()*4)]; nextM = 'ST'; } // 奇数 33% (2%は7へ)
-                    else if (rand < 55) { d = [2,4,6,8][Math.floor(Math.random()*4)]; nextM = 'ST'; } // 偶数からの昇格ST 20%
-                    else { d = [2,4,6,8][Math.floor(Math.random()*4)]; nextM = '時短'; } // 偶数通常 45%
+                    if (rand < 2) { d = 7; is10R = true; nextM = 'ST'; } // 7揃い
+                    else if (rand < 35) { d = [1,3,5,9][Math.floor(Math.random()*4)]; nextM = 'ST'; } // 奇数
+                    else if (rand < 55) { d = [2,4,6,8][Math.floor(Math.random()*4)]; nextM = 'ST'; isShokaku = true; } // 昇格ルート
+                    else { d = [2,4,6,8][Math.floor(Math.random()*4)]; nextM = '時短'; } // 通常偶数
                 }
                 
                 [1,2,3].forEach(i => { const el=document.getElementById('d'+i); el.innerText=d; el.className='digit '+(d===7?'gold':(d%2!==0?'odd':'even')); }); 
+                
+                if (isShokaku && mode === '通常') {
+                    await new Promise(r => setTimeout(r, 1200));
+                    document.getElementById('shokaku-overlay').style.display = 'block';
+                    document.getElementById('machine').classList.add('vibrate');
+                    await new Promise(r => setTimeout(r, 1200));
+                    // 偶数から±1動いて7以外の奇数(1,3,5,9)にする
+                    let candidates = [d-1, d+1].filter(n => n > 0 && n < 10 && n !== 7 && n % 2 !== 0);
+                    if (candidates.length === 0) candidates = [1, 3, 5, 9];
+                    d = candidates[Math.floor(Math.random() * candidates.length)];
+                    [1,2,3].forEach(i => { const el=document.getElementById('d'+i); el.innerText=d; el.className='digit odd'; });
+                    document.getElementById('shokaku-overlay').style.display = 'none';
+                    document.getElementById('machine').classList.remove('vibrate');
+                }
+
                 currentRushHits++; 
                 if(mode==='通常') { 
-                    addLog(`>> ${lcdCount}回転 【${d}】 大当り!(${is10R?'10R':'3R'}) → ${nextM}${nextM==='ST' && d%2===0 ? ' (昇格!)' : ''}突入`);
+                    addLog(`>> ${lcdCount}回転 【${d}】 大当り!(${is10R?'10R':'3R'}) → ${nextM}${isShokaku ? ' (昇格!)' : ''}突入`);
                     if(nextM==='ST') { mode='ST'; rRem=SPECS.st; rushCount=1; } else { mode='時短'; rRem=SPECS.jt; rushCount=0; }
                 } else { 
                     rushCount = currentRushHits; is10R = true;
@@ -233,6 +251,7 @@
 </script>
 </body>
 </html>
+
 
 
 
