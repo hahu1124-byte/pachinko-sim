@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>EVANGELION Sim -Vibe Polish-</title>
+    <title>EVANGELION Sim -Log Detail Update-</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&display=swap');
@@ -14,9 +14,12 @@
         .main-content { width: 100%; max-width: 440px; display: flex; flex-direction: column; align-items: center; padding: 10px; box-sizing: border-box; }
         
         .machine { width: 100%; background: #111; border: 2px solid #d00000; border-radius: 15px; padding: 12px; position: relative; box-sizing: border-box; }
+        /* 図柄表示（1.5倍） */
         .screen { background: #000; height: 350px; border-radius: 10px; border: 2px solid #444; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; width: 100%; }
         .digit-container { display: flex; gap: 5px; }
         .digit { font-size: 8.5rem; font-weight: 900; font-family: 'Shippori Mincho B1', serif; width: 110px; text-align: center; }
+        
+        /* ST回数表示（右下） */
         .mode-display { position: absolute; bottom: 35px; right: 15px; color: #d00000; font-weight: bold; font-size: 0.9rem; text-shadow: 0 0 5px #000; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 3px; border-right: 3px solid #d00000; }
         
         .gold { color: #ffeb3b; text-shadow: 0 0 30px #ffeb3b; }
@@ -55,6 +58,7 @@
         .btn-auto { flex: 1; background: #d00000; color: white; border: 1px solid #ff4444; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 1rem; }
         .btn-stop { background: #444 !important; border-color: #666 !important; }
         
+        /* 履歴表示：フォントサイズ縮小（保存済み基準） */
         .log { width: 100%; max-width: 440px; height: 290px; background: #000; margin-top: 10px; padding: 10px; font-size: 0.77rem; color: #ff4444; overflow-y: auto; border: 1px solid #333; font-family: monospace; box-sizing: border-box; line-height: 1.4; }
         
         #modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; justify-content: center; align-items: center; }
@@ -95,7 +99,7 @@
                 <button class="btn-auto" id="btn-fast" onclick="toggleAuto('fast')">高速オート</button>
             </div>
         </div>
-        <div class="log" id="log">> レバブル演出を排他制御に更新しました（虹＞赤＞白）。複合しません。</div>
+        <div class="log" id="log">> 履歴にST/時短の判別を追記しました。</div>
     </div>
 
 <script>
@@ -106,6 +110,7 @@
     let slumpData=[0], slumpLabels=["0"], historyData=[], historyLabels=[];
     let sChart, hChart;
 
+    // --- 各種関数（チャート、オート、リセット等） ---
     function openModal() { document.getElementById('modal-overlay').style.display='flex'; updateCharts(); }
     function closeModal() { document.getElementById('modal-overlay').style.display='none'; }
     function updateCharts() {
@@ -115,12 +120,10 @@
         if(hChart) hChart.destroy();
         hChart = new Chart(document.getElementById('historyChart'), { type:'bar', data:{ labels:historyLabels, datasets:[{data:historyData, backgroundColor:'#d00000'}] }, options:cfg });
     }
-
     function toggleOpt(t) {
         if(t==='all') { optAll=!optAll; document.getElementById('btn-all').classList.toggle('active'); }
         if(t==='kokuchi') { optKokuchi=!optKokuchi; document.getElementById('btn-kokuchi').classList.toggle('active'); }
     }
-
     function toggleAuto(s) {
         if(isAuto && autoSpeed===s) { isAuto=false; resetBtns(); }
         else { isAuto=true; autoSpeed=s; resetBtns(); document.getElementById('btn-'+s).classList.add('btn-stop'); startProcess(); }
@@ -128,6 +131,7 @@
     function resetBtns() { document.querySelectorAll('.btn-auto').forEach(b => b.classList.remove('btn-stop')); }
     function resetData() { hits=0; rushCount=0; currentCount=0; totalBall=0; totalRot=0; heso=0; currentRushHits=0; slumpData=[0]; slumpLabels=["0"]; historyData=[]; historyLabels=[]; updateUI(); updateHeso(); addLog("リセット"); }
 
+    // --- メインプロセス ---
     async function startProcess() {
         if(!isAuto || isAnim) return;
         if(heso < 4) heso++;
@@ -146,7 +150,7 @@
         }
         
         let eff = selectEffect(isHit, (willEnterRush || isBousou), mode !== '通常');
-        if(optKokuchi && isHit) { eff.heavy=true; eff.flash=true; eff.lamp=true; eff.name="インフラ(完全告知)"; eff.trust=100; }
+        if(optKokuchi && isHit) { eff.heavy=true; eff.flash=true; eff.lamp=true; eff.name="インフラ"; eff.trust=100; }
         
         let originalSpeed = autoSpeed;
         if(autoSpeed==='fast' && eff.heavy && !optAll) { autoSpeed='slow'; resetBtns(); document.getElementById('btn-slow').classList.add('btn-stop'); }
@@ -191,8 +195,11 @@
             } else {
                 let d = is10R ? 7 : 2;
                 [1,2,3].forEach(i => { const el=document.getElementById('d'+i); el.innerText=d; el.className='digit '+(d===7?'gold':'even'); });
+                
+                // 履歴への追記ロジック
                 if(mode==='通常') {
-                    addLog(`>> ${currentCount}回転 【${d}】 大当り! ${is10R ? '(10R)' : '(3R)'}`);
+                    let typeTxt = willEnterRush ? "ST突入" : "時短";
+                    addLog(`>> ${currentCount}回転 【${d}】 大当り! ${is10R ? '10R' : '3R'}(${typeTxt})`);
                     if(willEnterRush) { mode='ST'; rRem=SPECS.st; rushCount=1; currentRushHits=1; } 
                     else { mode='時短'; rRem=SPECS.jt; rushCount=0; currentRushHits=1; }
                 } else {
@@ -214,20 +221,18 @@
         if(isAuto) setTimeout(startProcess, (autoSpeed==='fast') ? 5 : 300);
     }
 
+    // --- 演出抽選 ---
     function selectEffect(isHit, willEnterRush, isRight) {
         let res = { heavy: false, name: [], trust: 0, vibe: false, flash: false, lamp: false, text: "", isRedHold: false };
         let names = [];
-        let vibeType = null; // null, "白", "赤", "虹"
+        let vibeType = null;
 
         if (isHit) {
-            // レバブル抽選（最上位優先）
             if (Math.random() < 0.03) vibeType = "虹";
             else if (Math.random() < 0.15) vibeType = "赤";
             else if (Math.random() < 0.667) vibeType = "白";
 
             if (vibeType) { res.vibe = true; names.push(vibeType + "レバブル"); }
-            
-            // その他独立抽選
             if (Math.random() < 0.05) { res.lamp = true; names.push("インフラ"); }
             if (Math.random() < 0.01) { names.push("カヲル"); res.text = "カヲル"; }
             if (Math.random() < 0.40) { names.push("次回予告"); res.text = "次回予告"; }
@@ -238,19 +243,11 @@
             if (names.length > 0) { res.heavy = true; res.name = names.join("+"); res.trust = 100; }
             else { res.heavy = true; res.name = "インパクト予告"; res.text = "当"; res.trust = 100; }
         } else {
-            // ハズレ時
             let r = Math.random() * 100;
-            if (r < 0.15) { 
-                res.heavy = true; res.vibe = true; res.name = "白レバブル"; res.text = "激熱"; res.trust = 90; 
-            } else if (r < 0.16) { // 赤レバハズレ（超低確率）
-                res.heavy = true; res.vibe = true; res.name = "赤レバブル"; res.text = "激熱"; res.trust = 96.5; 
-            } else if (r < 0.3) { 
-                res.heavy = true; res.isRedHold = true; res.name = "赤保留"; res.text = "赤保留"; res.trust = 90; 
-            } else if (r < 0.6) { 
-                res.heavy = true; res.name = "レイ背景"; res.text = "レイ背景"; res.trust = 85; 
-            } else if (r < 0.8) { 
-                res.heavy = true; res.name = "次回予告"; res.text = "次回予告"; res.trust = 65; 
-            }
+            if (r < 0.15) { res.heavy = true; res.vibe = true; res.name = "白レバブル"; res.text = "激熱"; res.trust = 90; }
+            else if (r < 0.3) { res.heavy = true; res.isRedHold = true; res.name = "赤保留"; res.text = "赤保留"; res.trust = 90; }
+            else if (r < 0.6) { res.heavy = true; res.name = "レイ背景"; res.text = "レイ背景"; res.trust = 85; }
+            else if (r < 0.8) { res.heavy = true; res.name = "次回予告"; res.text = "次回予告"; res.trust = 65; }
         }
         return res;
     }
@@ -271,6 +268,7 @@
 </script>
 </body>
 </html>
+
 
 
 
