@@ -13,7 +13,6 @@
         .btn-graph { background: #8a2be2; color: white; border-color: #a450ff; }
         .main-content { width: 100%; max-width: 440px; display: flex; flex-direction: column; align-items: center; padding: 10px; box-sizing: border-box; }
         
-        /* 筐体外枠: 基本は紫色 */
         .machine { 
             width: 100%; 
             background: #111; 
@@ -25,7 +24,6 @@
             transition: border-color 0.2s, box-shadow 0.2s;
         }
         
-        /* 図柄表示・履歴表示サイズ1.5倍調整 */
         .screen { background: #000; height: 300px; border-radius: 10px; border: 2px solid #444; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; width: 100%; }
         .digit-container { display: flex; gap: 5px; }
         .digit { font-size: 8.5rem; font-weight: 900; font-family: 'Shippori Mincho B1', serif; width: 110px; text-align: center; } 
@@ -68,14 +66,12 @@
         .btn-auto { flex: 1; background: #8a2be2; color: white; border: 1px solid #a450ff; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 1rem; }
         .btn-stop { background: #444 !important; border-color: #666 !important; }
         
-        /* 履歴ログ: 白色・サイズ1.5倍調整 */
         .log { width: 100%; max-width: 440px; height: 290px; background: #000; margin-top: 10px; padding: 10px; font-size: 0.85rem; color: #ffffff; overflow-y: auto; border: 1px solid #333; font-family: monospace; box-sizing: border-box; line-height: 1.4; } 
         
         #modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; justify-content: center; align-items: center; }
         #modal-content { background: #111; border: 2px solid #8a2be2; width: 92%; max-width: 400px; padding: 15px; border-radius: 12px; }
         .graph-area { background: #000; height: 160px; margin-bottom: 15px; }
 
-        /* 虹色用アニメーション */
         @keyframes rainbow-border {
             0% { border-color: #f00; box-shadow: 0 0 15px #f00; }
             20% { border-color: #ff0; box-shadow: 0 0 15px #ff0; }
@@ -120,7 +116,7 @@
                 <button class="btn-auto" id="btn-fast" onclick="toggleAuto('fast')">高速オート</button>
             </div>
         </div>
-        <div class="log" id="log">> 準備完了。完全版コードを適用しました。</div>
+        <div class="log" id="log">> プレミア告知機能を搭載しました。</div>
     </div>
 
 
@@ -164,7 +160,10 @@
             if (res.name.length > 0) res.heavy = true;
         }
         let names = res.name;
-        if (names.some(n => ["虹レバ", "インフラ", "カヲル", "さよなら", "全回転"].includes(n)) || names.length >= 3) { res.trust = 100; res.isSure = true; } 
+        // 単体100%演出が含まれるか判定
+        const hasSureSingle = names.some(n => ["虹レバ", "インフラ", "カヲル", "さよなら", "全回転"].includes(n));
+        
+        if (hasSureSingle || names.length >= 3) { res.trust = 100; res.isSure = true; } 
         else if (names.length === 2) { let combined = 1 - ((1 - (TRUST_MAP[names[0]]||0)) * (1 - (TRUST_MAP[names[1]]||0))); res.trust = Math.max(96.0, combined * 100); } 
         else if (names.length === 1) { res.trust = (TRUST_MAP[names[0]] || 0) * 100; }
         res.displayName = names.join("+") || "弱予告";
@@ -196,7 +195,15 @@
         const machineEl = document.getElementById('machine');
 
         if(eff.heavy) { 
-            addLog(`${mode} ${lcdCount}回【${eff.displayName}】信頼度:${eff.trust.toFixed(1)}%`); 
+            // ログの構築
+            let logText = `${mode} ${lcdCount}回【${eff.displayName}】信頼度:${eff.trust.toFixed(1)}%`;
+            // プレミア演出（単体100%）が含まれる場合
+            const pNames = ["虹レバ", "インフラ", "カヲル", "さよなら", "全回転"];
+            if (eff.isSure && eff.name.some(n => pNames.includes(n))) {
+                logText += " プレミア出現！";
+            }
+            addLog(logText); 
+
             if(eff.vibe) {
                 machineEl.classList.add('vibrate'); 
                 if(eff.vibeColor === "white") { machineEl.style.borderColor = "#fff"; machineEl.style.boxShadow = "0 0 20px #fff"; }
@@ -251,7 +258,6 @@
                 if (isShokaku) {
                     await new Promise(r => setTimeout(r, 1200));
                     machineEl.classList.add('vibrate'); 
-                    // ★昇格演出：枠を虹色アニメーションに変更
                     machineEl.style.animation = "vibration 0.05s infinite, rainbow-border 0.3s infinite";
                     await new Promise(r => setTimeout(r, 1000));
                     machineEl.classList.remove('vibrate'); machineEl.style.animation = ""; machineEl.style.borderColor = ""; machineEl.style.boxShadow = "";
@@ -280,7 +286,6 @@
         if(isAuto) setTimeout(startProcess, (autoSpeed==='fast') ? 5 : 300);
     }
 
-    // --- 共通関数 ---
     function openModal() { document.getElementById('modal-overlay').style.display='flex'; updateCharts(); }
     function closeModal() { document.getElementById('modal-overlay').style.display='none'; }
     function updateCharts() { const cfg = { responsive:true, maintainAspectRatio:false, scales:{ x:{display:false}, y:{grid:{color:'#222'}, ticks:{color:'#888'}} }, plugins:{legend:{display:false}} }; if(sChart) sChart.destroy(); sChart = new Chart(document.getElementById('slumpChart'), { type:'line', data:{ labels:slumpLabels, datasets:[{data:slumpData, borderColor:'#8a2be2', borderWidth:2, pointRadius:0, fill:false}] }, options:cfg }); if(hChart) hChart.destroy(); hChart = new Chart(document.getElementById('historyChart'), { type:'bar', data:{ labels:historyLabels, datasets:[{data:historyData, backgroundColor:'#8a2be2'}] }, options:cfg }); }
@@ -294,6 +299,7 @@
 </script>
 </body>
 </html>
+
 
 
 
