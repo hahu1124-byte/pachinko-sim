@@ -28,15 +28,21 @@
         @keyframes vibration { 0% { transform: translate(0,0); } 25% { transform: translate(-4px, 4px); } 50% { transform: translate(4px, -4px); } 75% { transform: translate(-4px, -4px); } 100% { transform: translate(0,0); } }
         .flash-active { animation: flash-white 0.05s 20; }
         @keyframes flash-white { 0%, 100% { background: #000; } 50% { background: #fff; } }
+        
+        /* 保留UI設定 */
         .heso-overlay { position: absolute; bottom: 10px; display: flex; align-items: flex-end; gap: 10px; }
         .heso-ball { width: 10px; height: 10px; background: #222; border-radius: 50%; border: 1px solid #555; transition: all 0.2s; }
         .heso-current { width: 13px; height: 13px; margin-right: 5px; border-width: 2px; } 
+        /* ST/時短中の四角保留 */
+        .heso-migi { border-radius: 2px !important; width: 12px !important; height: 12px !important; border: 1.5px solid #fff; }
+        
         .heso-on { background: #888; }
         .heso-red { background: radial-gradient(circle, #ff4444, #880000); box-shadow: 0 0 8px #ff0000; border-color: #f00; }
         .heso-green { background: radial-gradient(circle, #44ff44, #008800); box-shadow: 0 0 8px #00ff00; border-color: #0f0; }
         .heso-blue { background: radial-gradient(circle, #4444ff, #000088); box-shadow: 0 0 8px #0000ff; border-color: #00f; }
         .heso-blink { background: #fff; animation: blink-ball 0.3s infinite; box-shadow: 0 0 8px #fff; border-color: #fff; }
         .heso-rainbow { animation: rainbow-bg 0.5s infinite; box-shadow: 0 0 10px #fff; border-color: #fff; }
+        
         @keyframes blink-ball { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
         .effect-text { position: absolute; color: white; font-weight: bold; font-size: 2.2rem; z-index: 5; text-shadow: 0 0 10px #000; background: rgba(0,0,0,0.7); padding: 5px 15px; border-radius: 5px; display: none; text-align: center; }
         .stat-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-top: 12px; }
@@ -99,7 +105,7 @@
                 <button class="btn-auto" id="btn-fast" onclick="toggleAuto('fast')">高速オート</button>
             </div>
         </div>
-        <div class="log" id="log">> ST中の高信頼度演出時の自動低速化を実装しました。</div>
+        <div class="log" id="log">> 右打ち中（ST・時短）の保留を四角形に変更しました。</div>
     </div>
     
 <script>
@@ -112,7 +118,7 @@
     let sChart, hChart;
 
     let reservedStock = []; 
-    let originalSpeedSetting = 'slow'; // ユーザーが設定していた本来の速度モード
+    let originalSpeedSetting = 'slow';
 
     const TRUST_MAP_N = { "白レバ": 0.90, "赤レバ": 0.965, "赤保留": 0.90, "緑保留": 0.11, "青保留": 0.05, "点滅保留": 0.005, "次回予告": 0.65, "レイ背景": 0.85, "金系": 0.50 };
     const TRUST_MAP_S = { "白レバ": 0.95, "赤レバ": 0.99, "赤保留": 0.95, "緑保留": 0.11, "青保留": 0.05, "点滅保留": 0.005, "次回予告": 1.0, "レイ背景": 0.92, "金系": 0.80, "虹保留": 1.0 };
@@ -141,7 +147,6 @@
         
         reservedStock.push({ isHit: isHit, holdType: holdType });
 
-        // 強保留(赤・虹)検知時。ログは出さずに内部で速度を切り替える
         if ((holdType === "red" || holdType === "rainbow") && isAuto && autoSpeed === "fast") {
             originalSpeedSetting = 'fast'; 
             autoSpeed = 'slow';
@@ -157,9 +162,7 @@
         const roll = () => Math.random() * 100;
         const isMigi = (mode === 'ST' || mode === '時短');
 
-        if (isHit && !res.isSure && roll() < 8.0) {
-            res.isFukkatsu = true;
-        }
+        if (isHit && !res.isSure && roll() < 8.0) { res.isFukkatsu = true; }
 
         if (res.holdType !== "red" && res.holdType !== "rainbow") {
             let upgradeRoll = Math.random() * 100;
@@ -249,7 +252,6 @@
         
         if(optKokuchi && isHit) { eff.heavy=true; eff.flash=true; eff.lamp=true; eff.displayName="インフラ告知"; eff.trust=100; eff.isSure=true; }
         
-        // 修正ポイント: ST中で信頼度が高い(50%以上)場合、高速オート中でも低速にする
         if (mode !== '通常' && eff.trust >= 50 && isAuto && autoSpeed === 'fast') {
             originalSpeedSetting = 'fast';
             autoSpeed = 'slow';
@@ -353,7 +355,6 @@
         
         isAnim=false; 
 
-        // 高速オートに戻す
         if(originalSpeedSetting === 'fast') {
             autoSpeed = 'fast';
             originalSpeedSetting = 'slow';
@@ -373,21 +374,29 @@
     function toggleAuto(s) { if(isAuto && autoSpeed===s) { isAuto=false; originalSpeedSetting='slow'; resetBtns(); } else { isAuto=true; autoSpeed=s; if(s==='fast') originalSpeedSetting='fast'; resetBtns(); if (!isAnim) startProcess(); } }
     function resetBtns() { document.querySelectorAll('.btn-auto').forEach(b => b.classList.remove('btn-stop')); if(isAuto) document.getElementById('btn-' + autoSpeed).classList.add('btn-stop'); }
     function resetData() { hits=0; rushCount=0; currentRot=0; totalRot=0; totalBall=0; heso=0; currentRushHits=0; lcdCount=0; slumpData=[0]; slumpLabels=["0"]; historyData=[]; historyLabels=[]; reservedStock=[]; originalSpeedSetting='slow'; updateUI(); updateHesoUI("none"); addLog("データを初期化しました。"); }
+    
     function updateHesoUI(currentHoldType) { 
+        const isMigi = (mode === 'ST' || mode === '時短');
         const h0 = document.getElementById('h0');
-        h0.className = 'heso-ball heso-current ' + (currentHoldType === "none" ? "heso-on" : "heso-" + currentHoldType);
+        h0.className = 'heso-ball heso-current ' + (isMigi ? 'heso-migi ' : '') + (currentHoldType === "none" ? "heso-on" : "heso-" + currentHoldType);
+        
         for(let i=1; i<=4; i++) { 
             const el = document.getElementById('h' + i); 
             const stock = reservedStock[i-1];
-            if (stock) { el.className = 'heso-ball heso-on ' + (stock.holdType === "none" ? "" : "heso-" + stock.holdType); } 
-            else { el.className = 'heso-ball'; }
+            if (stock) { 
+                el.className = 'heso-ball heso-on ' + (isMigi ? 'heso-migi ' : '') + (stock.holdType === "none" ? "" : "heso-" + stock.holdType); 
+            } else { 
+                el.className = 'heso-ball ' + (isMigi ? 'heso-migi' : ''); 
+            }
         } 
     }
-    function updateUI() { document.getElementById('hits').innerText = hits; document.getElementById('rush-count').innerText = rushCount; document.getElementById('current-rot').innerText = currentRot; document.getElementById('total-rot').innerText = totalRot; const balEl = document.getElementById('balance'); const balVal = Math.floor(totalBall); balEl.innerText = balVal.toLocaleString(); balEl.className = 'stat-val ' + (balVal > 0 ? 'val-blue' : (balVal < 0 ? 'val-red' : 'val-white')); document.getElementById('sub-display').innerText = mode === '通常' ? `通常:${lcdCount}` : `${mode}:${rRem}`; }
+    
+    function updateUI() { document.getElementById('hits').innerText = hits; document.getElementById('rush-count').innerText = rushCount; document.getElementById('current-rot').innerText = currentRot; document.getElementById('total-rot').innerText = totalRot; const balEl = document.getElementById('balance'); const balVal = Math.floor(totalBall); balEl.innerText = balVal.toLocaleString(); balEl.className = 'stat-val ' + (balVal > 0 ? 'val-blue' : (balVal < 0 ? 'val-red' : 'val-white')); document.getElementById('sub-display').innerText = mode === '通常' ? `通常:${lcdCount}` : `${mode}:${rRem}`; updateHesoUI("none"); }
     function addLog(m) { const l=document.getElementById('log'); l.innerHTML=`> ${m}<br>${l.innerHTML}`; }
 </script>
 </body>
 </html>
+
 
 
 
