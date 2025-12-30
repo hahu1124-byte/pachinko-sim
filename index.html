@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EVANGELION Sim -Color Link-</title>
+    <title>EVANGELION Sim -Detailed Log-</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&display=swap');
@@ -22,14 +22,14 @@
         .main-content { flex-grow: 1; display: flex; flex-direction: column; align-items: center; padding: 10px; overflow-y: auto; }
         .machine { width: 100%; max-width: 400px; background: #111; border: 2px solid #d00000; border-radius: 15px; padding: 12px; }
         
+        /* 液晶エリア（高さ2倍） */
         .screen { background: #000; height: 240px; border-radius: 8px; border: 2px solid #444; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; margin-bottom: 8px; }
         .digit-container { display: flex; gap: 15px; }
         .digit { font-size: 6.5rem; font-weight: 900; font-family: 'Shippori Mincho B1', serif; width: 85px; text-align: center; z-index: 10; transition: color 0.2s; }
         
-        /* 配色指定 */
-        .gold { color: #ffeb3b; text-shadow: 0 0 30px #ffeb3b; } /* 金 */
-        .odd { color: #ff4444; text-shadow: 0 0 15px #ff4444; }  /* 赤 */
-        .even { color: #4444ff; text-shadow: 0 0 15px #4444ff; } /* 青 */
+        .gold { color: #ffeb3b; text-shadow: 0 0 30px #ffeb3b; }
+        .odd { color: #ff4444; text-shadow: 0 0 15px #ff4444; }
+        .even { color: #4444ff; text-shadow: 0 0 15px #4444ff; }
         
         .heso-box { display: flex; gap: 10px; margin-top: 20px; }
         .h-lamp { width: 15px; height: 15px; border-radius: 50%; background: #333; border: 1px solid #555; }
@@ -37,6 +37,7 @@
 
         #sub-display { position: absolute; bottom: 10px; right: 15px; color: #d00000; font-size: 1.2rem; font-weight: bold; }
 
+        /* スペック文字（白） */
         .spec-board { background: #222; border: 1px solid #444; margin-bottom: 8px; padding: 6px; display: grid; grid-template-columns: 1fr 1fr; gap: 5px; font-size: 0.65rem; color: #eee; }
         .spec-item b { color: #fff; font-weight: bold; }
 
@@ -54,7 +55,7 @@
         .btn-auto { flex: 1; background: #d00000; color: white; border: 1px solid #ff4444; padding: 12px 0; font-weight: bold; border-radius: 5px; cursor: pointer; font-size: 0.75rem; }
         .btn-stop { background: #444 !important; border-color: #666 !important; }
 
-        .log { width: 100%; max-width: 400px; height: 100px; background: #000; margin-top: 10px; padding: 10px; font-size: 0.7rem; color: #ff4444; overflow-y: auto; border: 1px solid #333; font-family: monospace; box-sizing: border-box; }
+        .log { width: 100%; max-width: 400px; height: 120px; background: #000; margin-top: 10px; padding: 10px; font-size: 0.7rem; color: #ff4444; overflow-y: auto; border: 1px solid #333; font-family: monospace; box-sizing: border-box; }
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 2000; flex-direction: column; padding: 20px; box-sizing: border-box; }
     </style>
 </head>
@@ -62,7 +63,7 @@
 
 <header>
     <button class="menu-btn" onclick="openModal('machineModal')">機種選択</button>
-    <button class="menu-btn" onclick="openDataModal()" style="background:#0066cc;">データ</button>
+    <button class="menu-btn" style="background:#0066cc;">データ</button>
     <div class="logo-main" id="machine-title">エヴァ15 未来への咆哮</div>
 </header>
 
@@ -109,7 +110,7 @@
             </div>
         </div>
     </div>
-    <div class="log" id="log">> 綾波、図柄同期完了</div>
+    <div class="log" id="log">> 目標、回転数表示を検知</div>
 </div>
 
 <script>
@@ -117,10 +118,8 @@
     let cur = SPECS['EVA15'];
     let hits=0, rushCount=0, currentCount=0, totalBall=0, firstHits=0, rushIn=0, maxRush=0, maxHamari=0;
     let mode='通常', rRem=0, isAuto=false, autoSpeed='slow', isFullAuto=false, isGyakkyo=false, isAnim=false;
-    let hojoCount = 0, balanceHistory=[0];
+    let hojoCount = 0;
 
-    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
     function toggleBtn(id) {
         if(id==='full-auto') isFullAuto = !isFullAuto;
         if(id==='gyakkyo') isGyakkyo = !isGyakkyo;
@@ -153,13 +152,8 @@
                 isAnim = true;
                 if(hasVibe) document.getElementById('machine').classList.add('vibrate');
                 if(hasFlash) document.getElementById('screen').classList.add('flash-active');
-                
-                let spin = setInterval(() => {
-                    [1,2,3].forEach(i => setRandomDigit(i));
-                }, 80);
-
+                let spin = setInterval(() => { [1,2,3].forEach(i => setRandomDigit(i)); }, 80);
                 await new Promise(r => setTimeout(r, 1800));
-                
                 clearInterval(spin);
                 document.getElementById('machine').classList.remove('vibrate');
                 document.getElementById('screen').classList.remove('flash-active');
@@ -173,20 +167,24 @@
 
                 let isSt = (mode !== '通常') || (Math.random() < 0.59);
                 let d = isSt ? [1,3,5,7,9][Math.floor(Math.random()*5)] : [2,4,6,8][Math.floor(Math.random()*4)];
-                
-                applyDigit(d); // 確定図柄を表示
+                applyDigit(d);
 
+                // 履歴に回転数を追加（全状態対応）
                 if(isSt) {
-                    if(mode==='通常') { firstHits++; rushIn++; addLog(`【${d}】初当り RUSH突入 ${currentCount}G`); } 
-                    else if(mode==='時短') { rushIn++; addLog(`【${d}】時短引き戻し!! ${currentCount}G`); }
-                    else { addLog(`【${d}】RUSH継続 ${rushCount+1}連`); }
+                    if(mode==='通常') { 
+                        firstHits++; rushIn++; addLog(`【${d}】初当り RUSH突入 ${currentCount}回転`); 
+                    } else if(mode==='時短') { 
+                        rushIn++; addLog(`【${d}】時短引き戻し!! ${currentCount}回転`); 
+                    } else { 
+                        addLog(`【${d}】RUSH継続 ${rushCount+1}連目(${currentCount}回転)`); 
+                    }
                     mode='ST'; rRem=cur.st; rushCount++;
                     if(rushCount > maxRush) maxRush = rushCount;
                     totalBall += 1400;
                 } else {
                     firstHits++; mode='時短'; rRem=cur.jt; rushCount=0;
                     totalBall += 400;
-                    addLog(`【${d}】単発時短 ${currentCount}G`);
+                    addLog(`【${d}】単発通常 ${currentCount}回転`);
                 }
                 currentCount=0;
                 await new Promise(r => setTimeout(r, isFullAuto ? 100 : 1000));
@@ -200,12 +198,10 @@
         }
 
         updateUI();
-        if(currentCount % 10 === 0) balanceHistory.push(totalBall);
         let delay = autoSpeed==='fast' ? (isFullAuto?1:30) : 800;
         if(isAuto) setTimeout(startProcess, delay);
     }
 
-    // ランダム変動中の図柄色設定
     function setRandomDigit(i) {
         const num = Math.floor(Math.random()*9)+1;
         const el = document.getElementById('d'+i);
@@ -213,7 +209,6 @@
         applyColor(el, num);
     }
 
-    // 確定図柄の表示
     function applyDigit(d) {
         [1,2,3].forEach(i => {
             const el = document.getElementById('d'+i);
@@ -222,16 +217,11 @@
         });
     }
 
-    // 色指定ロジック
     function applyColor(el, num) {
-        el.className = 'digit'; // 初期化
-        if (num === 7 && mode !== '通常') {
-            el.classList.add('gold'); // 右打ち中のみ7は金
-        } else if (num % 2 === 0) {
-            el.classList.add('even'); // 偶数は青
-        } else {
-            el.classList.add('odd');  // 奇数は赤
-        }
+        el.className = 'digit';
+        if (num === 7 && mode !== '通常') { el.classList.add('gold'); } 
+        else if (num % 2 === 0) { el.classList.add('even'); } 
+        else { el.classList.add('odd'); }
     }
 
     function updateHojo() { for(let i=1; i<=4; i++) document.getElementById('h'+i).classList.toggle('h-on', i <= hojoCount); }
@@ -245,8 +235,6 @@
     }
     function addLog(m) { const l=document.getElementById('log'); l.innerHTML=`> ${m}<br>${l.innerHTML}`; }
     function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-    function selectSpec(k) { location.reload(); }
 </script>
 </body>
 </html>
