@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>EVANGELION Sim -Vibe Update-</title>
+    <title>EVANGELION Sim -Occupancy Update-</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&display=swap');
@@ -13,7 +13,7 @@
         .btn-graph { background: #d00000; color: white; border-color: #ff4444; }
         .main-content { width: 100%; max-width: 440px; display: flex; flex-direction: column; align-items: center; padding: 10px; box-sizing: border-box; }
         .machine { width: 100%; background: #111; border: 2px solid #d00000; border-radius: 15px; padding: 12px; position: relative; box-sizing: border-box; }
-        .screen { background: #000; height: 350px; border-radius: 10px; border: 2px solid #444; display: flex; flex-direction: center; align-items: center; justify-content: center; position: relative; overflow: hidden; width: 100%; }
+        .screen { background: #000; height: 350px; border-radius: 10px; border: 2px solid #444; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; width: 100%; }
         .digit-container { display: flex; gap: 5px; }
         .digit { font-size: 8.5rem; font-weight: 900; font-family: 'Shippori Mincho B1', serif; width: 110px; text-align: center; }
         .gold { color: #ffeb3b; text-shadow: 0 0 30px #ffeb3b; }
@@ -23,7 +23,6 @@
         .hidden-lamp { position: absolute; top: 12px; right: 20px; width: 15px; height: 15px; background: #222; border-radius: 50%; border: 1px solid #444; z-index: 10; }
         .lamp-active { animation: rainbow-bg 0.3s infinite; box-shadow: 0 0 20px #fff; }
         @keyframes rainbow-bg { 0% { background: #f00; } 20% { background: #ff0; } 40% { background: #0f0; } 60% { background: #0ff; } 80% { background: #00f; } 100% { background: #f0f; } }
-        /* レバブル振動 */
         .vibrate { animation: vibration 0.05s infinite; }
         @keyframes vibration { 0% { transform: translate(0,0); } 25% { transform: translate(-4px, 4px); } 50% { transform: translate(4px, -4px); } 75% { transform: translate(-4px, -4px); } 100% { transform: translate(0,0); } }
         .flash-active { animation: flash-white 0.05s 20; }
@@ -32,7 +31,7 @@
         .heso-ball { width: 10px; height: 10px; background: #222; border-radius: 50%; border: 1px solid #555; }
         .heso-red { background: radial-gradient(circle, #ff4444, #880000); box-shadow: 0 0 8px #ff0000; border-color: #f00; }
         .heso-on { background: #888; }
-        .effect-text { position: absolute; color: white; font-weight: bold; font-size: 2.2rem; z-index: 5; text-shadow: 0 0 10px #000; background: rgba(0,0,0,0.7); padding: 5px 15px; border-radius: 5px; display: none; }
+        .effect-text { position: absolute; color: white; font-weight: bold; font-size: 2.2rem; z-index: 5; text-shadow: 0 0 10px #000; background: rgba(0,0,0,0.7); padding: 5px 15px; border-radius: 5px; display: none; text-align: center; }
         .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-top: 12px; }
         .stat-item { background: #000; border: 1px solid #333; padding: 5px 0; text-align: center; border-radius: 4px; }
         .stat-val { font-size: 0.9rem; font-weight: bold; font-family: monospace; }
@@ -82,11 +81,10 @@
                 <button class="btn-auto" id="btn-fast" onclick="toggleAuto('fast')">高速オート</button>
             </div>
         </div>
-        <div class="log" id="log">> 白レバブル（占有率66.7%）を実装しました。複合演出も発生します。</div>
+        <div class="log" id="log">> 指定された占有率を反映しました。次回予告(40%)、赤保留(25%)、レイ背景等の複合が発生します。</div>
     </div>
 
 <script>
-    // 基本スペック設定
     const SPECS = { n: 319.7, s: 99.4, st: 163, jt: 100 };
     let hits=0, rushCount=0, currentCount=0, totalBall=0, totalRot=0, heso=0, currentRushHits=0;
     let mode='通常', rRem=0, isAuto=false, autoSpeed='slow', isAnim=false;
@@ -94,7 +92,6 @@
     let slumpData=[0], slumpLabels=["0"], historyData=[], historyLabels=[];
     let sChart, hChart;
 
-    // --- ユーティリティ・グラフ系 ---
     function openModal() { document.getElementById('modal-overlay').style.display='flex'; updateCharts(); }
     function closeModal() { document.getElementById('modal-overlay').style.display='none'; }
     function updateCharts() {
@@ -117,7 +114,6 @@
     function resetBtns() { document.querySelectorAll('.btn-auto').forEach(b => b.classList.remove('btn-stop')); }
     function resetData() { hits=0; rushCount=0; currentCount=0; totalBall=0; totalRot=0; heso=0; currentRushHits=0; slumpData=[0]; slumpLabels=["0"]; historyData=[]; historyLabels=[]; updateUI(); updateHeso(); addLog("リセット"); }
 
-    // --- メインロジック ---
     async function startProcess() {
         if(!isAuto || isAnim) return;
         if(heso < 4) heso++;
@@ -135,7 +131,6 @@
             } else { is10R = true; willEnterRush = true; }
         }
         
-        // 演出抽選（複合対応）
         let eff = selectEffect(isHit, (willEnterRush || isBousou), mode !== '通常');
         if(optKokuchi && isHit) { eff.heavy=true; eff.flash=true; eff.lamp=true; eff.name="インフラ(完全告知)"; eff.trust=100; }
         
@@ -148,7 +143,6 @@
 
         let spinTime = (eff.heavy || (originalSpeed==='fast' && autoSpeed==='slow')) ? 2500 : (autoSpeed==='fast'?60:600);
         
-        // 演出実行
         if(eff.heavy) {
             if(isHit || mode==='通常') addLog(`${mode} ${currentCount}回【${eff.name}】信頼度:${eff.trust}%`);
             if(eff.vibe) document.getElementById('machine').classList.add('vibrate');
@@ -206,47 +200,40 @@
         if(isAuto) setTimeout(startProcess, (autoSpeed==='fast') ? 5 : 300);
     }
 
-    // --- 演出抽選ロジック（白レバブル占有率66.7% + 複合対応） ---
     function selectEffect(isHit, willEnterRush, isRight) {
-        let res = { heavy: false, name: "", trust: 0, vibe: false, flash: false, lamp: false, text: "", isRedHold: false };
+        let res = { heavy: false, name: [], trust: 0, vibe: false, flash: false, lamp: false, text: "", isRedHold: false };
+        let names = [];
 
         if (isHit) {
-            // 1. 白レバブル抽選 (占有率 66.7%)
-            if (Math.random() < 0.667) {
-                res.heavy = true;
-                res.vibe = true;
-                res.name = "白レバブル";
-                res.trust = 90;
-                res.text = "激熱";
+            // 指定された占有率で独立抽選（複合あり）
+            if (Math.random() < 0.667) { res.vibe = true; names.push("白レバブル"); }
+            if (Math.random() < 0.03) { res.vibe = true; res.lamp = true; names.push("虹レバブル"); }
+            if (Math.random() < 0.05) { res.lamp = true; names.push("インフラ"); }
+            if (Math.random() < 0.01) { names.push("カヲル"); res.text = "カヲル"; }
+            if (Math.random() < 0.40) { names.push("次回予告"); res.text = "次回予告"; }
+            if (Math.random() < 0.25) { res.isRedHold = true; names.push("赤保留"); }
+            
+            // レイ背景排他処理
+            if (Math.random() < 0.03) { 
+                names.push("レイ背景(さよなら)"); res.text = "さよなら"; 
+            } else if (Math.random() < 0.333) { 
+                names.push("レイ背景"); res.text = "レイ背景"; 
             }
 
-            // 2. 複合演出の抽選（白レバブルと重なる可能性がある）
-            let r = Math.random() * 100;
-            if (r < 10) { 
-                res.heavy = true; res.flash = true; res.lamp = true; res.vibe = true; 
-                res.name = (res.name ? res.name + "+" : "") + "カヲル"; res.text = "カヲル"; res.trust = 100; 
+            if (names.length > 0) {
+                res.heavy = true;
+                res.name = names.join("+");
+                res.trust = 100; // 当たり時は便宜上100表示
+            } else {
+                res.heavy = true; res.name = "インパクト予告"; res.text = "当"; res.trust = 100;
             }
-            else if (r < 25) { 
-                res.heavy = true; res.flash = true; res.lamp = true; res.vibe = true; 
-                res.name = (res.name ? res.name + "+" : "") + "インフラ"; res.text = "当確"; res.trust = 100; 
-            }
-            else if (r < 40) { 
-                res.heavy = true; res.vibe = true; 
-                res.name = (res.name ? res.name + "+" : "") + "赤レバブル"; res.text = "激熱"; res.trust = 96.5; 
-            }
-            else if (r < 65) { 
-                res.heavy = true; 
-                res.name = (res.name ? res.name + "+" : "") + "レイ背景"; res.text = "レイ背景"; res.trust = 85; 
-            }
-            
-            // 何も選ばれなかったが当たっている場合、白レバブルのみ、またはインパクト予告
-            if (!res.heavy) { res.heavy = true; res.name = "インパクト予告"; res.text = "当"; res.trust = 100; }
         } else {
-            // ハズレ時：信頼度90%を保つための調整
+            // ハズレ時
             let r = Math.random() * 100;
             if (r < 0.15) { res.heavy = true; res.vibe = true; res.name = "白レバブル"; res.text = "激熱"; res.trust = 90; }
             else if (r < 0.3) { res.heavy = true; res.isRedHold = true; res.name = "赤保留"; res.text = "赤保留"; res.trust = 90; }
             else if (r < 0.6) { res.heavy = true; res.name = "レイ背景"; res.text = "レイ背景"; res.trust = 85; }
+            else if (r < 0.8) { res.heavy = true; res.name = "次回予告"; res.text = "次回予告"; res.trust = 65; }
         }
         return res;
     }
@@ -267,6 +254,7 @@
 </script>
 </body>
 </html>
+
 
 
 
