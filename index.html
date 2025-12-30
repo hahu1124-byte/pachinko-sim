@@ -118,19 +118,16 @@
         if(heso < 4) heso++;
 
         let isHit = Math.random() < (1 / (mode==='ST' ? SPECS.s : SPECS.n));
-        
-        // 振り分け判定
         let rand = Math.random() * 100;
         let is10R = false;
         let willEnterRush = false;
 
         if (isHit) {
             if (mode === '通常') {
-                if (rand < 3) { is10R = true; willEnterRush = true; } // 3% 10R(7図柄・RUSH)
-                else if (rand < 59) { is10R = false; willEnterRush = true; } // 56% 3R(偶数・RUSH)
-                else { is10R = false; willEnterRush = false; } // 41% 3R(偶数・時短)
+                if (rand < 3) { is10R = true; willEnterRush = true; } 
+                else if (rand < 59) { is10R = false; willEnterRush = true; } 
+                else { is10R = false; willEnterRush = false; } 
             } else {
-                // RUSH中/時短中は全大当り10R(1400個)
                 is10R = true;
                 willEnterRush = true;
             }
@@ -169,7 +166,6 @@
         if(isHit) {
             isAnim=true; hits++;
             historyData.push(currentCount); historyLabels.push(hits);
-            
             let d = is10R ? 7 : 2;
             [1,2,3].forEach(i => { const el=document.getElementById('d'+i); el.innerText=d; el.className='digit '+(d===7?'gold':'even'); });
             
@@ -215,7 +211,7 @@
                 if(r < 5) return {name:"カヲル", heavy:true, flash:true, lamp:true, vibe:true, text:"カヲル", trust:100, freq:0.05};
                 if(r < 15) return {name:"インフラ", heavy:true, flash:true, lamp:true, vibe:true, text:"当確", trust:100, freq:0.1};
                 if(r < 25) return {name:"虹レバブル", heavy:true, vibe:true, lamp:true, text:"祝", trust:100, freq:0.1};
-                if(r < 35) return {name:"さよなら", heavy:true, text:"さよなら", trust:100, freq:0.1};
+                if(r < 35) return {name:"レイ背景（さよなら）", heavy:true, text:"さよなら", trust:100, freq:0.1};
             }
             if(r < 55) return {name:"赤レバブル", heavy:true, vibe:true, text:"激熱", trust:96.5, freq:1.2};
             if(r < 75) return {name:"赤保留", heavy:true, isRedHold:true, text:"赤保留", trust:90, freq:1.5};
@@ -236,4 +232,5 @@
 </script>
 </body>
 </html>
+
 
