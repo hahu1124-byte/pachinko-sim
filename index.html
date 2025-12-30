@@ -2,63 +2,78 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>EVANGELION Sim -Kaworu & Detail-</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>EVANGELION Sim -Mobile Fixed-</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&display=swap');
-        body { background: #000; color: white; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        header { width: 100%; height: 50px; background: #111; border-bottom: 2px solid #d00000; display: flex; align-items: center; padding: 0 10px; box-sizing: border-box; gap: 10px; }
-        .header-btn { background: #333; color: #ccc; border: 1px solid #555; padding: 5px 10px; font-size: 0.75rem; cursor: pointer; border-radius: 4px; }
+        body { background: #000; color: white; font-family: sans-serif; margin: 0; padding: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; overflow-x: hidden; }
+        
+        header { width: 100%; height: 50px; background: #111; border-bottom: 2px solid #d00000; display: flex; align-items: center; padding: 0 10px; box-sizing: border-box; gap: 10px; position: sticky; top: 0; z-index: 100; }
+        .header-btn { background: #333; color: #ccc; border: 1px solid #555; padding: 5px 8px; font-size: 0.7rem; cursor: pointer; border-radius: 4px; }
         .btn-graph { background: #d00000; color: white; border-color: #ff4444; }
-        .main-content { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 10px; overflow: hidden; }
-        .machine { width: 100%; max-width: 440px; background: #111; border: 2px solid #d00000; border-radius: 15px; padding: 15px; position: relative; box-sizing: border-box; }
-        .screen { background: #000; height: 300px; border-radius: 10px; border: 2px solid #444; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; }
-        .digit-container { display: flex; gap: 10px; }
-        .digit { font-size: 8rem; font-weight: 900; font-family: 'Shippori Mincho B1', serif; width: 100px; text-align: center; }
+
+        .main-content { width: 100%; max-width: 440px; display: flex; flex-direction: column; align-items: center; padding: 10px; box-sizing: border-box; }
+        .machine { width: 100%; background: #111; border: 2px solid #d00000; border-radius: 15px; padding: 12px; position: relative; box-sizing: border-box; }
+        
+        .screen { background: #000; height: 300px; border-radius: 10px; border: 2px solid #444; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; width: 100%; }
+        .digit-container { display: flex; gap: 5px; }
+        .digit { font-size: 7rem; font-weight: 900; font-family: 'Shippori Mincho B1', serif; width: 85px; text-align: center; }
         .gold { color: #ffeb3b; text-shadow: 0 0 30px #ffeb3b; }
         .odd { color: #ff4444; text-shadow: 0 0 20px #ff4444; }
         .even { color: #4444ff; text-shadow: 0 0 20px #4444ff; }
+
         .hidden-lamp { position: absolute; top: 12px; right: 20px; width: 12px; height: 12px; background: #222; border-radius: 50%; border: 1px solid #444; }
         .lamp-active { animation: rainbow-bg 0.5s infinite; box-shadow: 0 0 15px #fff; }
         @keyframes rainbow-bg { 0% { background: #f00; } 20% { background: #ff0; } 40% { background: #0f0; } 60% { background: #0ff; } 80% { background: #00f; } 100% { background: #f0f; } }
         .vibrate { animation: viberation 0.05s infinite; }
-        @keyframes viberation { 0% { transform: translate(0,0); } 10% { transform: translate(-3px, 3px); } 20% { transform: translate(3px, -3px); } 100% { transform: translate(0,0); } }
+        @keyframes viberation { 0% { transform: translate(0,0); } 10% { transform: translate(-2px, 2px); } 20% { transform: translate(2px, -2px); } 100% { transform: translate(0,0); } }
         .flash-active { animation: flash-white 0.05s 20; }
         @keyframes flash-white { 0%, 100% { background: #000; } 50% { background: #fff; } }
-        .heso-overlay { position: absolute; bottom: 12px; display: flex; gap: 8px; }
-        .heso-ball { width: 12px; height: 12px; background: #222; border-radius: 50%; border: 1px solid #555; }
+        
+        .heso-overlay { position: absolute; bottom: 10px; display: flex; gap: 8px; }
+        .heso-ball { width: 10px; height: 10px; background: #222; border-radius: 50%; border: 1px solid #555; }
         .heso-red { background: radial-gradient(circle, #ff4444, #880000); box-shadow: 0 0 8px #ff0000; border-color: #f00; }
         .heso-on { background: #888; }
-        .effect-text { position: absolute; color: white; font-weight: bold; font-size: 2.2rem; z-index: 5; text-shadow: 0 0 10px #000; background: rgba(0,0,0,0.7); padding: 5px 20px; border-radius: 5px; display: none; }
-        .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-top: 15px; }
-        .stat-item { background: #000; border: 1px solid #333; padding: 6px 0; text-align: center; border-radius: 4px; }
-        .stat-val { font-size: 1rem; font-weight: bold; color: #d00000; font-family: monospace; }
-        .stat-label { font-size: 0.65rem; color: #888; display: block; }
-        .control-panel { margin-top: 15px; display: flex; gap: 10px; width: 100%; height: 70px; }
-        .side-btns { display: flex; flex-direction: column; gap: 5px; width: 60px; }
-        .side-btn { flex: 1; background: #222; color: #666; border: 1px solid #444; font-size: 0.75rem; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .effect-text { position: absolute; color: white; font-weight: bold; font-size: 2rem; z-index: 5; text-shadow: 0 0 10px #000; background: rgba(0,0,0,0.7); padding: 5px 15px; border-radius: 5px; display: none; }
+
+        .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-top: 12px; }
+        .stat-item { background: #000; border: 1px solid #333; padding: 5px 0; text-align: center; border-radius: 4px; }
+        .stat-val { font-size: 0.9rem; font-weight: bold; color: #d00000; font-family: monospace; }
+        .stat-label { font-size: 0.6rem; color: #888; display: block; }
+
+        .control-panel { margin-top: 12px; display: flex; gap: 8px; width: 100%; height: 65px; }
+        .side-btns { display: flex; flex-direction: column; gap: 4px; width: 55px; }
+        .side-btn { flex: 1; background: #222; color: #666; border: 1px solid #444; font-size: 0.7rem; border-radius: 4px; cursor: pointer; font-weight: bold; }
         .side-btn.active { background: #d00000; color: #fff; border-color: #ff4444; }
-        .btn-auto { flex: 1; background: #d00000; color: white; border: 1px solid #ff4444; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 1.1rem; }
+        .btn-auto { flex: 1; background: #d00000; color: white; border: 1px solid #ff4444; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 1rem; }
         .btn-stop { background: #444 !important; border-color: #666 !important; }
-        .log { width: 100%; max-width: 440px; height: 195px; background: #000; margin-top: 10px; padding: 12px; font-size: 0.9rem; color: #ff4444; overflow-y: auto; border: 1px solid #333; font-family: monospace; box-sizing: border-box; }
-        #modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; }
-        #modal-content { background: #111; border: 2px solid #d00000; width: 95%; max-width: 480px; padding: 20px; border-radius: 12px; }
-        .graph-area { background: #000; height: 180px; margin-bottom: 20px; }
+
+        .log { width: 100%; max-width: 440px; height: 195px; background: #000; margin-top: 10px; padding: 10px; font-size: 0.8rem; color: #ff4444; overflow-y: auto; border: 1px solid #333; font-family: monospace; box-sizing: border-box; line-height: 1.3; }
+
+        #modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; justify-content: center; align-items: center; }
+        #modal-content { background: #111; border: 2px solid #d00000; width: 92%; max-width: 400px; padding: 15px; border-radius: 12px; }
+        .graph-area { background: #000; height: 160px; margin-bottom: 15px; }
     </style>
 </head>
 <body>
+
 <header>
     <button class="header-btn">機種選択</button>
     <button class="header-btn btn-graph" onclick="openModal()">データグラフ</button>
     <button class="header-btn" onclick="resetData()">リセット</button>
 </header>
+
 <div id="modal-overlay">
     <div id="modal-content">
         <span style="float:right; cursor:pointer; font-size:1.5rem;" onclick="closeModal()">×</span>
-        <div style="font-size:0.8rem; color:#888;">■ 差玉スランプグラフ</div><div class="graph-area"><canvas id="slumpChart"></canvas></div>
-        <div style="font-size:0.8rem; color:#888;">■ 大当り履歴グラフ</div><div class="graph-area"><canvas id="historyChart"></canvas></div>
+        <div style="font-size:0.75rem; color:#888; margin-bottom:5px;">■ 差玉スランプグラフ</div>
+        <div class="graph-area"><canvas id="slumpChart"></canvas></div>
+        <div style="font-size:0.75rem; color:#888; margin-bottom:5px;">■ 大当り履歴グラフ</div>
+        <div class="graph-area"><canvas id="historyChart"></canvas></div>
     </div>
 </div>
+
 <div class="main-content">
     <div class="machine" id="machine">
         <div id="lamp" class="hidden-lamp"></div>
@@ -67,15 +82,19 @@
             <div class="digit-container">
                 <div id="d1" class="digit odd">1</div><div id="d2" class="digit even">2</div><div id="d3" class="digit odd">3</div>
             </div>
-            <div id="sub-display" style="position:absolute; top:12px; right:15px; color:#d00000; font-weight:bold;">通常</div>
-            <div class="heso-overlay"><div id="h1" class="heso-ball"></div><div id="h2" class="heso-ball"></div><div id="h3" class="heso-ball"></div><div id="h4" class="heso-ball"></div></div>
+            <div id="sub-display" style="position:absolute; top:10px; right:12px; color:#d00000; font-weight:bold; font-size:0.8rem;">通常</div>
+            <div class="heso-overlay">
+                <div id="h1" class="heso-ball"></div><div id="h2" class="heso-ball"></div><div id="h3" class="heso-ball"></div><div id="h4" class="heso-ball"></div>
+            </div>
         </div>
+        
         <div class="stat-grid">
             <div class="stat-item"><span class="stat-label">大当り</span><span id="hits" class="stat-val">0</span></div>
             <div class="stat-item"><span class="stat-label">連チャン</span><span id="rush-count" class="stat-val">0</span></div>
             <div class="stat-item"><span class="stat-label">現在回転</span><span id="current-rot" class="stat-val">0</span></div>
             <div class="stat-item"><span class="stat-label">差玉数</span><span id="balance" class="stat-val">0</span></div>
         </div>
+
         <div class="control-panel">
             <div class="side-btns">
                 <button id="btn-all" class="side-btn" onclick="toggleOpt('all')">全</button>
@@ -85,7 +104,7 @@
             <button class="btn-auto" id="btn-fast" onclick="toggleAuto('fast')">高速オート</button>
         </div>
     </div>
-    <div class="log" id="log">> ロジック更新完了（カヲル君＆詳細表示）</div>
+    <div class="log" id="log">> スマホ対応・終了時オート解除を適用。</div>
 </div>
 
 <script>
@@ -139,14 +158,15 @@
         
         if(eff.heavy) {
             isAnim=true;
-            addLog(`${currentCount}回 【${eff.name}】 信頼度:${eff.trust}% (出現率:${eff.freq}%)`);
+            addLog(`${currentCount}回【${eff.name}】信頼度:${eff.trust}%(出現率:${eff.freq}%)`);
             if(eff.vibe) document.getElementById('machine').classList.add('vibrate');
             if(eff.flash) document.getElementById('screen').classList.add('flash-active');
             if(eff.text) { const ov = document.getElementById('effect-overlay'); ov.innerText = eff.text; ov.style.display = 'block'; }
             if(eff.lamp) document.getElementById('lamp').classList.add('lamp-active');
         }
 
-        let spin = setInterval(() => { [1,2,3].forEach(i => { const n=Math.floor(Math.random()*9)+1; const el=document.getElementById('d'+i); el.innerText=n; el.className='digit '+(n%2===0?'even':'odd'); }); }, 40);
+        let lastDigits = [0,0,0];
+        let spin = setInterval(() => { [1,2,3].forEach((i, idx) => { const n=Math.floor(Math.random()*9)+1; const el=document.getElementById('d'+i); el.innerText=n; el.className='digit '+(n%2===0?'even':'odd'); lastDigits[idx]=n; }); }, 40);
         await new Promise(r => setTimeout(r, spinTime));
         clearInterval(spin);
         
@@ -159,20 +179,36 @@
             historyData.push(currentCount); historyLabels.push(hits);
             let d = willEnterRush ? 7 : 2;
             [1,2,3].forEach(i => { const el=document.getElementById('d'+i); el.innerText=d; el.className='digit '+(d===7?'gold':'even'); });
+            addLog(`>> ${currentCount}回転 [${d}${d}${d}] 大当り!`);
             if(willEnterRush) { 
-                addLog("--- RUSH突入 ---"); totalBall += (mode==='通常'||mode==='時短') ? 420 : 1400;
+                addLog(">>> RUSH突入！"); totalBall += (mode==='通常'||mode==='時短') ? 420 : 1400;
                 mode='ST'; rRem=SPECS.st; rushCount++;
             } else {
-                mode='時短'; rRem=SPECS.jt; rushCount=0; totalBall += 420; addLog("--- 通常当り ---");
+                mode='時短'; rRem=SPECS.jt; rushCount=0; totalBall += 420; addLog(">>> 通常当り");
             }
             updateUI(); await new Promise(r => setTimeout(r, 1800));
             currentCount=0; document.getElementById('lamp').classList.remove('lamp-active');
+        } else if(eff.heavy) {
+            addLog(`>> ${currentCount}回転 [${lastDigits.join('')}] ハズレ`);
         }
 
-        if(mode!=='通常' && !isHit) { rRem--; if(rRem<=0) { addLog("--- " + mode + "終了 ---"); mode='通常'; rushCount=0; if(!optAll){isAuto=false; resetBtns();}} }
+        if(mode!=='通常' && !isHit) { 
+            rRem--; 
+            if(rRem<=0) { 
+                addLog("--- " + mode + "終了 ---"); 
+                mode='通常'; rushCount=0; 
+                // モード終了時、かつ「全」がOFFならオート停止＆ボタンリセット
+                if(!optAll) { 
+                    isAuto=false; 
+                    resetBtns(); // ここでボタンの色をグレーに戻す
+                    addLog(">>> オート停止");
+                }
+            } 
+        }
         
         isAnim=false; updateUI();
-        if(originalSpeed==='fast' && !optAll) { autoSpeed='fast'; resetBtns(); document.getElementById('btn-fast').classList.add('btn-stop'); }
+        // 激アツで減速していた場合、次の回転で元のスピードに戻す
+        if(isAuto && originalSpeed==='fast' && !optAll) { autoSpeed='fast'; resetBtns(); document.getElementById('btn-fast').classList.add('btn-stop'); }
         if(isAuto) setTimeout(startProcess, (autoSpeed==='fast') ? 5 : 300);
     }
 
