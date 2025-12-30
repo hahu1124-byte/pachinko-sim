@@ -3,79 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EVANGELION Sim -Full Restore-</title>
+    <title>EVANGELION Sim -Auto Control Edition-</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&display=swap');
         body { background: #000; color: white; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        
-        /* 隠しランプ */
         .hidden-lamp { position: absolute; top: 10px; right: 20px; width: 10px; height: 10px; background: #222; border-radius: 50%; border: 1px solid #444; z-index: 10; }
         .lamp-active { animation: rainbow-bg 0.5s infinite; box-shadow: 0 0 10px #fff; }
-
         @keyframes viberation { 0% { transform: translate(0,0); } 10% { transform: translate(-3px, 3px); } 20% { transform: translate(3px, -3px); } 100% { transform: translate(0,0); } }
         .vibrate { animation: viberation 0.05s infinite; }
         @keyframes flash-white { 0%, 100% { background: #000; } 50% { background: #fff; } }
         .flash-active { animation: flash-white 0.05s 20; }
-        @keyframes rainbow-bg { 0% { background: #f00; } 20% { background: #ff0; } 40% { background: #0f0; } 60% { background: #0ff; } 80% { background: #00f; } 100% { background: #f0f; } }
+        @keyframes rainbow-bg { 0% { background: #f00; } 20% { background: #ff0; } 40% { background: #0f0; } 60% { background: #00f; } 80% { background: #f0f; } 100% { background: #f00; } }
         
-        /* ヘッダー：機種選択・グラフボタン */
         header { width: 100%; height: 50px; background: #111; border-bottom: 2px solid #d00000; display: flex; align-items: center; padding: 0 10px; box-sizing: border-box; gap: 8px; }
-        .header-title { font-size: 0.8rem; font-weight: bold; color: #d00000; margin-right: 5px; }
         .header-btn { background: #333; color: #ccc; border: 1px solid #555; padding: 5px 8px; font-size: 0.7rem; cursor: pointer; border-radius: 4px; }
         .btn-graph { background: #d00000; color: white; border-color: #ff4444; }
 
         .main-content { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 10px; overflow: hidden; }
         .machine { width: 100%; max-width: 440px; background: #111; border: 2px solid #d00000; border-radius: 15px; padding: 12px; position: relative; box-sizing: border-box; }
-        
-        /* 液晶：300px固定 */
         .screen { background: #000; height: 300px; border-radius: 10px; border: 2px solid #444; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; }
         .digit-container { display: flex; gap: 10px; z-index: 2; }
         .digit { font-size: 8rem; font-weight: 900; font-family: 'Shippori Mincho B1', serif; width: 105px; text-align: center; }
         .gold { color: #ffeb3b; text-shadow: 0 0 30px #ffeb3b; }
         .odd { color: #ff4444; text-shadow: 0 0 20px #ff4444; }
         .even { color: #4444ff; text-shadow: 0 0 20px #4444ff; }
-
-        /* 保留ランプ */
         .heso-overlay { position: absolute; bottom: 12px; display: flex; gap: 8px; }
         .heso-ball { width: 12px; height: 12px; background: #222; border-radius: 50%; border: 1px solid #555; }
         .heso-red { background: radial-gradient(circle, #ff4444, #880000); box-shadow: 0 0 8px #ff0000; border-color: #f00; }
         .heso-on { background: #888; }
-
         .effect-text { position: absolute; color: white; font-weight: bold; font-size: 2rem; z-index: 5; text-shadow: 0 0 10px #000; background: rgba(0,0,0,0.7); padding: 5px 20px; border-radius: 5px; display: none; }
 
-        /* 統計グリッド */
         .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-top: 10px; }
         .stat-item { background: #000; border: 1px solid #333; padding: 5px 0; text-align: center; border-radius: 3px; }
         .stat-val { font-size: 0.9rem; font-weight: bold; color: #d00000; font-family: monospace; }
         .stat-label { font-size: 0.6rem; color: #888; display: block; }
 
-        /* ボタンエリア：液晶とログの間 */
-        .control-panel { margin: 12px 0 5px 0; display: flex; gap: 8px; width: 100%; }
-        .btn-auto { flex: 1; background: #d00000; color: white; border: 1px solid #ff4444; padding: 14px 0; font-weight: bold; border-radius: 5px; cursor: pointer; }
+        /* コントロールパネル */
+        .control-panel { margin: 12px 0 5px 0; display: flex; gap: 8px; width: 100%; height: 60px; }
+        .side-buttons { display: flex; flex-direction: column; gap: 4px; width: 50px; }
+        .side-btn { flex: 1; background: #222; color: #666; border: 1px solid #444; font-size: 0.65rem; border-radius: 3px; cursor: pointer; font-weight: bold; }
+        .side-btn.active { background: #d00000; color: #fff; border-color: #ff4444; }
+        .btn-auto { flex: 1; background: #d00000; color: white; border: 1px solid #ff4444; font-weight: bold; border-radius: 5px; cursor: pointer; font-size: 1rem; }
         .btn-stop { background: #444 !important; border-color: #666 !important; }
 
-        /* 履歴ログ：1.5倍(195px)固定 */
+        /* 履歴ログ：195px */
         .log { width: 100%; max-width: 440px; height: 195px; background: #000; margin-top: 10px; padding: 10px; font-size: 0.95rem; color: #ff4444; overflow-y: auto; border: 1px solid #333; font-family: monospace; box-sizing: border-box; }
 
         #modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; }
-        #modal-content { background: #111; border: 2px solid #d00000; width: 95%; max-width: 450px; padding: 15px; border-radius: 10px; position: relative; }
-        .graph-area { background: #000; height: 180px; margin-bottom: 10px; }
+        #modal-content { background: #111; border: 2px solid #d00000; width: 95%; max-width: 450px; padding: 15px; border-radius: 10px; }
+        .graph-area { background: #000; height: 180px; margin-bottom: 15px; }
     </style>
 </head>
 <body>
 
 <header>
-    <div class="header-title">機種選択</div>
-    <button class="header-btn" onclick="alert('エヴァ〜未来への咆哮〜 選択中')">未来への咆哮</button>
+    <button class="header-btn" onclick="alert('エヴァ〜未来への咆哮〜')">機種選択</button>
     <button class="header-btn btn-graph" onclick="openModal()">データグラフ</button>
     <button class="header-btn" onclick="resetData()">リセット</button>
 </header>
 
 <div id="modal-overlay">
     <div id="modal-content">
-        <span style="position:absolute; top:10px; right:15px; cursor:pointer; font-size:1.5rem;" onclick="closeModal()">×</span>
+        <span style="float:right; cursor:pointer; font-size:1.5rem;" onclick="closeModal()">×</span>
+        <div style="font-size:0.7rem; color:#888;">■ 差玉スランプグラフ</div>
         <div class="graph-area"><canvas id="slumpChart"></canvas></div>
+        <div style="font-size:0.7rem; color:#888;">■ 大当り履歴グラフ</div>
         <div class="graph-area"><canvas id="historyChart"></canvas></div>
     </div>
 </div>
@@ -102,17 +95,22 @@
         </div>
 
         <div class="control-panel">
-            <button class="btn-auto" id="btn-slow" onclick="toggleAuto('slow')">通常オート</button>
+            <div class="side-buttons">
+                <button id="btn-all" class="side-btn" onclick="toggleOption('all')">全</button>
+                <button id="btn-kokuchi" class="side-btn" onclick="toggleOption('kokuchi')">告知</button>
+            </div>
+            <button class="btn-auto" id="btn-slow" onclick="toggleAuto('slow')">低速オート</button>
             <button class="btn-auto" id="btn-fast" onclick="toggleAuto('fast')">高速オート</button>
         </div>
     </div>
-    <div class="log" id="log">> レイアウトとボタン構成を復元しました。</div>
+    <div class="log" id="log">> オート制御・特殊ボタンを復元しました。</div>
 </div>
 
 <script>
     const SPECS = { n: 319.7, s: 99.4, st: 163, jt: 100 };
     let hits=0, rushCount=0, currentCount=0, totalBall=0, totalRot=0, heso=0;
     let mode='通常', rRem=0, isAuto=false, autoSpeed='slow', isAnim=false;
+    let optAll=false, optKokuchi=false;
     let slumpData=[0], slumpLabels=["0"], historyData=[], historyLabels=[];
     let sChart, hChart;
 
@@ -126,29 +124,44 @@
         hChart = new Chart(document.getElementById('historyChart'), { type:'bar', data:{ labels:historyLabels, datasets:[{data:historyData, backgroundColor:'#d00000'}] }, options:cfg });
     }
 
+    function toggleOption(type) {
+        if(type==='all') { optAll=!optAll; document.getElementById('btn-all').classList.toggle('active'); }
+        if(type==='kokuchi') { optKokuchi=!optKokuchi; document.getElementById('btn-kokuchi').classList.toggle('active'); }
+    }
+
     function toggleAuto(s) {
         if(isAuto && autoSpeed===s) { isAuto=false; resetBtns(); }
         else { isAuto=true; autoSpeed=s; resetBtns(); document.getElementById('btn-'+s).classList.add('btn-stop'); startProcess(); }
     }
     function resetBtns() { document.querySelectorAll('.btn-auto').forEach(b => b.classList.remove('btn-stop')); }
-    function resetData() { hits=0; rushCount=0; currentCount=0; totalBall=0; totalRot=0; heso=0; slumpData=[0]; slumpLabels=["0"]; historyData=[]; historyLabels=[]; updateUI(); updateHeso(); addLog("全データリセット"); }
+    function resetData() { hits=0; rushCount=0; currentCount=0; totalBall=0; totalRot=0; heso=0; slumpData=[0]; slumpLabels=["0"]; historyData=[]; historyLabels=[]; updateUI(); updateHeso(); addLog("リセット完了"); }
 
     async function startProcess() {
         if(!isAuto || isAnim) return;
         if(heso < 4) heso++;
-        
+
         let prob = (mode==='ST' ? SPECS.s : SPECS.n);
         let isHit = Math.random() < (1/prob);
         let willEnterRush = isHit && (mode !== '通常' || Math.random() < 0.59);
-
         let eff = selectEffect(isHit, willEnterRush);
+
+        // 完全告知モード
+        if(optKokuchi && isHit) { eff.heavy=true; eff.flash=true; eff.lamp=true; eff.name="完全告知"; }
+
+        // 高速オート中の自動減速ロジック
+        if(autoSpeed==='fast' && eff.heavy && !optAll) {
+            autoSpeed='slow';
+            resetBtns();
+            document.getElementById('btn-slow').classList.add('btn-stop');
+            addLog("!! 激アツ演出検知：低速に切り替えます !!");
+        }
+
         currentCount++; totalRot++; heso--;
         updateHeso(eff.isRedHold);
-
         if(mode==='通常') totalBall -= (13 + Math.random()*2); else totalBall -= 0.05;
-        if(totalRot % (autoSpeed==='fast'?10:1)===0) { slumpData.push(Math.floor(totalBall)); slumpLabels.push(totalRot.toString()); }
+        slumpData.push(Math.floor(totalBall)); slumpLabels.push(totalRot.toString());
 
-        let spinTime = (eff.heavy) ? 2200 : (autoSpeed==='fast'?30:500);
+        let spinTime = (eff.heavy) ? 2500 : (autoSpeed==='fast'?20:500);
         if(eff.heavy) {
             isAnim=true;
             addLog(`${currentCount}回転 【${eff.name}】`);
@@ -169,7 +182,7 @@
         if(isHit) {
             isAnim=true; hits++;
             historyData.push(currentCount); historyLabels.push(hits);
-            let d = willEnterRush ? 7 : 2;
+            let d = (willEnterRush) ? 7 : 2;
             [1,2,3].forEach(i => { const el=document.getElementById('d'+i); el.innerText=d; el.className='digit '+(d===7?'gold':'even'); });
             
             if(willEnterRush) { 
@@ -180,12 +193,19 @@
                 mode='時短'; rRem=SPECS.jt; rushCount=0; totalBall += 420; addLog("通常大当り");
             }
             updateUI();
-            await new Promise(r => setTimeout(r, 1800));
+            await new Promise(r => setTimeout(r, 2000));
             currentCount=0;
             document.getElementById('lamp').classList.remove('lamp-active');
         }
 
-        if(mode!=='通常' && !isHit) { rRem--; if(rRem<=0) { addLog(mode + "終了"); mode='通常'; rushCount=0; } }
+        if(mode!=='通常' && !isHit) { 
+            rRem--; 
+            if(rRem<=0) { 
+                addLog(mode + "終了"); 
+                mode='通常'; rushCount=0; 
+                if(!optAll) { isAuto=false; resetBtns(); addLog("オート停止（通常へ）"); }
+            } 
+        }
         isAnim=false; updateUI();
         if(isAuto) setTimeout(startProcess, autoSpeed==='fast'?5:400);
     }
