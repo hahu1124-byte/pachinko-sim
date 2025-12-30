@@ -124,10 +124,12 @@
         let rand = Math.random() * 100;
         let is10R = false;
         let willEnterRush = false;
+        let isBousou = false;
 
         if (isHit) {
             if (mode === '通常') {
                 if (rand < 3) { is10R = true; willEnterRush = true; } 
+                else if (rand < 13) { is10R = false; willEnterRush = true; isBousou = true; } // 暴走ボーナス
                 else if (rand < 59) { is10R = false; willEnterRush = true; } 
                 else { is10R = false; willEnterRush = false; } 
             } else {
@@ -135,7 +137,7 @@
             }
         }
         
-        let eff = selectEffect(isHit, willEnterRush, mode !== '通常');
+        let eff = selectEffect(isHit, (willEnterRush || isBousou), mode !== '通常');
         if(optKokuchi && isHit) { eff.heavy=true; eff.flash=true; eff.lamp=true; eff.name="完全告知"; eff.trust=100; }
         
         let originalSpeed = autoSpeed;
@@ -147,11 +149,8 @@
 
         let spinTime = (eff.heavy || (originalSpeed==='fast' && autoSpeed==='slow')) ? 2500 : (autoSpeed==='fast'?60:600);
         
-        // 演出発生時のログとアニメーション（当たっても外れても表示）
         if(eff.heavy) {
-            if(isHit || mode==='通常') {
-                addLog(`${mode} ${currentCount}回【${eff.name}】信頼度:${eff.trust}%`);
-            }
+            if(isHit || mode==='通常') addLog(`${mode} ${currentCount}回【${eff.name}】信頼度:${eff.trust}%`);
             if(eff.vibe) document.getElementById('machine').classList.add('vibrate');
             if(eff.flash) document.getElementById('screen').classList.add('flash-active');
             if(eff.text) { const ov = document.getElementById('effect-overlay'); ov.innerText = eff.text; ov.style.display = 'block'; }
@@ -176,26 +175,35 @@
         if(isHit) {
             isAnim=true; hits++;
             historyData.push(currentCount); historyLabels.push(hits);
-            let d = is10R ? 7 : 2;
-            [1,2,3].forEach(i => { const el=document.getElementById('d'+i); el.innerText=d; el.className='digit '+(d===7?'gold':'even'); });
             
-            if(mode==='通常') {
-                addLog(`>> ${currentCount}回転 【${d}】 大当り! ${is10R ? '(10R)' : '(3R)'}`);
-                if(willEnterRush) { addLog(">>> RUSH突入！"); mode='ST'; rRem=SPECS.st; rushCount=1; currentRushHits=1; } 
-                else { mode='時短'; rRem=SPECS.jt; rushCount=0; currentRushHits=1; addLog(">>> 通常当り"); }
+            if(isBousou) {
+                // 暴走ボーナス（1・3・5停止）
+                document.getElementById('d1').innerText='1'; document.getElementById('d1').className='digit beast';
+                document.getElementById('d2').innerText='3'; document.getElementById('d2').className='digit beast';
+                document.getElementById('d3').innerText='5'; document.getElementById('d3').className='digit beast';
+                addLog(`>> ${currentCount}回転 【135】 暴走BONUS!`);
+                addLog(">>> RUSH突入！");
+                mode='ST'; rRem=SPECS.st; rushCount=1; currentRushHits=1;
+                totalBall += 420;
             } else {
-                currentRushHits++;
-                if(mode==='ST') rushCount = currentRushHits;
-                addLog(`>> ${mode} ${currentCount}回転 【${d}】 10R当り! (${currentRushHits}連)`);
-                mode='ST'; rRem=SPECS.st;
+                let d = is10R ? 7 : 2;
+                [1,2,3].forEach(i => { const el=document.getElementById('d'+i); el.innerText=d; el.className='digit '+(d===7?'gold':'even'); });
+                if(mode==='通常') {
+                    addLog(`>> ${currentCount}回転 【${d}】 大当り! ${is10R ? '(10R)' : '(3R)'}`);
+                    if(willEnterRush) { addLog(">>> RUSH突入！"); mode='ST'; rRem=SPECS.st; rushCount=1; currentRushHits=1; } 
+                    else { mode='時短'; rRem=SPECS.jt; rushCount=0; currentRushHits=1; addLog(">>> 通常当り"); }
+                } else {
+                    currentRushHits++;
+                    if(mode==='ST') rushCount = currentRushHits;
+                    addLog(`>> ${mode} ${currentCount}回転 【${d}】 10R当り! (${currentRushHits}連)`);
+                    mode='ST'; rRem=SPECS.st;
+                }
+                totalBall += (is10R ? 1400 : 420);
             }
-            totalBall += (is10R ? 1400 : 420);
             updateUI(); await new Promise(r => setTimeout(r, 1800));
             currentCount=0; document.getElementById('lamp').classList.remove('lamp-active');
         } else {
-            if(eff.heavy) {
-                addLog(`>> ${currentCount}回転 【${lastDigits[0]}】 ${eff.name} ハズレ`);
-            }
+            if(eff.heavy) addLog(`>> ${currentCount}回転 【${lastDigits[0]}】 ${eff.name} ハズレ`);
         }
 
         if(mode!=='通常' && !isHit) { 
@@ -222,7 +230,6 @@
             if(r < 60) return {name:"レイ背景", heavy:true, text:"レイ背景", trust:85};
             return {name:"インパクト予告", heavy:true, flash:true, text:"当", trust:100};
         } else {
-            // ハズレ時も演出を選択して返すように調整
             if(r < 0.2) return {name:"赤保留", heavy:true, isRedHold:true, text:"赤保留", trust:90};
             if(r < 0.3) return {name:"赤レバブル", heavy:true, vibe:true, text:"激熱", trust:96.5};
             if(r < 0.8) return {name:"レイ背景", heavy:true, text:"レイ背景", trust:85};
@@ -251,6 +258,7 @@
 </script>
 </body>
 </html>
+
 
 
 
