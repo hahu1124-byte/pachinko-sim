@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>EVANGELION Sim -Log Adjustment-</title>
+    <title>EVANGELION Sim -Vibe Polish-</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&display=swap');
@@ -55,7 +55,6 @@
         .btn-auto { flex: 1; background: #d00000; color: white; border: 1px solid #ff4444; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 1rem; }
         .btn-stop { background: #444 !important; border-color: #666 !important; }
         
-        /* 履歴表示：フォントサイズを2px(約0.13rem)縮小 */
         .log { width: 100%; max-width: 440px; height: 290px; background: #000; margin-top: 10px; padding: 10px; font-size: 0.77rem; color: #ff4444; overflow-y: auto; border: 1px solid #333; font-family: monospace; box-sizing: border-box; line-height: 1.4; }
         
         #modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; justify-content: center; align-items: center; }
@@ -96,7 +95,7 @@
                 <button class="btn-auto" id="btn-fast" onclick="toggleAuto('fast')">高速オート</button>
             </div>
         </div>
-        <div class="log" id="log">> 履歴の文字サイズを2px小さくしました。</div>
+        <div class="log" id="log">> レバブル演出を排他制御に更新しました（虹＞赤＞白）。複合しません。</div>
     </div>
 
 <script>
@@ -272,6 +271,7 @@
 </script>
 </body>
 </html>
+
 
 
 
