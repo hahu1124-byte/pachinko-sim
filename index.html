@@ -28,21 +28,16 @@
         @keyframes vibration { 0% { transform: translate(0,0); } 25% { transform: translate(-4px, 4px); } 50% { transform: translate(4px, -4px); } 75% { transform: translate(-4px, -4px); } 100% { transform: translate(0,0); } }
         .flash-active { animation: flash-white 0.05s 20; }
         @keyframes flash-white { 0%, 100% { background: #000; } 50% { background: #fff; } }
-        
-        /* 保留UI設定 */
         .heso-overlay { position: absolute; bottom: 10px; display: flex; align-items: flex-end; gap: 10px; }
         .heso-ball { width: 10px; height: 10px; background: #222; border-radius: 50%; border: 1px solid #555; transition: all 0.2s; }
         .heso-current { width: 13px; height: 13px; margin-right: 5px; border-width: 2px; } 
-        /* ST/時短中の四角保留 */
         .heso-migi { border-radius: 2px !important; width: 12px !important; height: 12px !important; border: 1.5px solid #fff; }
-        
         .heso-on { background: #888; }
         .heso-red { background: radial-gradient(circle, #ff4444, #880000); box-shadow: 0 0 8px #ff0000; border-color: #f00; }
         .heso-green { background: radial-gradient(circle, #44ff44, #008800); box-shadow: 0 0 8px #00ff00; border-color: #0f0; }
         .heso-blue { background: radial-gradient(circle, #4444ff, #000088); box-shadow: 0 0 8px #0000ff; border-color: #00f; }
         .heso-blink { background: #fff; animation: blink-ball 0.3s infinite; box-shadow: 0 0 8px #fff; border-color: #fff; }
         .heso-rainbow { animation: rainbow-bg 0.5s infinite; box-shadow: 0 0 10px #fff; border-color: #fff; }
-        
         @keyframes blink-ball { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
         .effect-text { position: absolute; color: white; font-weight: bold; font-size: 2.2rem; z-index: 5; text-shadow: 0 0 10px #000; background: rgba(0,0,0,0.7); padding: 5px 15px; border-radius: 5px; display: none; text-align: center; }
         .stat-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-top: 12px; }
@@ -105,7 +100,7 @@
                 <button class="btn-auto" id="btn-fast" onclick="toggleAuto('fast')">高速オート</button>
             </div>
         </div>
-        <div class="log" id="log">> 右打ち中（ST・時短）の保留を四角形に変更しました。</div>
+        <div class="log" id="log">> レバブル先読み機能を実装しました。</div>
     </div>
     
 <script>
@@ -123,12 +118,26 @@
     const TRUST_MAP_N = { "白レバ": 0.90, "赤レバ": 0.965, "赤保留": 0.90, "緑保留": 0.11, "青保留": 0.05, "点滅保留": 0.005, "次回予告": 0.65, "レイ背景": 0.85, "金系": 0.50 };
     const TRUST_MAP_S = { "白レバ": 0.95, "赤レバ": 0.99, "赤保留": 0.95, "緑保留": 0.11, "青保留": 0.05, "点滅保留": 0.005, "次回予告": 1.0, "レイ背景": 0.92, "金系": 0.80, "虹保留": 1.0 };
 
+    function triggerVibeUI(color) {
+        const machineEl = document.getElementById('machine');
+        machineEl.classList.add('vibrate');
+        if (color === "white") { machineEl.style.borderColor = "#fff"; machineEl.style.boxShadow = "0 0 20px #fff"; }
+        else if (color === "red") { machineEl.style.borderColor = "#f00"; machineEl.style.boxShadow = "0 0 20px #f00"; }
+        else if (color === "rainbow") { machineEl.style.animation = "vibration 0.05s infinite, rainbow-border 0.3s infinite"; }
+        
+        setTimeout(() => {
+            machineEl.classList.remove('vibrate');
+            machineEl.style.borderColor = ""; machineEl.style.boxShadow = ""; machineEl.style.animation = "";
+        }, 500); // 先読み時は一瞬震える
+    }
+
     function preCheck() {
         if (reservedStock.length >= 4) return;
         let prob = (mode === 'ST' || mode === '時短') ? SPECS.s : SPECS.n;
         let isHit = Math.random() < (1 / prob);
         
         let holdType = "none";
+        let preVibe = "none";
         let roll = Math.random() * 100;
 
         if (isHit) {
@@ -138,16 +147,28 @@
             } else if (roll < 55) holdType = "green";
             else if (roll < 80) holdType = "blue";
             else holdType = "blink";
+
+            // 先読みレバブル抽選 (当たり時 25%程度で先読み)
+            let vibeRoll = Math.random() * 100;
+            if (vibeRoll < 5.0) preVibe = "rainbow";
+            else if (vibeRoll < 15.0) preVibe = "red";
+            else if (vibeRoll < 25.0) preVibe = "white";
         } else {
             if (roll < 0.1) holdType = "red";
             else if (roll < 2.0) holdType = "green";
             else if (roll < 8.0) holdType = "blue";
             else if (roll < 15.0) holdType = "blink";
+
+            // 外れ時の先読みガセ (非常に稀)
+            if (Math.random() < 0.005) preVibe = "white";
         }
         
-        reservedStock.push({ isHit: isHit, holdType: holdType });
+        reservedStock.push({ isHit: isHit, holdType: holdType, preVibe: preVibe });
 
-        if ((holdType === "red" || holdType === "rainbow") && isAuto && autoSpeed === "fast") {
+        // 先読みレバブル発生時の視覚効果
+        if (preVibe !== "none") triggerVibeUI(preVibe);
+
+        if ((holdType === "red" || holdType === "rainbow" || preVibe !== "none") && isAuto && autoSpeed === "fast") {
             originalSpeedSetting = 'fast'; 
             autoSpeed = 'slow';
             resetBtns();
@@ -157,8 +178,8 @@
         updateHesoUI();
     }
 
-    function selectEffect(isHit, forceHold) {
-        let res = { heavy: false, name: [], trust: 0, vibe: false, vibeColor: "", flash: false, lamp: false, text: "", holdType: forceHold, isSure: false, isFullSpin: false, isFukkatsu: false };
+    function selectEffect(isHit, forceHold, forceVibe) {
+        let res = { heavy: false, name: [], trust: 0, vibe: false, vibeColor: forceVibe || "", flash: false, lamp: false, text: "", holdType: forceHold, isSure: false, isFullSpin: false, isFukkatsu: false };
         const roll = () => Math.random() * 100;
         const isMigi = (mode === 'ST' || mode === '時短');
 
@@ -181,18 +202,31 @@
             res.name.push(hName);
         }
 
+        // 先読みレバブルがある場合は確定でレバブルをセット
+        if (res.vibeColor !== "none" && res.vibeColor !== "") {
+            res.vibe = true;
+            res.name.push(res.vibeColor === "rainbow" ? "虹レバ" : res.vibeColor === "red" ? "赤レバ" : "白レバ");
+            if (res.vibeColor === "rainbow") res.lamp = true;
+            res.heavy = true;
+        }
+
         if (isHit && !res.isFukkatsu) {
             if (roll() < 1.0 || res.holdType === "rainbow") { 
                 res.isSure = true; res.heavy = true; 
                 if (res.holdType === "rainbow") { res.lamp = true; }
                 else { res.name.push("全回転"); res.text="全回転"; res.isFullSpin=true; res.lamp=true; }
             } else {
-                let hasVibe = false;
+                let hasVibe = res.vibe;
                 if (isMigi && roll() < 10.0) { res.name.push("次回予告"); res.text="次回予告"; res.isSure = true; }
                 else if (isMigi && roll() < 33.0) { res.name.push("金系"); }
-                if (roll() < 3.0) { res.name.push("虹レバ"); res.lamp=true; hasVibe=true; res.vibeColor="rainbow"; }
-                else if (roll() < 15.0) { res.name.push("赤レバ"); hasVibe=true; res.vibeColor="red"; }
-                else if (roll() < 66.7) { res.name.push("白レバ"); hasVibe=true; res.vibeColor="white"; }
+                
+                // 先読みがなかった場合のみレバブルを新規抽選
+                if (!hasVibe) {
+                    if (roll() < 3.0) { res.name.push("虹レバ"); res.lamp=true; hasVibe=true; res.vibeColor="rainbow"; }
+                    else if (roll() < 15.0) { res.name.push("赤レバ"); hasVibe=true; res.vibeColor="red"; }
+                    else if (roll() < 66.7) { res.name.push("白レバ"); hasVibe=true; res.vibeColor="white"; }
+                }
+
                 if (roll() < 5.0) { res.name.push("インフラ"); res.flash=true; res.lamp=true; }
                 if (roll() < 1.0) { res.name.push("カヲル"); res.text="カヲル"; }
                 if (!isMigi || res.name.length <= 1) {
@@ -205,15 +239,20 @@
                 res.heavy = true;
             }
         } else if (!isHit) {
-            if (roll() < 0.0017) { res.name.push("赤レバ"); res.vibe=true; res.vibeColor="red"; res.heavy = true; }
-            else if (roll() < 0.023) { res.name.push("白レバ"); res.vibe=true; res.vibeColor="white"; res.heavy = true; }
-            else if (roll() < 0.150) { res.name.push("金系"); res.heavy = true; }
+            if (!res.vibe) { // 先読みがない場合のみ
+                if (roll() < 0.0017) { res.name.push("赤レバ"); res.vibe=true; res.vibeColor="red"; res.heavy = true; }
+                else if (roll() < 0.023) { res.name.push("白レバ"); res.vibe=true; res.vibeColor="white"; res.heavy = true; }
+                else if (roll() < 0.150) { res.name.push("金系"); res.heavy = true; }
+            }
             if (res.holdType === "red") res.heavy = true;
         }
 
         const currentMap = (isMigi) ? TRUST_MAP_S : TRUST_MAP_N;
         const pNames = ["虹レバ", "インフラ", "カヲル", "さよなら", "全回転", "虹保留"];
         if (isMigi) pNames.push("次回予告");
+
+        // 重複削除
+        res.name = [...new Set(res.name)];
 
         if (res.name.some(n => pNames.includes(n)) || res.name.length >= 3) { res.trust = 100; res.isSure = true; } 
         else if (res.name.length >= 2) { 
@@ -248,7 +287,7 @@
         heso = reservedStock.length;
         
         let isHit = currentJob.isHit;
-        let eff = selectEffect(isHit, currentJob.holdType);
+        let eff = selectEffect(isHit, currentJob.holdType, currentJob.preVibe);
         
         if(optKokuchi && isHit) { eff.heavy=true; eff.flash=true; eff.lamp=true; eff.displayName="インフラ告知"; eff.trust=100; eff.isSure=true; }
         
@@ -396,6 +435,7 @@
 </script>
 </body>
 </html>
+
 
 
 
