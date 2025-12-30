@@ -106,7 +106,6 @@
     let slumpData=[0], slumpLabels=["0"], historyData=[], historyLabels=[];
     let sChart, hChart;
 
-    // --- 各種関数 ---
     function openModal() { document.getElementById('modal-overlay').style.display='flex'; updateCharts(); }
     function closeModal() { document.getElementById('modal-overlay').style.display='none'; }
     function updateCharts() {
@@ -127,11 +126,10 @@
     function resetBtns() { document.querySelectorAll('.btn-auto').forEach(b => b.classList.remove('btn-stop')); }
     function resetData() { hits=0; rushCount=0; currentCount=0; totalBall=0; totalRot=0; heso=0; currentRushHits=0; slumpData=[0]; slumpLabels=["0"]; historyData=[]; historyLabels=[]; updateUI(); updateHeso(); addLog("リセット"); }
 
-    // --- メインプロセス ---
     async function startProcess() {
         if(!isAuto || isAnim) return;
 
-        // 1. 変動開始前のチェック：右打ち終了判定
+        // 1. 右打ち終了チェック
         if(mode !== '通常' && rRem <= 0) {
             addLog(`【結 果】 ${currentRushHits}連チャン終了`);
             mode = '通常'; rushCount = 0; currentRushHits = 0; currentCount = 0;
@@ -141,15 +139,12 @@
 
         if(heso < 4) heso++;
 
-        // 2. 当落抽選
-        let eff = selectEffect(mode !== '通常');
-        let isHit = false;
-        if (eff.heavy) {
-            isHit = (Math.random() * 100) < eff.trust;
-        } else {
-            let prob = (mode==='ST') ? SPECS.s : (mode==='時短' ? SPECS.n : SPECS.n * 1.3);
-            isHit = Math.random() < (1 / prob);
-        }
+        // 2. 基本の当落抽選（ここをスペック通りに固定）
+        let prob = (mode==='ST') ? SPECS.s : (mode==='時短' ? SPECS.n : SPECS.n);
+        let isHit = Math.random() < (1 / prob);
+
+        // 3. 演出の決定（当たりなら強演出を出しやすく、ハズレなら信頼度に応じて稀に出す）
+        let eff = selectEffectCorrected(isHit);
 
         if(optKokuchi && isHit) { eff.heavy=true; eff.flash=true; eff.lamp=true; eff.name="インフラ"; eff.trust=100; }
 
@@ -171,9 +166,9 @@
         let originalSpeed = autoSpeed;
         if(autoSpeed==='fast' && eff.heavy && !optAll) { autoSpeed='slow'; resetBtns(); document.getElementById('btn-slow').classList.add('btn-stop'); }
 
-        // 3. 回転数・回数の更新（ここを確定させる）
+        // 4. 回転数・回数の更新
         currentCount++; totalRot++; heso--; updateHeso(eff.isRedHold);
-        if(mode !== '通常') rRem--; // 右打ち中は必ず1引く
+        if(mode !== '通常') rRem--; 
         
         totalBall -= (mode==='通常' ? 14 : 0.05);
         slumpData.push(Math.floor(totalBall)); slumpLabels.push(totalRot.toString());
@@ -210,10 +205,10 @@
             historyData.push(currentCount); historyLabels.push(hits);
             if(isBousou) {
                 [1,3,5].forEach((n, idx) => { const el=document.getElementById('d'+(idx+1)); el.innerText=n; el.className='digit beast'; });
-                currentRushHits++;
-                let bTxt = (mode==='通常') ? "暴走BONUS!(ST突入)" : `暴走BONUS!(10R・${currentRushHits}連)`;
+                let bTxt = (mode==='通常') ? "暴走BONUS!(ST突入)" : `暴走BONUS!(10R・${(currentRushHits+1)}連)`;
                 addLog(`>> ${currentCount}回転 【135】 ${bTxt}`);
                 totalBall += (mode==='通常' ? 420 : 1400);
+                currentRushHits++;
                 mode='ST'; rRem=SPECS.st; rushCount=currentRushHits;
             } else {
                 let d = (is10R || mode!=='通常') ? 7 : 2;
@@ -241,18 +236,28 @@
         if(isAuto) setTimeout(startProcess, (autoSpeed==='fast') ? 5 : 300);
     }
 
-    function selectEffect(isRight) {
+    // --- 演出抽選ロジック（完全に分離し、当落を上書きしない） ---
+    function selectEffectCorrected(isHit) {
         let res = { heavy: false, name: "", trust: 0, vibe: false, flash: false, lamp: false, text: "", isRedHold: false };
         let r = Math.random() * 1000;
-        if (r < 1) { res.heavy=true; res.name="カヲル"; res.text="カヲル"; res.trust=100; return res; }
-        if (r < 4) { res.heavy=true; res.vibe=true; res.name="虹レバブル"; res.trust=100; res.lamp=true; return res; }
-        if (r < 7) { res.heavy=true; res.name="レイ背景(さよなら)"; res.text="さよなら"; res.trust=100; return res; }
-        if (r < 12) { res.heavy=true; res.name="インフラ"; res.lamp=true; res.trust=100; return res; }
-        if (r < 25) { res.heavy=true; res.vibe=true; res.name="赤レバブル"; res.trust=96.5; return res; }
-        if (r < 120) { res.heavy=true; res.vibe=true; res.name="白レバブル"; res.trust=90; return res; }
-        if (r < 180) { res.heavy=true; res.isRedHold=true; res.name="赤保留"; res.trust=90; return res; }
-        if (r < 250) { res.heavy=true; res.name="レイ背景"; res.text="レイ背景"; res.trust=85; return res; }
-        if (r < 350) { res.heavy=true; res.name="次回予告"; res.text="次回予告"; res.trust=65; return res; }
+
+        if (isHit) {
+            // 当たり時の演出振分
+            if (r < 50) { res.heavy=true; res.vibe=true; res.name="虹レバブル"; res.trust=100; res.lamp=true; }
+            else if (r < 250) { res.heavy=true; res.vibe=true; res.name="赤レバブル"; res.trust=96.5; }
+            else if (r < 550) { res.heavy=true; res.vibe=true; res.name="白レバブル"; res.trust=90; }
+            else if (r < 700) { res.heavy=true; res.isRedHold=true; res.name="赤保留"; res.trust=90; }
+            else if (r < 850) { res.heavy=true; res.name="レイ背景"; res.text="レイ背景"; res.trust=85; }
+            else if (r < 950) { res.heavy=true; res.name="次回予告"; res.text="次回予告"; res.trust=65; }
+        } else {
+            // ハズレ時のガセ演出振分（各演出の信頼度から逆算した確率）
+            // 例：白レバブル(90%)なら、当たりの9倍出にくい確率にする
+            if (r < 0.5) { res.heavy=true; res.vibe=true; res.name="赤レバブル"; res.trust=96.5; }
+            else if (r < 5.0) { res.heavy=true; res.vibe=true; res.name="白レバブル"; res.trust=90; }
+            else if (r < 10.0) { res.heavy=true; res.isRedHold=true; res.name="赤保留"; res.trust=90; }
+            else if (r < 20.0) { res.heavy=true; res.name="レイ背景"; res.text="レイ背景"; res.trust=85; }
+            else if (r < 45.0) { res.heavy=true; res.name="次回予告"; res.text="次回予告"; res.trust=65; }
+        }
         return res;
     }
 
@@ -272,6 +277,7 @@
 </script>
 </body>
 </html>
+
 
 
 
