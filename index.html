@@ -99,9 +99,8 @@
                 <button class="btn-auto" id="btn-fast" onclick="toggleAuto('fast')">高速オート</button>
             </div>
         </div>
-        <div class="log" id="log">> 通常時の復活演出は必ず奇数図柄（ST確定）となります。</div>
+        <div class="log" id="log">> ST中の高信頼度演出時の自動低速化を実装しました。</div>
     </div>
-
     
 <script>
     const SPECS = { n: 319.7, s: 99.4, st: 163, jt: 100 };
@@ -113,7 +112,7 @@
     let sChart, hChart;
 
     let reservedStock = []; 
-    let originalSpeedSetting = 'slow';
+    let originalSpeedSetting = 'slow'; // ユーザーが設定していた本来の速度モード
 
     const TRUST_MAP_N = { "白レバ": 0.90, "赤レバ": 0.965, "赤保留": 0.90, "緑保留": 0.11, "青保留": 0.05, "点滅保留": 0.005, "次回予告": 0.65, "レイ背景": 0.85, "金系": 0.50 };
     const TRUST_MAP_S = { "白レバ": 0.95, "赤レバ": 0.99, "赤保留": 0.95, "緑保留": 0.11, "青保留": 0.05, "点滅保留": 0.005, "次回予告": 1.0, "レイ背景": 0.92, "金系": 0.80, "虹保留": 1.0 };
@@ -142,9 +141,9 @@
         
         reservedStock.push({ isHit: isHit, holdType: holdType });
 
+        // 強保留(赤・虹)検知時。ログは出さずに内部で速度を切り替える
         if ((holdType === "red" || holdType === "rainbow") && isAuto && autoSpeed === "fast") {
             originalSpeedSetting = 'fast'; 
-            addLog(`!! ${holdType === "rainbow" ? "虹" : "赤"}保留を検知。低速オートに切り替えます !!`);
             autoSpeed = 'slow';
             resetBtns();
         }
@@ -158,9 +157,7 @@
         const roll = () => Math.random() * 100;
         const isMigi = (mode === 'ST' || mode === '時短');
 
-        // 通常時の復活はST当選（奇数図柄）が確定している場合のみ抽選
         if (isHit && !res.isSure && roll() < 8.0) {
-            // ここで後ほど判定する「昇格/ST当選」フラグを擬似的に参照
             res.isFukkatsu = true;
         }
 
@@ -232,9 +229,9 @@
         if(mode !== '通常' && rRem <= 0) { 
             let prevMode = mode;
             if (prevMode === 'ST') {
-                if (currentRushHits <= 1) addLog(`【ST終了】 スルー単発 (通常に戻ります)`);
-                else addLog(`【ST終了】 連チャン${currentRushHits}回 (通常に戻ります)`);
-            } else { addLog(`【時短終了】 (通常に戻ります)`); }
+                if (currentRushHits <= 1) addLog(`【ST終了】 スルー単発`);
+                else addLog(`【ST終了】 連チャン${currentRushHits}回`);
+            } else { addLog(`【時短終了】`); }
             mode = '通常'; rushCount = 0; currentRushHits = 0; 
             lcdCount = (prevMode==='ST') ? 0 : 100;
             updateUI(); 
@@ -252,6 +249,13 @@
         
         if(optKokuchi && isHit) { eff.heavy=true; eff.flash=true; eff.lamp=true; eff.displayName="インフラ告知"; eff.trust=100; eff.isSure=true; }
         
+        // 修正ポイント: ST中で信頼度が高い(50%以上)場合、高速オート中でも低速にする
+        if (mode !== '通常' && eff.trust >= 50 && isAuto && autoSpeed === 'fast') {
+            originalSpeedSetting = 'fast';
+            autoSpeed = 'slow';
+            resetBtns();
+        }
+
         totalRot++; currentRot++; lcdCount++; 
         updateHesoUI(eff.holdType); 
         
@@ -287,11 +291,10 @@
         if(isHit) { 
             isAnim=true;
             let rand = Math.random() * 100;
-            let isSTFromStart = (rand < 55); // 通常時のST直撃率(暴走含まず)
+            let isSTFromStart = (rand < 55); 
 
-            // 復活演出が発生する場合、必ず奇数図柄（ST）になるように調整
             if (eff.isFukkatsu && mode === '通常') {
-                isSTFromStart = true; // 強制的にSTフラグを立てる
+                isSTFromStart = true;
                 addLog(`>> ${lcdCount}回転 【ハズレ目】 ...からの復活！`);
                 await new Promise(r => setTimeout(r, 1000));
                 const ov = document.getElementById('effect-overlay');
@@ -318,7 +321,7 @@
                     } else {
                         if (rand < 2) { d = 7; is10R = true; nextM = 'ST'; logDigit = "7"; } 
                         else if (isSTFromStart) { d = [1,3,5,9][Math.floor(Math.random()*4)]; nextM = 'ST'; logDigit = d; }
-                        else if (rand < 75) { logDigit = [2,4,6,8][Math.floor(Math.random()*4)]; d = logDigit; nextM = 'ST'; isShokaku = true; } // 昇格演出
+                        else if (rand < 75) { logDigit = [2,4,6,8][Math.floor(Math.random()*4)]; d = logDigit; nextM = 'ST'; isShokaku = true; } 
                         else { d = [2,4,6,8][Math.floor(Math.random()*4)]; nextM = '時短'; logDigit = d; }
                     }
                 }
@@ -350,10 +353,10 @@
         
         isAnim=false; 
 
+        // 高速オートに戻す
         if(originalSpeedSetting === 'fast') {
             autoSpeed = 'fast';
             originalSpeedSetting = 'slow';
-            addLog(`>> 高速オートに復帰。`);
         }
         
         updateUI();
@@ -385,6 +388,7 @@
 </script>
 </body>
 </html>
+
 
 
 
