@@ -128,8 +128,7 @@
                 else if (rand < 59) { is10R = false; willEnterRush = true; } 
                 else { is10R = false; willEnterRush = false; } 
             } else {
-                is10R = true;
-                willEnterRush = true;
+                is10R = true; willEnterRush = true;
             }
         }
         
@@ -145,9 +144,10 @@
 
         let spinTime = (eff.heavy || (originalSpeed==='fast' && autoSpeed==='slow')) ? 2500 : (autoSpeed==='fast'?60:600);
         
-        if(eff.heavy && mode==='通常') {
+        // 当たった時だけ強い演出のログを表示
+        if(eff.heavy && isHit && mode==='通常') {
             isAnim=true;
-            addLog(`${currentCount}回【${eff.name}】信頼度:${eff.trust}%(出現率:${eff.freq}%)`);
+            addLog(`${currentCount}回【${eff.name}】信頼度:${eff.trust}%`);
             if(eff.vibe) document.getElementById('machine').classList.add('vibrate');
             if(eff.flash) document.getElementById('screen').classList.add('flash-active');
             if(eff.text) { const ov = document.getElementById('effect-overlay'); ov.innerText = eff.text; ov.style.display = 'block'; }
@@ -155,7 +155,14 @@
         }
 
         let lastDigits = [0,0,0];
-        let spin = setInterval(() => { [1,2,3].forEach((i, idx) => { const n=Math.floor(Math.random()*9)+1; const el=document.getElementById('d'+i); el.innerText=n; el.className='digit '+(n%2===0?'even':'odd'); lastDigits[idx]=n; }); }, 40);
+        let spin = setInterval(() => { 
+            [1,2,3].forEach((i, idx) => { 
+                // 通常時、10R当り(is10R)以外は7図柄を表示しない
+                let n;
+                do { n = Math.floor(Math.random()*9)+1; } while(mode==='通常' && !is10R && n===7);
+                const el=document.getElementById('d'+i); el.innerText=n; el.className='digit '+(n%2===0?'even':'odd'); lastDigits[idx]=n; 
+            }); 
+        }, 40);
         await new Promise(r => setTimeout(r, spinTime));
         clearInterval(spin);
         
@@ -180,12 +187,14 @@
             } else {
                 currentRushHits++;
                 if(mode==='ST') rushCount = currentRushHits;
+                addLog(`>> ${mode} ${currentCount}回転 【${d}】 10R当り! (${currentRushHits}連)`);
                 if(willEnterRush) { mode='ST'; rRem=SPECS.st; } else { mode='時短'; rRem=SPECS.jt; }
             }
             totalBall += (is10R ? 1400 : 420);
             updateUI(); await new Promise(r => setTimeout(r, 1800));
             currentCount=0; document.getElementById('lamp').classList.remove('lamp-active');
         } else if(eff.heavy && mode==='通常') {
+            // ハズレ時はシンプルな表示
             addLog(`>> ${currentCount}回転 【${lastDigits[0]}】 ハズレ`);
         }
 
@@ -208,17 +217,17 @@
         let r = Math.random() * 100;
         if(isHit) {
             if(willEnterRush) {
-                if(r < 5) return {name:"カヲル", heavy:true, flash:true, lamp:true, vibe:true, text:"カヲル", trust:100, freq:0.05};
-                if(r < 15) return {name:"インフラ", heavy:true, flash:true, lamp:true, vibe:true, text:"当確", trust:100, freq:0.1};
-                if(r < 25) return {name:"虹レバブル", heavy:true, vibe:true, lamp:true, text:"祝", trust:100, freq:0.1};
-                if(r < 35) return {name:"レイ背景（さよなら）", heavy:true, text:"さよなら", trust:100, freq:0.1};
+                if(r < 5) return {name:"カヲル", heavy:true, flash:true, lamp:true, vibe:true, text:"カヲル", trust:100};
+                if(r < 15) return {name:"インフラ", heavy:true, flash:true, lamp:true, vibe:true, text:"当確", trust:100};
+                if(r < 25) return {name:"虹レバブル", heavy:true, vibe:true, lamp:true, text:"祝", trust:100};
+                if(r < 35) return {name:"レイ背景（さよなら）", heavy:true, text:"さよなら", trust:100};
             }
-            if(r < 55) return {name:"赤レバブル", heavy:true, vibe:true, text:"激熱", trust:96.5, freq:1.2};
-            if(r < 75) return {name:"赤保留", heavy:true, isRedHold:true, text:"赤保留", trust:90, freq:1.5};
-            return {name:"レイ背景", heavy:true, text:"レイ背景", trust:85, freq:2.0};
+            if(r < 55) return {name:"赤レバブル", heavy:true, vibe:true, text:"激熱", trust:96.5};
+            if(r < 75) return {name:"赤保留", heavy:true, isRedHold:true, text:"赤保留", trust:90};
+            return {name:"レイ背景", heavy:true, text:"レイ背景", trust:85};
         } else {
-            if(r < 0.2) return {name:"赤保留", heavy:true, isRedHold:true, text:"赤保留", trust:90, freq:1.5};
-            if(r < 0.5) return {name:"次回予告", heavy:true, text:"次回予告", trust:65, freq:0.3};
+            if(r < 0.2) return {name:"赤保留", heavy:true, isRedHold:true, text:"赤保留", trust:90};
+            if(r < 0.5) return {name:"次回予告", heavy:true, text:"次回予告", trust:65};
         }
         return {heavy:false};
     }
@@ -232,5 +241,6 @@
 </script>
 </body>
 </html>
+
 
 
