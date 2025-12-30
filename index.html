@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>EVANGELION Sim -Custom Log-</title>
+    <title>EVANGELION Sim -Fix-</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&display=swap');
@@ -80,7 +80,7 @@
             <button class="btn-auto" id="btn-fast" onclick="toggleAuto('fast')">高速オート</button>
         </div>
     </div>
-    <div class="log" id="log">> 履歴表示を調整（図柄表記・RUSH終了連数）</div>
+    <div class="log" id="log">> 復旧完了しました。</div>
 </div>
 
 <script>
@@ -90,16 +90,16 @@
     let optAll=false, optKokuchi=false;
     let slumpData=[0], slumpLabels=["0"], historyData=[], historyLabels=[];
     let sChart, hChart;
-    let currentRushHits = 0; // 今回のRUSHでの連チャン数計測
+    let currentRushHits = 0;
 
     function openModal() { document.getElementById('modal-overlay').style.display='flex'; updateCharts(); }
     function closeModal() { document.getElementById('modal-overlay').style.display='none'; }
     function updateCharts() {
         const cfg = { responsive:true, maintainAspectRatio:false, scales:{ x:{display:false}, y:{grid:{color:'#222'}, ticks:{color:'#888'}} }, plugins:{legend:{display:false}} };
         if(sChart) sChart.destroy();
-        sChart = new Chart(document.getElementById('slumpChart'), { type:'line', data:{ labels:slumpLabels, datasets:[{data:slumpData, borderColor:#d00000, borderWidth:2, pointRadius:0, fill:false}] }, options:cfg });
+        sChart = new Chart(document.getElementById('slumpChart'), { type:'line', data:{ labels:slumpLabels, datasets:[{data:slumpData, borderColor:'#d00000', borderWidth:2, pointRadius:0, fill:false}] }, options:cfg });
         if(hChart) hChart.destroy();
-        hChart = new Chart(document.getElementById('historyChart'), { type:'bar', data:{ labels:historyLabels, datasets:[{data:historyData, backgroundColor:#d00000}] }, options:cfg });
+        hChart = new Chart(document.getElementById('historyChart'), { type:'bar', data:{ labels:historyLabels, datasets:[{data:historyData, backgroundColor:'#d00000'}] }, options:cfg });
     }
 
     function toggleOpt(t) {
@@ -157,7 +157,6 @@
             let d = willEnterRush ? 7 : 2;
             [1,2,3].forEach(i => { const el=document.getElementById('d'+i); el.innerText=d; el.className='digit '+(d===7?'gold':'even'); });
             
-            // 通常時のみ詳細ログを出す
             if(mode==='通常') {
                 addLog(`>> ${currentCount}回転 【${d}】 大当り!`);
                 if(willEnterRush) { 
@@ -167,7 +166,6 @@
                     mode='時短'; rRem=SPECS.jt; rushCount=0; currentRushHits=1; addLog(">>> 通常当り");
                 }
             } else {
-                // RUSH/時短中は連チャン数のみ更新（ログは出さない）
                 currentRushHits++;
                 if(mode==='ST') rushCount = currentRushHits;
                 if(willEnterRush) { mode='ST'; rRem=SPECS.st; } else { mode='時短'; rRem=SPECS.jt; }
@@ -182,7 +180,7 @@
         if(mode!=='通常' && !isHit) { 
             rRem--; 
             if(rRem<=0) { 
-                addLog(`【結 果】 ${currentRushHits}連チャン`); // 終了時に結果を表示
+                addLog(`【結 果】 ${currentRushHits}連チャン`);
                 addLog(`--- ${mode}終了 ---`); 
                 mode='通常'; rushCount=0; currentRushHits=0;
                 if(!optAll) { isAuto=false; resetBtns(); addLog(">>> オート停止"); }
