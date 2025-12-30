@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EVANGELION Sim -Graph Mode-</title>
+    <title>EVANGELION Sim -Restore Layout-</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&display=swap');
         body { background: #000; color: white; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
-        /* 演出アニメ */
+        /* アニメーション */
         @keyframes viberation { 0% { transform: translate(0,0); } 10% { transform: translate(-2px, 2px); } 20% { transform: translate(2px, -2px); } 100% { transform: translate(0,0); } }
         .vibrate { animation: viberation 0.08s infinite; }
         @keyframes flash { 0%, 100% { background: #000; } 50% { background: #fff; } }
@@ -17,55 +17,62 @@
         @keyframes rainbow { 0% { border-color: #f00; } 20% { border-color: #ff0; } 40% { border-color: #0f0; } 60% { border-color: #0ff; } 80% { border-color: #00f; } 100% { border-color: #f0f; } }
         .rainbow-active { animation: rainbow 0.5s infinite; border-width: 4px !important; }
 
-        /* ヘッダー */
+        /* ヘッダー操作系（復活） */
         header { width: 100%; height: 50px; background: #111; border-bottom: 2px solid #d00000; display: flex; align-items: center; padding: 0 10px; box-sizing: border-box; gap: 8px; }
-        .select-box { background: #222; color: #fff; border: 1px solid #444; padding: 5px; font-size: 0.75rem; border-radius: 4px; width: 100px; }
-        .header-btn { background: #333; color: #ccc; border: 1px solid #555; padding: 5px 8px; font-size: 0.7rem; cursor: pointer; border-radius: 4px; white-space: nowrap; }
-        .btn-data { background: #d00000; color: white; border-color: #f44; }
+        .select-box { background: #222; color: #fff; border: 1px solid #444; padding: 5px; font-size: 0.8rem; border-radius: 4px; }
+        .header-btn { background: #333; color: #ccc; border: 1px solid #555; padding: 5px 8px; font-size: 0.7rem; cursor: pointer; border-radius: 4px; }
+        .btn-graph { background: #d00000; color: white; border-color: #ff4444; }
 
-        /* ポップアップ（モーダル） */
-        #modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center; }
+        /* グラフポップアップ */
+        #modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; }
         #modal-content { background: #111; border: 2px solid #d00000; width: 95%; max-width: 500px; padding: 15px; border-radius: 10px; position: relative; }
-        .close-btn { position: absolute; top: 10px; right: 10px; color: white; cursor: pointer; font-size: 1.2rem; }
-        .graph-container { background: #000; margin-bottom: 10px; padding: 5px; border-radius: 5px; height: 180px; }
+        .close-btn { position: absolute; top: 10px; right: 15px; color: white; cursor: pointer; font-size: 1.5rem; }
+        .graph-area { background: #000; margin-bottom: 15px; height: 180px; width: 100%; }
 
         .main-content { flex-grow: 1; display: flex; flex-direction: column; align-items: center; padding: 10px; overflow-y: auto; }
         .machine { width: 100%; max-width: 400px; background: #111; border: 2px solid #d00000; border-radius: 15px; padding: 12px; position: relative; }
         #hidden-lamp { position: absolute; top: 15px; right: 20px; width: 10px; height: 10px; border-radius: 50%; background: #222; z-index: 100; }
         .hidden-active { animation: rainbow 0.3s infinite; box-shadow: 0 0 10px #fff; }
 
-        .screen { background: #000; height: 210px; border-radius: 8px; border: 2px solid #444; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; margin-bottom: 10px; }
-        .digit { font-size: 5.5rem; font-weight: 900; font-family: 'Shippori Mincho B1', serif; width: 75px; text-align: center; }
+        .screen { background: #000; height: 220px; border-radius: 8px; border: 2px solid #444; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; margin-bottom: 10px; }
+        .digit-container { display: flex; gap: 10px; }
+        .digit { font-size: 6rem; font-weight: 900; font-family: 'Shippori Mincho B1', serif; width: 80px; text-align: center; }
         .gold { color: #ffeb3b; text-shadow: 0 0 30px #ffeb3b; }
         .odd { color: #ff4444; text-shadow: 0 0 15px #ff4444; }
         .even { color: #4444ff; text-shadow: 0 0 15px #4444ff; }
-        
+
         .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-bottom: 4px; }
         .stat-item { background: #000; border: 1px solid #333; padding: 4px 1px; text-align: center; border-radius: 3px; }
         .stat-label { font-size: 0.55rem; color: #888; display: block; }
         .stat-val { font-size: 0.85rem; font-weight: bold; color: #d00000; font-family: monospace; }
 
+        /* 操作パネル（復活） */
         .control-layout { display: flex; gap: 6px; }
+        .side-mini-btns { display: flex; flex-direction: column; gap: 4px; width: 45px; }
+        .mini-btn { flex: 1; font-size: 0.7rem; font-weight: bold; border: 1px solid #444; background: #222; color: #888; cursor: pointer; border-radius: 3px; }
+        .mini-btn.active { background: #d00000; color: white; border-color: #ff4444; }
         .btn-auto { flex: 1; background: #d00000; color: white; border: 1px solid #ff4444; padding: 12px 0; font-weight: bold; border-radius: 5px; cursor: pointer; font-size: 0.75rem; }
         .btn-stop { background: #444 !important; border-color: #666 !important; }
-        .log { width: 100%; max-width: 400px; height: 120px; background: #000; margin-top: 10px; padding: 10px; font-size: 0.7rem; color: #ff4444; overflow-y: auto; border: 1px solid #333; font-family: monospace; box-sizing: border-box; }
+
+        .log { width: 100%; max-width: 400px; height: 130px; background: #000; margin-top: 10px; padding: 10px; font-size: 0.7rem; color: #ff4444; overflow-y: auto; border: 1px solid #333; font-family: monospace; box-sizing: border-box; }
     </style>
 </head>
 <body>
 
 <header>
     <select class="select-box"><option>Pエヴァ15</option></select>
-    <button class="header-btn btn-data" onclick="openModal()">データ</button>
-    <button class="header-btn" onclick="resetData()">リセット</button>
+    <button class="header-btn btn-graph" onclick="openModal()">データグラフ</button>
+    <button class="header-btn" onclick="resetData()">データクリア</button>
+    <button class="header-btn" onclick="clearLog()">履歴削除</button>
 </header>
 
 <div id="modal-overlay">
     <div id="modal-content">
         <span class="close-btn" onclick="closeModal()">×</span>
-        <h4 style="margin:0 0 10px 0; font-size:0.8rem; color:#d00000;">スランプグラフ（差玉推移）</h4>
-        <div class="graph-container"><canvas id="slumpChart"></canvas></div>
-        <h4 style="margin:5px 0 10px 0; font-size:0.8rem; color:#d00000;">大当り履歴（粒グラフ）</h4>
-        <div class="graph-container"><canvas id="historyChart"></canvas></div>
+        <div style="font-size:0.8rem; color:#d00000; margin-bottom:5px;">■ スランプグラフ</div>
+        <div class="graph-area"><canvas id="slumpChart"></canvas></div>
+        <div style="font-size:0.8rem; color:#d00000; margin-bottom:5px;">■ 大当り履歴（粒）</div>
+        <div class="graph-area"><canvas id="historyChart"></canvas></div>
     </div>
 </div>
 
@@ -73,138 +80,143 @@
     <div class="machine" id="machine">
         <div id="hidden-lamp"></div>
         <div class="screen" id="screen">
-            <div style="display:flex; gap:10px;">
+            <div class="digit-container">
                 <div id="d1" class="digit odd">1</div><div id="d2" class="digit even">2</div><div id="d3" class="digit odd">3</div>
             </div>
             <div id="sub-display" style="position:absolute; bottom:8px; right:12px; color:#d00000; font-weight:bold;">通常</div>
         </div>
+
         <div class="stat-grid">
             <div class="stat-item"><span class="stat-label">大当り</span><span id="hits" class="stat-val">0</span></div>
             <div class="stat-item"><span class="stat-label">連チャン</span><span id="rush-count" class="stat-val">0</span></div>
             <div class="stat-item"><span class="stat-label">現在回転</span><span id="current-rot" class="stat-val">0</span></div>
             <div class="stat-item"><span class="stat-label">差玉数</span><span id="balance" class="stat-val">0</span></div>
         </div>
+        <div class="stat-grid">
+            <div class="stat-item"><span class="stat-label">最高連</span><span id="max-rush" class="stat-val">0</span></div>
+            <div class="stat-item"><span class="stat-label">初当り</span><span id="first-hits" class="stat-val">0</span></div>
+            <div class="stat-item"><span class="stat-label">RUSH突入</span><span id="rush-in" class="stat-val">0</span></div>
+            <div class="stat-item"><span class="stat-label">最大ハマ</span><span id="max-hamari" class="stat-val">0</span></div>
+        </div>
+
         <div class="control-layout">
-            <button class="btn-auto" id="btn-slow" onclick="toggleAuto('slow')">低速オート</button>
-            <button class="btn-auto" id="btn-fast" onclick="toggleAuto('fast')">高速オート</button>
+            <div class="side-mini-btns">
+                <button class="mini-btn" id="full-auto" onclick="toggleBtn('full-auto')">全</button>
+                <button class="mini-btn" id="gyakkyo" onclick="toggleBtn('gyakkyo')">逆</button>
+            </div>
+            <div style="flex:1; display:flex; gap:6px;">
+                <button class="btn-auto" id="btn-slow" onclick="toggleAuto('slow')">低速オート</button>
+                <button class="btn-auto" id="btn-fast" onclick="toggleAuto('fast')">高速オート</button>
+            </div>
         </div>
     </div>
-    <div class="log" id="log">> データグラフ機能を追加しました。</div>
+    <div class="log" id="log">> レイアウトを以前の状態に復旧しました。</div>
 </div>
 
 <script>
+    // --- 内部ロジック（信頼度演出・グラフ連動含む） ---
     const SPECS = { n: 319.7, s: 99.4, st: 163, jt: 100 };
-    let hits=0, rushCount=0, currentCount=0, totalBall=0, maxRush=0, firstHits=0;
-    let mode='通常', rRem=0, isAuto=false, autoSpeed='slow', isAnim=false, hojoCount=0;
+    let hits=0, rushCount=0, currentCount=0, totalBall=0, firstHits=0, rushIn=0, maxRush=0, maxHamari=0;
+    let mode='通常', rRem=0, isAuto=false, autoSpeed='slow', isFullAuto=false, isGyakkyo=false, isAnim=false;
     
-    // グラフ用データ
-    let slumpData = [0];
-    let slumpLabels = ["0"];
-    let historyData = [];
-    let historyLabels = [];
+    let slumpData = [0], slumpLabels = ["0"], historyData = [], historyLabels = [];
+    let sChart, hChart;
 
-    let slumpChart, historyChart;
+    function openModal() { document.getElementById('modal-overlay').style.display='flex'; updateCharts(); }
+    function closeModal() { document.getElementById('modal-overlay').style.display='none'; }
 
-    function openModal() {
-        document.getElementById('modal-overlay').style.display = 'flex';
-        initCharts();
-    }
-    function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
-
-    function initCharts() {
-        const ctxS = document.getElementById('slumpChart').getContext('2d');
-        if(slumpChart) slumpChart.destroy();
-        slumpChart = new Chart(ctxS, {
-            type: 'line',
-            data: { labels: slumpLabels, datasets: [{ label: '差玉', data: slumpData, borderColor: '#d00000', borderWidth: 2, pointRadius: 0, fill: false }] },
-            options: { responsive: true, maintainAspectRatio: false, scales: { y: { grid: { color: '#333' } }, x: { display: false } } }
-        });
-
-        const ctxH = document.getElementById('historyChart').getContext('2d');
-        if(historyChart) historyChart.destroy();
-        historyChart = new Chart(ctxH, {
-            type: 'bar',
-            data: { labels: historyLabels, datasets: [{ label: '回転数', data: historyData, backgroundColor: '#d00000' }] },
-            options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, grid: { color: '#333' } }, x: { display: false } } }
-        });
+    function updateCharts() {
+        const cfg = { responsive:true, maintainAspectRatio:false, scales:{ x:{display:false}, y:{grid:{color:'#222'}, ticks:{color:'#888'}} }, plugins:{legend:{display:false}} };
+        if(sChart) sChart.destroy();
+        sChart = new Chart(document.getElementById('slumpChart'), { type:'line', data:{ labels:slumpLabels, datasets:[{data:slumpData, borderColor:'#d00000', borderWidth:2, pointRadius:0}] }, options:cfg });
+        if(hChart) hChart.destroy();
+        hChart = new Chart(document.getElementById('historyChart'), { type:'bar', data:{ labels:historyLabels, datasets:[{data:historyData, backgroundColor:'#d00000'}] }, options:cfg });
     }
 
+    function toggleBtn(id) { document.getElementById(id).classList.toggle('active'); if(id==='full-auto') isFullAuto=!isFullAuto; if(id==='gyakkyo') isGyakkyo=!isGyakkyo; }
     function toggleAuto(s) {
-        if(isAuto && autoSpeed === s) { isAuto = false; resetBtns(); }
-        else { isAuto = true; autoSpeed = s; resetBtns(); document.getElementById('btn-'+s).classList.add('btn-stop'); startProcess(); }
+        if(isAuto && autoSpeed===s) { isAuto=false; resetBtns(); }
+        else { isAuto=true; autoSpeed=s; resetBtns(); document.getElementById('btn-'+s).classList.add('btn-stop'); startProcess(); }
     }
     function resetBtns() { document.querySelectorAll('.btn-auto').forEach(b => b.classList.remove('btn-stop')); }
-    function resetData() { hits=0; rushCount=0; currentCount=0; totalBall=0; slumpData=[0]; slumpLabels=["0"]; historyData=[]; historyLabels=[]; updateUI(); }
+    function clearLog() { document.getElementById('log').innerHTML = "> 履歴を削除しました。"; }
+    function resetData() { hits=0; rushCount=0; currentCount=0; totalBall=0; firstHits=0; rushIn=0; maxRush=0; maxHamari=0; slumpData=[0]; slumpLabels=["0"]; historyData=[]; historyLabels=[]; updateUI(); addLog("データリセット完了"); }
 
     async function startProcess() {
         if(!isAuto || isAnim) return;
         let prob = (mode==='ST' ? SPECS.s : SPECS.n);
         let isHit = Math.random() < (1/prob);
-        let effect = selectEffect(isHit);
+        let eff = selectEffect(isHit);
         
         if(mode==='通常') totalBall -= 3.125;
         currentCount++;
 
-        if(effect.heavy) {
+        if(eff.heavy && !isGyakkyo) {
             isAnim = true;
-            addLog(`${currentCount}回転 ${effect.name} (信頼度${effect.trust}% / 出現率1/${effect.rate})`);
-            if(effect.vibe) document.getElementById('machine').classList.add('vibrate');
-            if(effect.flash) document.getElementById('screen').classList.add('flash-active');
-            await new Promise(r => setTimeout(r, 1500));
+            addLog(`${currentCount}回転 ${eff.name} (信頼度${eff.trust}% / 出現率1/${eff.rate})`);
+            if(eff.vibe) document.getElementById('machine').classList.add('vibrate');
+            if(eff.flash) document.getElementById('screen').classList.add('flash-active');
+            if(eff.rainbow) document.getElementById('machine').classList.add('rainbow-active');
+            let spin = setInterval(() => { [1,2,3].forEach(i => { const n=Math.floor(Math.random()*9)+1; document.getElementById('d'+i).innerText=n; }); }, 80);
+            await new Promise(r => setTimeout(r, 2000));
+            clearInterval(spin);
             document.getElementById('machine').className = 'machine';
             document.getElementById('screen').classList.remove('flash-active');
         }
 
         if(isHit) {
             isAnim = true; hits++;
-            let isBouso = Math.random() < 0.10;
+            if(currentCount > maxHamari) maxHamari = currentCount;
+            historyData.push(currentCount); historyLabels.push(hits);
+
+            let isBouso = Math.random() < 0.1;
             let isSt = isBouso || (mode !== '通常') || (Math.random() < 0.59);
+            let d = isSt ? [1,3,5,7,9][Math.floor(Math.random()*5)] : [2,4,6,8][Math.floor(Math.random()*4)];
             
-            // 履歴グラフにデータを追加
-            historyData.push(currentCount);
-            historyLabels.push(hits);
+            [1,2,3].forEach(i => { 
+                const el = document.getElementById('d'+i); 
+                el.innerText = isBouso ? [1,3,5][i-1] : d;
+                el.className = 'digit ' + (isBouso?'odd':(d%2===0?'even':'odd'));
+            });
 
             if(isSt) {
-                totalBall += (mode === '通常' ? 420 : 1400);
-                addLog(`${currentCount}回転 【${isBouso?'暴走':7}】 RUSH継続`);
+                if(mode==='通常') { firstHits++; rushIn++; addLog(`${currentCount}回転 【${isBouso?'暴走':d}】初当り RUSH突入`); totalBall += 420; }
+                else { addLog(`${currentCount}回転 【${isBouso?'暴走':d}】RUSH継続 ${rushCount+1}連目`); totalBall += 1400; }
                 mode='ST'; rRem=SPECS.st; rushCount++;
             } else {
-                totalBall += 420;
-                addLog(`${currentCount}回転 【2】 通常当り`);
-                mode='時短'; rRem=SPECS.jt; rushCount=0;
+                firstHits++; addLog(`${currentCount}回転 【${d}】通常(3R)`);
+                mode='時短'; rRem=SPECS.jt; rushCount=0; totalBall += 420;
             }
+            if(rushCount > maxRush) maxRush = rushCount;
             slumpData.push(totalBall); slumpLabels.push(hits);
             currentCount=0;
-            await new Promise(r => setTimeout(r, 1000));
+            await new Promise(r => setTimeout(r, isFullAuto ? 100 : 1500));
         }
 
-        if(mode!=='通常' && !isHit) {
-            rRem--;
-            if(rRem<=0) { mode='通常'; rushCount=0; }
-        }
-
+        if(mode!=='通常' && !isHit) { rRem--; if(rRem<=0) { addLog(`${mode}終了 ${rushCount}連`); mode='通常'; rushCount=0; if(!isFullAuto) { isAuto=false; resetBtns(); } } }
         isAnim = false;
         updateUI();
-        if(isAuto) setTimeout(startProcess, autoSpeed==='fast' ? (isAnim?800:5) : 800);
+        if(isAuto) setTimeout(startProcess, autoSpeed==='fast'?(isAnim?800:(isFullAuto?1:30)):800);
     }
 
     function selectEffect(isHit) {
         let r = Math.random() * 1000;
         if(isHit) {
             if(r < 100) return {name:"インフラ", trust:100, rate:10, heavy:true, flash:true};
-            if(r < 300) return {name:"レバブル(赤)", trust:96.5, rate:5, heavy:true, vibe:true};
-            if(r < 500) return {name:"赤保留", trust:90, rate:5, heavy:true};
+            if(r < 200) return {name:"レバブル(虹)", trust:100, rate:10, heavy:true, rainbow:true};
+            if(r < 400) return {name:"レバブル(赤)", trust:96.5, rate:5, heavy:true, vibe:true};
+            if(r < 600) return {name:"赤保留", trust:90, rate:5, heavy:true};
             return {name:"金予告", trust:50, rate:1, heavy:true};
         }
-        if(r < 2) return {name:"赤保留", trust:90, rate:500, heavy:true};
+        if(Math.random() < 0.005) return {name:"赤保留", trust:90, rate:500, heavy:true};
         return {heavy:false};
     }
 
     function updateUI() {
-        document.getElementById('hits').innerText=hits;
-        document.getElementById('rush-count').innerText=rushCount;
-        document.getElementById('current-rot').innerText=currentCount;
-        document.getElementById('balance').innerText=Math.floor(totalBall).toLocaleString();
+        document.getElementById('hits').innerText=hits; document.getElementById('rush-count').innerText=rushCount;
+        document.getElementById('current-rot').innerText=currentCount; document.getElementById('balance').innerText=Math.floor(totalBall).toLocaleString();
+        document.getElementById('max-rush').innerText=maxRush; document.getElementById('first-hits').innerText=firstHits;
+        document.getElementById('rush-in').innerText=rushIn; document.getElementById('max-hamari').innerText=maxHamari;
         document.getElementById('sub-display').innerText = mode==='通常'?'通常':`${mode}:${rRem}`;
     }
     function addLog(m) { const l=document.getElementById('log'); l.innerHTML=`> ${m}<br>${l.innerHTML}`; }
