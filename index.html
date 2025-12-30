@@ -191,9 +191,17 @@
         let eff = selectEffect(activeJob);
         if(optKokuchi && activeJob.isHit) { eff.flash=true; eff.isSure=true; eff.trust=100; eff.displayName="インフラ告知"; }
         if (mode !== '通常' && eff.trust >= 50 && autoSpeed === 'fast') { autoSpeed = 'slow'; resetBtns(); }
+        
         totalRot++; currentRot++; lcdCount++; 
-        if(mode !== '通常') rRem--;
-        totalBall -= (mode === '通常' ? 14 : 0.05);
+        if(mode !== '通常') {
+            rRem--;
+            totalBall -= 0.05; // 電サポ中削り (-0.05玉)
+        } else {
+            // 回転率15~20のランダム設定
+            let currentKaitenRitsu = 15 + (Math.random() * 5);
+            totalBall -= (250 / currentKaitenRitsu); // 1回転あたりの消費玉
+        }
+
         if (totalRot % 10 === 0) { slumpData.push(Math.floor(totalBall)); slumpLabels.push(totalRot.toString()); }
         if(eff.trust >= 50 || activeJob.isHit) {
             addLog(`${mode} ${lcdCount}回【${eff.displayName}】信頼度:${eff.trust.toFixed(1)}%`);
@@ -224,19 +232,19 @@
             let logDigit; let isST = false; let bonusText = "";
             if (mode !== '通常') {
                 logDigit = (rand < 50) ? 7 : [1,3,5,9][Math.floor(Math.random()*4)];
-                isST = true; totalBall += 1400;
+                isST = true; totalBall += 1500;
             } else {
-                // 通常時振り分け：ご指示通りに固定
+                // 通常時振り分け
                 if (rand < 2) { // 全回転(2%)
-                    logDigit = 7; isST = true; totalBall += 1400; bonusText = "[全回転] ";
+                    logDigit = 7; isST = true; totalBall += 1500; bonusText = "[全回転] ";
                 } else if (rand < 5) { // 7図柄(3%)
-                    logDigit = 7; isST = true; totalBall += 1400;
+                    logDigit = 7; isST = true; totalBall += 1500;
                 } else if (rand < 39) { // 奇数図柄(34%)
-                    logDigit = [1,3,5,9][Math.floor(Math.random()*4)]; isST = true; totalBall += 420;
-                } else if (rand < 59) { // ★偶数昇格(20%)
-                    logDigit = [2,4,6,8][Math.floor(Math.random()*4)]; isST = true; totalBall += 420; bonusText = "[昇格] ";
-                } else { // ★偶数通常(41%)
-                    logDigit = [2,4,6,8][Math.floor(Math.random()*4)]; isST = false; totalBall += 420;
+                    logDigit = [1,3,5,9][Math.floor(Math.random()*4)]; isST = true; totalBall += 450;
+                } else if (rand < 59) { // 昇格(20%)
+                    logDigit = [2,4,6,8][Math.floor(Math.random()*4)]; isST = true; totalBall += 450; bonusText = "[昇格] ";
+                } else { // 偶数通常(41%)
+                    logDigit = [2,4,6,8][Math.floor(Math.random()*4)]; isST = false; totalBall += 450;
                 }
             }
             [1,2,3].forEach(i => { const el = document.getElementById('d'+i); el.innerText = logDigit; el.className = 'digit '+(logDigit==7?'gold':(logDigit%2!==0?'odd':'even')); });
@@ -287,6 +295,7 @@
 </script>
 </body>
 </html>
+
 
 
 
