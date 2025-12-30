@@ -3,41 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EVANGELION Sim -Hidden Lamp-</title>
+    <title>EVANGELION Sim -Log Updated-</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&display=swap');
         body { background: #000; color: white; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
-        /* 演出アニメーション */
         @keyframes viberation { 0% { transform: translate(0,0); } 10% { transform: translate(-3px, 3px); } 20% { transform: translate(3px, -3px); } 100% { transform: translate(0,0); } }
         .vibrate { animation: viberation 0.08s infinite; }
         @keyframes flash { 0%, 100% { background: #000; } 50% { background: #fff; } }
         .flash-active { animation: flash 0.05s 15; }
         @keyframes rainbow { 0% { border-color: #ff0000; } 20% { border-color: #ffff00; } 40% { border-color: #00ff00; } 60% { border-color: #00ffff; } 80% { border-color: #0000ff; } 100% { border-color: #ff00ff; } }
         .rainbow-active { animation: rainbow 0.5s infinite; border-width: 4px !important; }
-        
-        /* 隠しランプ用虹アニメーション */
-        @keyframes hidden-rainbow { 
-            0% { background: #ff0000; box-shadow: 0 0 10px #ff0000; } 
-            33% { background: #00ff00; box-shadow: 0 0 10px #00ff00; }
-            66% { background: #0000ff; box-shadow: 0 0 10px #0000ff; }
-            100% { background: #ff0000; box-shadow: 0 0 10px #ff0000; }
-        }
+        @keyframes hidden-rainbow { 0% { background: #f00; box-shadow: 0 0 10px #f00; } 33% { background: #0f0; box-shadow: 0 0 10px #0f0; } 66% { background: #00f; box-shadow: 0 0 10px #00f; } 100% { background: #f00; box-shadow: 0 0 10px #f00; } }
 
         header { width: 100%; height: 45px; background: #000; border-bottom: 2px solid #d00000; display: flex; align-items: center; padding: 0 15px; box-sizing: border-box; }
         .logo-main { flex-grow: 1; text-align: center; font-family: 'Shippori Mincho B1', serif; font-size: 1rem; color: #d00000; }
 
         .main-content { flex-grow: 1; display: flex; flex-direction: column; align-items: center; padding: 10px; overflow-y: auto; }
         .machine { width: 100%; max-width: 400px; background: #111; border: 2px solid #d00000; border-radius: 15px; padding: 12px; position: relative; }
-        
-        /* 隠しランプ本体 */
-        #hidden-lamp { position: absolute; top: 15px; right: 20px; width: 10px; height: 10px; border-radius: 50%; background: #222; z-index: 100; transition: 0.3s; }
+        #hidden-lamp { position: absolute; top: 15px; right: 20px; width: 10px; height: 10px; border-radius: 50%; background: #222; z-index: 100; }
         .hidden-active { animation: hidden-rainbow 0.3s infinite !important; }
 
         .screen { background: #000; height: 240px; border-radius: 8px; border: 2px solid #444; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; margin-bottom: 8px; }
         .digit-container { display: flex; gap: 15px; }
         .digit { font-size: 6.5rem; font-weight: 900; font-family: 'Shippori Mincho B1', serif; width: 85px; text-align: center; z-index: 10; }
-        
         .gold { color: #ffeb3b; text-shadow: 0 0 30px #ffeb3b; }
         .odd { color: #ff4444; text-shadow: 0 0 15px #ff4444; }
         .even { color: #4444ff; text-shadow: 0 0 15px #4444ff; }
@@ -45,10 +34,9 @@
         .heso-box { display: flex; gap: 10px; margin-top: 20px; }
         .h-lamp { width: 15px; height: 15px; border-radius: 50%; background: #333; border: 1px solid #555; }
         .h-on { background: #ff4444; box-shadow: 0 0 8px #ff4444; }
-        .h-red-hot { background: #ff0000 !important; box-shadow: 0 0 15px #ff0000, 0 0 5px #fff !important; border: 2px solid #fff !important; }
+        .h-red-hot { background: #f00 !important; box-shadow: 0 0 15px #f00, 0 0 5px #fff !important; border: 2px solid #fff !important; }
 
         #sub-display { position: absolute; bottom: 10px; right: 15px; color: #d00000; font-size: 1.2rem; font-weight: bold; }
-
         .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-bottom: 4px; }
         .stat-item { background: #000; border: 1px solid #333; padding: 4px 1px; text-align: center; border-radius: 3px; }
         .stat-label { font-size: 0.55rem; color: #888; display: block; }
@@ -58,8 +46,6 @@
         .side-mini-btns { display: flex; flex-direction: column; gap: 4px; width: 45px; }
         .mini-btn { flex: 1; font-size: 0.7rem; font-weight: bold; border: 1px solid #444; background: #222; color: #888; cursor: pointer; border-radius: 3px; }
         .mini-btn.active { background: #d00000; color: white; border-color: #ff4444; }
-        
-        .main-btns { flex: 1; display: flex; gap: 6px; }
         .btn-auto { flex: 1; background: #d00000; color: white; border: 1px solid #ff4444; padding: 12px 0; font-weight: bold; border-radius: 5px; cursor: pointer; font-size: 0.75rem; }
         .btn-stop { background: #444 !important; border-color: #666 !important; }
 
@@ -75,7 +61,6 @@
 <div class="main-content">
     <div class="machine" id="machine">
         <div id="hidden-lamp"></div>
-
         <div class="screen" id="screen">
             <div class="digit-container">
                 <div id="d1" class="digit odd">1</div><div id="d2" class="digit even">2</div><div id="d3" class="digit odd">3</div>
@@ -85,7 +70,6 @@
             </div>
             <div id="sub-display">通常</div>
         </div>
-
         <div class="stat-grid">
             <div class="stat-item"><span class="stat-label">大当り</span><span id="hits" class="stat-val">0</span></div>
             <div class="stat-item"><span class="stat-label">連チャン</span><span id="rush-count" class="stat-val">0</span></div>
@@ -98,19 +82,18 @@
             <div class="stat-item"><span class="stat-label">RUSH突入</span><span id="rush-in" class="stat-val">0</span></div>
             <div class="stat-item"><span class="stat-label">最大ハマ</span><span id="max-hamari" class="stat-val">0</span></div>
         </div>
-        
         <div class="control-layout">
             <div class="side-mini-btns">
                 <button class="mini-btn" id="full-auto" onclick="toggleBtn('full-auto')">全</button>
                 <button class="mini-btn" id="gyakkyo" onclick="toggleBtn('gyakkyo')">逆</button>
             </div>
-            <div class="main-btns">
+            <div style="flex:1; display:flex; gap:6px;">
                 <button class="btn-auto" id="btn-slow" onclick="toggleAuto('slow')">低速オート</button>
                 <button class="btn-auto" id="btn-fast" onclick="toggleAuto('fast')">高速オート</button>
             </div>
         </div>
     </div>
-    <div class="log" id="log">> 隠しランプ実装。違和感に気づけるか。</div>
+    <div class="log" id="log">> 全システム正常。履歴表示を最適化しました。</div>
 </div>
 
 <script>
@@ -123,7 +106,6 @@
         if(id==='gyakkyo') isGyakkyo = !isGyakkyo;
         document.getElementById(id).classList.toggle('active');
     }
-
     function toggleAuto(s) {
         if(isAuto && autoSpeed === s) { isAuto = false; resetBtns(); }
         else { isAuto = true; autoSpeed = s; resetBtns(); document.getElementById('btn-'+s).classList.add('btn-stop'); startProcess(); }
@@ -133,40 +115,40 @@
     async function startProcess() {
         if(!isAuto || isAnim) return;
         if(hojoCount < 4) { hojoCount++; updateHojo(); }
-
         if(hojoCount > 0) {
             hojoCount--;
             let prob = (mode==='ST' ? SPECS.s : SPECS.n);
             let isHit = Math.random() < (1/prob);
             let effect = selectEffect(isHit);
-
             updateHojo(effect.name === "赤保留");
             if(mode==='通常') totalBall -= 3.125;
             currentCount++;
-
-            // 演出開始前に隠しランプのリセット
             document.getElementById('hidden-lamp').className = '';
 
-            // 隠しランプ（カヲル）演出：大当り時の一部でひっそり点灯
-            if(isHit && Math.random() < 0.08) {
-                document.getElementById('hidden-lamp').className = 'hidden-active';
-            }
-
-            if(effect.name === "全回転") {
-                isAnim = true; addLog("【プレミア】全回転演出発生！！");
-                document.getElementById('machine').classList.add('rainbow-active');
-                for(let n=1; n<=7; n++) { applyDigit(n); await new Promise(r => setTimeout(r, 400)); }
-                document.getElementById('machine').classList.remove('rainbow-active');
-            } else if(effect.heavy && !isGyakkyo) {
-                isAnim = true; addLog(`【予告】${effect.name}`);
+            // 激アツ演出時はisAnimをtrueにして高速オート中でも「タメ」を作る
+            if(effect.heavy && !isGyakkyo) {
+                isAnim = true; 
+                // 履歴：回転数を最初に表示
+                addLog(`${currentCount}回転 【予告】${effect.name}`);
+                
                 if(effect.vibe) document.getElementById('machine').classList.add('vibrate');
                 if(effect.flash) document.getElementById('screen').classList.add('flash-active');
-                let spin = setInterval(() => { [1,2,3].forEach(i => setRandomDigit(i)); }, 80);
-                await new Promise(r => setTimeout(r, 2000));
-                clearInterval(spin);
+                if(effect.rainbow) document.getElementById('machine').classList.add('rainbow-active');
+                
+                if(isHit && Math.random() < 0.1) document.getElementById('hidden-lamp').className = 'hidden-active';
+
+                if(effect.name === "全回転") {
+                    for(let n=1; n<=7; n++) { applyDigit(n); await new Promise(r => setTimeout(r, 400)); }
+                } else {
+                    let spin = setInterval(() => { [1,2,3].forEach(i => setRandomDigit(i)); }, 80);
+                    await new Promise(r => setTimeout(r, 2000)); // 2秒間の演出タメ
+                    clearInterval(spin);
+                }
                 document.getElementById('machine').className = 'machine';
                 document.getElementById('screen').classList.remove('flash-active');
-            } else { [1,2,3].forEach(i => setRandomDigit(i)); }
+            } else { 
+                [1,2,3].forEach(i => setRandomDigit(i)); 
+            }
 
             if(isHit || effect.name === "全回転") {
                 isAnim = true; hits++;
@@ -176,70 +158,83 @@
                 applyDigit(d);
 
                 if(isSt) {
-                    if(mode==='通常') { firstHits++; rushIn++; addLog(`【${d}】初当り RUSH突入 ${currentCount}回転`); totalBall += 420; }
-                    else if(mode==='時短') { rushIn++; addLog(`【${d}】時短引き戻し!! ${currentCount}回転`); totalBall += 1400; }
-                    else { addLog(`【${d}】RUSH継続 ${rushCount+1}連目(${currentCount}回転)`); totalBall += 1400; }
+                    if(mode==='通常') { 
+                        firstHits++; rushIn++; 
+                        addLog(`${currentCount}回転 【${d}】初当り RUSH突入`); 
+                        totalBall += 420; 
+                    }
+                    else if(mode==='時短') { 
+                        rushIn++; 
+                        addLog(`${currentCount}回転 【${d}】時短引き戻し!!`); 
+                        totalBall += 1400; 
+                    }
+                    else { 
+                        // RUSH中当たり：回転数を最初に表示
+                        addLog(`${currentCount}回転 【${d}】RUSH継続 ${rushCount+1}連目`); 
+                        totalBall += 1400; 
+                    }
                     mode='ST'; rRem=SPECS.st; rushCount++;
                     if(rushCount > maxRush) maxRush = rushCount;
                 } else {
-                    firstHits++; mode='時短'; rRem=SPECS.jt; rushCount=0; totalBall += 420;
-                    addLog(`【${d}】単発通常(3R) ${currentCount}回転`);
+                    firstHits++; 
+                    addLog(`${currentCount}回転 【${d}】単発通常(3R)`);
+                    mode='時短'; rRem=SPECS.jt; rushCount=0; totalBall += 420;
                 }
                 currentCount=0;
                 await new Promise(r => setTimeout(r, isFullAuto ? 100 : 1000));
-            } else if(effect.heavy && !isGyakkyo) {
-                addLog(`> ${effect.name} 外れ...`);
+            } else if(effect.heavy && !isGyakkyo) { 
+                // 外れ時も履歴は回転数から
+                // addLog(`> ${currentCount}回転 ${effect.name} 外れ`); // 重複するので省略可
             }
 
-            // 隠しランプ消灯
             document.getElementById('hidden-lamp').className = '';
-
             if(mode!=='通常' && !isHit && effect.name !== "全回転") {
                 rRem--;
                 if(rRem<=0) { addLog(`${mode}終了 ${rushCount}連`); mode='通常'; rushCount=0; if(!isFullAuto) { isAuto=false; resetBtns(); } }
             }
             isAnim = false;
         }
-
         updateUI();
         let delay = autoSpeed==='fast' ? (isAnim?800:(isFullAuto?1:30)) : 800;
         if(isAuto) setTimeout(startProcess, delay);
     }
 
     function selectEffect(isHit) {
+        let r = Math.random() * 1000;
         if(isHit) {
-            let r = Math.random() * 1000;
-            if(r < 10) return {name:"全回転", heavy:true};
-            if(r < 100) return {name:"インパクトフラッシュ", heavy:true, flash:true};
-            if(r < 250) return {name:"レバブル(赤)", heavy:true, vibe:true};
-            if(r < 450) return {name:"赤保留", heavy:true};
-            if(r < 600) return {name:"レイ背景(無言)", heavy:true};
-            if(r < 800) return {name:"次回予告", heavy:true};
+            if(r < 10) return {name:"全回転", heavy:true, rainbow:true};
+            if(r < 110) return {name:"インパクトフラッシュ", heavy:true, flash:true};
+            if(r < 210) return {name:"レバブル(虹)", heavy:true, rainbow:true};
+            if(r < 410) return {name:"レバブル(赤)", heavy:true, vibe:true};
+            if(r < 610) return {name:"赤保留", heavy:true};
+            if(r < 710) return {name:"レイ背景(さよなら)", heavy:true};
+            if(r < 810) return {name:"次回予告", heavy:true};
+            if(r < 910) return {name:"レイ背景(セリフ無)", heavy:true};
+            return {name:"金系予告", heavy:true};
         }
-        let r2 = Math.random() * 100;
-        if(r2 < 0.3) return {name:"レバブル(赤)", heavy:true, vibe:true}; 
-        if(r2 < 0.6) return {name:"赤保留", heavy:true};
+        let r2 = Math.random() * 1000;
+        if(r2 < 1) return {name:"レバブル(赤)", heavy:true, vibe:true};
+        if(r2 < 3) return {name:"赤保留", heavy:true};
+        if(r2 < 4) return {name:"レバブル(白)", heavy:true, vibe:true};
+        if(r2 < 7) return {name:"レイ背景(セリフ無)", heavy:true};
+        if(r2 < 15) return {name:"次回予告", heavy:true};
+        if(r2 < 30) return {name:"金系予告", heavy:true};
         return {heavy:false};
     }
 
     function updateHojo(isRedHot = false) {
         for(let i=1; i<=4; i++) {
-            const el = document.getElementById('h'+i);
-            el.className = 'h-lamp';
+            const el = document.getElementById('h'+i); el.className = 'h-lamp';
             if(i <= hojoCount) { el.classList.add('h-on'); if(isRedHot && i === 1) el.classList.add('h-red-hot'); }
         }
     }
-
     function setRandomDigit(i) {
-        const num = Math.floor(Math.random()*9)+1;
-        const el = document.getElementById('d'+i);
-        el.innerText = num;
-        el.className = 'digit ' + (num%2===0?'even':'odd');
+        const num = Math.floor(Math.random()*9)+1; const el = document.getElementById('d'+i);
+        el.innerText = num; el.className = 'digit ' + (num%2===0?'even':'odd');
     }
     function applyDigit(d) {
         [1,2,3].forEach(i => {
-            const el = document.getElementById('d'+i);
-            el.innerText = d;
+            const el = document.getElementById('d'+i); el.innerText = d;
             el.className = 'digit ' + (d===7 && mode!=='通常'?'gold':(d%2===0?'even':'odd'));
         });
     }
