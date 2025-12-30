@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EVANGELION Sim -Graph Fix-</title>
+    <title>EVANGELION Sim -Size Adjusted-</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&display=swap');
         body { background: #000; color: white; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
+        /* アニメーション */
         @keyframes viberation { 0% { transform: translate(0,0); } 10% { transform: translate(-3px, 3px); } 20% { transform: translate(3px, -3px); } 100% { transform: translate(0,0); } }
         .vibrate { animation: viberation 0.08s infinite; }
         @keyframes flash { 0%, 100% { background: #000; } 50% { background: #fff; } }
@@ -29,12 +30,12 @@
         .main-content { flex-grow: 1; display: flex; flex-direction: column; align-items: center; padding: 10px; overflow-y: auto; }
         .machine { width: 100%; max-width: 450px; background: #111; border: 2px solid #d00000; border-radius: 15px; padding: 12px; position: relative; }
         
-        /* 液晶：基準サイズ(330px) */
-        .screen { background: #000; height: 330px; border-radius: 10px; border: 2px solid #444; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; margin-bottom: 10px; }
-        .digit-container { display: flex; gap: 15px; }
-        .digit { font-size: 9rem; font-weight: 900; font-family: 'Shippori Mincho B1', serif; width: 120px; text-align: center; }
+        /* 液晶：気持ち小さく修正 (280px) */
+        .screen { background: #000; height: 280px; border-radius: 10px; border: 2px solid #444; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; margin-bottom: 10px; }
+        .digit-container { display: flex; gap: 12px; }
+        .digit { font-size: 7.5rem; font-weight: 900; font-family: 'Shippori Mincho B1', serif; width: 100px; text-align: center; }
         
-        .gold { color: #ffeb3b; text-shadow: 0 0 40px #ffeb3b; }
+        .gold { color: #ffeb3b; text-shadow: 0 0 30px #ffeb3b; }
         .odd { color: #ff4444; text-shadow: 0 0 20px #ff4444; }
         .even { color: #4444ff; text-shadow: 0 0 20px #4444ff; }
 
@@ -50,7 +51,7 @@
         .btn-auto { flex: 1; background: #d00000; color: white; border: 1px solid #ff4444; padding: 12px 0; font-weight: bold; border-radius: 5px; cursor: pointer; font-size: 0.85rem; }
         .btn-stop { background: #444 !important; border-color: #666 !important; }
 
-        /* 履歴ログ：基準サイズ(195px) */
+        /* 履歴ログ：1.5倍 (195px) を維持 */
         .log { width: 100%; max-width: 450px; height: 195px; background: #000; margin-top: 10px; padding: 10px; font-size: 0.95rem; color: #ff4444; overflow-y: auto; border: 1px solid #333; font-family: monospace; box-sizing: border-box; }
     </style>
 </head>
@@ -79,7 +80,7 @@
             <div class="digit-container">
                 <div id="d1" class="digit odd">1</div><div id="d2" class="digit even">2</div><div id="d3" class="digit odd">3</div>
             </div>
-            <div id="sub-display" style="position:absolute; bottom:10px; right:15px; color:#d00000; font-weight:bold; font-size:1.3rem;">通常</div>
+            <div id="sub-display" style="position:absolute; bottom:10px; right:15px; color:#d00000; font-weight:bold; font-size:1.1rem;">通常</div>
         </div>
 
         <div class="stat-grid">
@@ -106,7 +107,7 @@
             </div>
         </div>
     </div>
-    <div class="log" id="log">> グラフデータ記録機能を修正しました。</div>
+    <div class="log" id="log">> 液晶サイズを微調整しました（約1.3倍）。</div>
 </div>
 
 <script>
@@ -153,15 +154,13 @@
         currentCount++;
         totalRot++;
 
-        // 消費玉計算
         if(mode === '通常') {
             totalBall -= (13 + Math.random() * 3);
         } else {
             totalBall -= 0.05;
         }
 
-        // グラフデータに毎回転記録 (重要)
-        if(totalRot % (autoSpeed === 'fast' ? 10 : 1) === 0) { // 高速時は10回に1回記録して負荷軽減
+        if(totalRot % (autoSpeed === 'fast' ? 10 : 1) === 0) {
             slumpData.push(Math.floor(totalBall));
             slumpLabels.push(totalRot.toString());
         }
@@ -209,7 +208,6 @@
                 mode='時短'; rRem=SPECS.jt; rushCount=0; totalBall += 420;
             }
             if(rushCount > maxRush) maxRush = rushCount;
-            // 当たった時も記録
             slumpData.push(Math.floor(totalBall));
             slumpLabels.push(totalRot + " Hit");
             currentCount=0;
