@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EVANGELION Sim -Pure EVA15-</title>
+    <title>EVANGELION Sim -Fixed Spec-</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&display=swap');
         body { background: #000; color: white; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
@@ -17,7 +17,7 @@
         .rainbow-active { animation: rainbow 0.5s infinite; border-width: 4px !important; }
 
         header { width: 100%; height: 45px; background: #000; border-bottom: 2px solid #d00000; display: flex; align-items: center; padding: 0 15px; box-sizing: border-box; }
-        .logo-main { flex-grow: 1; text-align: center; font-family: 'Shippori Mincho B1', serif; font-size: 1rem; color: #d00000; letter-spacing: 2px; }
+        .logo-main { flex-grow: 1; text-align: center; font-family: 'Shippori Mincho B1', serif; font-size: 1rem; color: #d00000; }
 
         .main-content { flex-grow: 1; display: flex; flex-direction: column; align-items: center; padding: 10px; overflow-y: auto; }
         .machine { width: 100%; max-width: 400px; background: #111; border: 2px solid #d00000; border-radius: 15px; padding: 12px; }
@@ -37,13 +37,18 @@
 
         #sub-display { position: absolute; bottom: 10px; right: 15px; color: #d00000; font-size: 1.2rem; font-weight: bold; }
 
-        .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-bottom: 10px; }
+        .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-bottom: 4px; }
         .stat-item { background: #000; border: 1px solid #333; padding: 4px 1px; text-align: center; border-radius: 3px; }
         .stat-label { font-size: 0.55rem; color: #888; display: block; }
         .stat-val { font-size: 0.85rem; font-weight: bold; color: #d00000; font-family: monospace; }
 
         .control-layout { display: flex; gap: 6px; }
-        .btn-auto { flex: 1; background: #d00000; color: white; border: 1px solid #ff4444; padding: 15px 0; font-weight: bold; border-radius: 5px; cursor: pointer; font-size: 0.8rem; transition: 0.2s; }
+        .side-mini-btns { display: flex; flex-direction: column; gap: 4px; width: 45px; }
+        .mini-btn { flex: 1; font-size: 0.7rem; font-weight: bold; border: 1px solid #444; background: #222; color: #888; cursor: pointer; border-radius: 3px; }
+        .mini-btn.active { background: #d00000; color: white; border-color: #ff4444; }
+        
+        .main-btns { flex: 1; display: flex; gap: 6px; }
+        .btn-auto { flex: 1; background: #d00000; color: white; border: 1px solid #ff4444; padding: 12px 0; font-weight: bold; border-radius: 5px; cursor: pointer; font-size: 0.75rem; }
         .btn-stop { background: #444 !important; border-color: #666 !important; }
 
         .log { width: 100%; max-width: 400px; height: 120px; background: #000; margin-top: 10px; padding: 10px; font-size: 0.7rem; color: #ff4444; overflow-y: auto; border: 1px solid #333; font-family: monospace; box-sizing: border-box; }
@@ -73,20 +78,37 @@
             <div class="stat-item"><span class="stat-label">現在回転</span><span id="current-rot" class="stat-val">0</span></div>
             <div class="stat-item"><span class="stat-label">差玉数</span><span id="balance" class="stat-val">0</span></div>
         </div>
+        <div class="stat-grid">
+            <div class="stat-item"><span class="stat-label">最高連</span><span id="max-rush" class="stat-val">0</span></div>
+            <div class="stat-item"><span class="stat-label">初当り</span><span id="first-hits" class="stat-val">0</span></div>
+            <div class="stat-item"><span class="stat-label">RUSH突入</span><span id="rush-in" class="stat-val">0</span></div>
+            <div class="stat-item"><span class="stat-label">最大ハマ</span><span id="max-hamari" class="stat-val">0</span></div>
+        </div>
         
         <div class="control-layout">
-            <button class="btn-auto" id="btn-slow" onclick="toggleAuto('slow')">低速オート</button>
-            <button class="btn-auto" id="btn-fast" onclick="toggleAuto('fast')">高速オート</button>
+            <div class="side-mini-btns">
+                <button class="mini-btn" id="full-auto" onclick="toggleBtn('full-auto')">全</button>
+                <button class="mini-btn" id="gyakkyo" onclick="toggleBtn('gyakkyo')">逆</button>
+            </div>
+            <div class="main-btns">
+                <button class="btn-auto" id="btn-slow" onclick="toggleAuto('slow')">低速オート</button>
+                <button class="btn-auto" id="btn-fast" onclick="toggleAuto('fast')">高速オート</button>
+            </div>
         </div>
     </div>
-    <div class="log" id="log">> 起動準備完了。目標、使徒。</div>
+    <div class="log" id="log">> 全機能復旧完了。スペック固定。</div>
 </div>
 
 <script>
-    // エヴァ15専用スペック固定
     const SPECS = { n: 319.7, s: 99.4, st: 163, jt: 100 };
-    let hits=0, rushCount=0, currentCount=0, totalBall=0;
-    let mode='通常', rRem=0, isAuto=false, autoSpeed='slow', isAnim=false, hojoCount=0;
+    let hits=0, rushCount=0, currentCount=0, totalBall=0, firstHits=0, rushIn=0, maxRush=0, maxHamari=0;
+    let mode='通常', rRem=0, isAuto=false, autoSpeed='slow', isFullAuto=false, isGyakkyo=false, isAnim=false, hojoCount=0;
+
+    function toggleBtn(id) {
+        if(id==='full-auto') isFullAuto = !isFullAuto;
+        if(id==='gyakkyo') isGyakkyo = !isGyakkyo;
+        document.getElementById(id).classList.toggle('active');
+    }
 
     function toggleAuto(s) {
         if(isAuto && autoSpeed === s) { isAuto = false; resetBtns(); }
@@ -105,68 +127,60 @@
             let effect = selectEffect(isHit);
 
             updateHojo(effect.name === "赤保留");
-            if(mode==='通常') totalBall -= 3.125;
+            if(mode==='通常') totalBall -= 3.125; // 1回転のマイナス（4円換算等）
             currentCount++;
 
             if(effect.name === "全回転") {
-                isAnim = true;
-                addLog("【プレミア】全回転演出発生！！");
+                isAnim = true; addLog("【プレミア】全回転演出発生！！");
                 document.getElementById('machine').classList.add('rainbow-active');
-                for(let n=1; n<=7; n++) {
-                    applyDigit(n);
-                    await new Promise(r => setTimeout(r, 400));
-                }
+                for(let n=1; n<=7; n++) { applyDigit(n); await new Promise(r => setTimeout(r, 400)); }
                 document.getElementById('machine').classList.remove('rainbow-active');
-            } else if(effect.heavy) {
-                isAnim = true;
-                addLog(`【予告】${effect.name}`);
+            } else if(effect.heavy && !isGyakkyo) {
+                isAnim = true; addLog(`【予告】${effect.name}`);
                 if(effect.vibe) document.getElementById('machine').classList.add('vibrate');
                 if(effect.flash) document.getElementById('screen').classList.add('flash-active');
-                
                 let spin = setInterval(() => { [1,2,3].forEach(i => setRandomDigit(i)); }, 80);
                 await new Promise(r => setTimeout(r, 2000));
                 clearInterval(spin);
-                
                 document.getElementById('machine').className = 'machine';
                 document.getElementById('screen').classList.remove('flash-active');
-            } else {
-                [1,2,3].forEach(i => setRandomDigit(i));
-            }
+            } else { [1,2,3].forEach(i => setRandomDigit(i)); }
 
             if(isHit || effect.name === "全回転") {
-                hits++;
+                isAnim = true; hits++;
+                if(currentCount > maxHamari) maxHamari = currentCount;
                 let isSt = (effect.name === "全回転") || (mode !== '通常') || (Math.random() < 0.59);
-                let d = isSt ? [1,3,5,7,9][Math.floor(Math.random()*5)] : [2,4,6,8][Math.floor(Math.random()*4)];
-                if(effect.name === "全回転") d = 7; 
+                let d = (effect.name === "全回転") ? 7 : (isSt ? [1,3,5,7,9][Math.floor(Math.random()*5)] : [2,4,6,8][Math.floor(Math.random()*4)]);
                 applyDigit(d);
 
                 if(isSt) {
-                    addLog(`【${d}】${mode==='通常'?'初当り':(mode==='時短'?'引き戻し':'継続')} ${currentCount}回転`);
+                    if(mode==='通常') { firstHits++; rushIn++; addLog(`【${d}】初当り RUSH突入 ${currentCount}回転`); totalBall += 420; }
+                    else if(mode==='時短') { rushIn++; addLog(`【${d}】時短引き戻し!! ${currentCount}回転`); totalBall += 1400; }
+                    else { addLog(`【${d}】RUSH継続 ${rushCount+1}連目(${currentCount}回転)`); totalBall += 1400; }
                     mode='ST'; rRem=SPECS.st; rushCount++;
-                    totalBall += 1400;
+                    if(rushCount > maxRush) maxRush = rushCount;
                 } else {
-                    mode='時短'; rRem=SPECS.jt; rushCount=0;
-                    totalBall += 400;
-                    addLog(`【${d}】単発通常 ${currentCount}回転`);
+                    firstHits++; mode='時短'; rRem=SPECS.jt; rushCount=0; totalBall += 420;
+                    addLog(`【${d}】単発通常(3R) ${currentCount}回転`);
                 }
                 currentCount=0;
-                await new Promise(r => setTimeout(r, 1000));
-            } else if(effect.heavy) {
+                await new Promise(r => setTimeout(r, isFullAuto ? 100 : 1000));
+            } else if(effect.heavy && !isGyakkyo) {
                 addLog(`> ${effect.name} 外れ...`);
             }
 
             if(mode!=='通常' && !isHit && effect.name !== "全回転") {
                 rRem--;
                 if(rRem<=0) { 
-                    addLog(`${mode}終了 ${rushCount}連`); 
-                    mode='通常'; rushCount=0; isAuto=false; resetBtns(); 
+                    addLog(`${mode}終了 ${rushCount}連`); mode='通常'; rushCount=0; 
+                    if(!isFullAuto) { isAuto=false; resetBtns(); }
                 }
             }
             isAnim = false;
         }
 
         updateUI();
-        let delay = autoSpeed==='fast' ? (isAnim?800:30) : 800;
+        let delay = autoSpeed==='fast' ? (isAnim?800:(isFullAuto?1:30)) : 800;
         if(isAuto) setTimeout(startProcess, delay);
     }
 
@@ -190,10 +204,7 @@
         for(let i=1; i<=4; i++) {
             const el = document.getElementById('h'+i);
             el.className = 'h-lamp';
-            if(i <= hojoCount) {
-                el.classList.add('h-on');
-                if(isRedHot && i === 1) el.classList.add('h-red-hot');
-            }
+            if(i <= hojoCount) { el.classList.add('h-on'); if(isRedHot && i === 1) el.classList.add('h-red-hot'); }
         }
     }
 
@@ -212,8 +223,9 @@
     }
     function updateUI() {
         document.getElementById('hits').innerText=hits; document.getElementById('rush-count').innerText=rushCount;
-        document.getElementById('current-rot').innerText=currentCount;
-        document.getElementById('balance').innerText=Math.floor(totalBall).toLocaleString();
+        document.getElementById('current-rot').innerText=currentCount; document.getElementById('balance').innerText=Math.floor(totalBall).toLocaleString();
+        document.getElementById('max-rush').innerText=maxRush; document.getElementById('first-hits').innerText=firstHits;
+        document.getElementById('rush-in').innerText=rushIn; document.getElementById('max-hamari').innerText=maxHamari;
         document.getElementById('sub-display').innerText = mode==='通常'?'通常':`${mode}:${rRem}`;
     }
     function addLog(m) { const l=document.getElementById('log'); l.innerHTML=`> ${m}<br>${l.innerHTML}`; }
