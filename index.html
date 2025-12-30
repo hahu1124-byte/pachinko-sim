@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EVANGELION Sim -Complete-</title>
+    <title>EVANGELION Sim -Pro-</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&display=swap');
@@ -20,41 +20,40 @@
         .logo-main { flex-grow: 1; text-align: center; font-family: 'Shippori Mincho B1', serif; font-size: 0.9rem; color: #d00000; }
 
         .main-content { flex-grow: 1; display: flex; flex-direction: column; align-items: center; padding: 10px; overflow-y: auto; }
-        .machine { width: 100%; max-width: 400px; background: #111; border: 2px solid #d00000; border-radius: 15px; padding: 10px; position: relative; }
+        .machine { width: 100%; max-width: 400px; background: #111; border: 2px solid #d00000; border-radius: 15px; padding: 12px; }
         
-        /* 液晶周り */
-        .screen { background: #000; height: 120px; border-radius: 8px; border: 2px solid #444; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+        .screen { background: #000; height: 120px; border-radius: 8px; border: 2px solid #444; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; margin-bottom: 8px; }
         .digit-container { display: flex; gap: 5px; }
         .digit { font-size: 3rem; font-weight: 900; font-family: 'Shippori Mincho B1', serif; width: 50px; text-align: center; z-index: 10; }
         .gold { color: #ffeb3b; text-shadow: 0 0 15px #ffeb3b; } .odd { color: #ff4444; } .even { color: #4444ff; }
         
-        /* 保留ランプ */
         .heso-box { display: flex; gap: 5px; margin-top: 5px; }
         .h-lamp { width: 10px; height: 10px; border-radius: 50%; background: #333; border: 1px solid #555; }
         .h-on { background: #ff0000; box-shadow: 0 0 5px #ff0000; }
 
-        /* スペック表示板 */
-        .spec-board { background: #222; border: 1px solid #444; margin: 8px 0; padding: 5px; display: grid; grid-template-columns: 1fr 1fr; gap: 5px; font-size: 0.65rem; color: #ccc; }
-        .spec-item b { color: #d00000; }
+        /* スペック文字を白に修正 */
+        .spec-board { background: #222; border: 1px solid #444; margin-bottom: 8px; padding: 6px; display: grid; grid-template-columns: 1fr 1fr; gap: 5px; font-size: 0.65rem; color: #eee; }
+        .spec-item b { color: #fff; font-weight: bold; }
 
-        .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-bottom: 5px; }
+        .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-bottom: 4px; }
         .stat-item { background: #000; border: 1px solid #333; padding: 4px 1px; text-align: center; border-radius: 3px; }
         .stat-label { font-size: 0.55rem; color: #888; display: block; }
         .stat-val { font-size: 0.85rem; font-weight: bold; color: #d00000; font-family: monospace; }
 
+        /* オートボタンを左右に配置 */
         .control-layout { display: flex; gap: 6px; }
         .side-mini-btns { display: flex; flex-direction: column; gap: 4px; width: 45px; }
         .mini-btn { flex: 1; font-size: 0.7rem; font-weight: bold; border: 1px solid #444; background: #222; color: #888; cursor: pointer; border-radius: 3px; }
         .mini-btn.active { background: #d00000; color: white; border-color: #ff4444; }
         
-        .main-btns { flex: 1; display: flex; flex-direction: column; gap: 4px; }
-        .btn-auto { flex: 1; background: #d00000; color: white; border: 1px solid #ff4444; padding: 10px; font-weight: bold; border-radius: 5px; cursor: pointer; font-size: 0.8rem; }
+        .main-btns { flex: 1; display: flex; gap: 6px; }
+        .btn-auto { flex: 1; background: #d00000; color: white; border: 1px solid #ff4444; padding: 12px 0; font-weight: bold; border-radius: 5px; cursor: pointer; font-size: 0.75rem; }
         .btn-stop { background: #444 !important; border-color: #666 !important; }
 
-        .log { width: 100%; max-width: 400px; height: 90px; background: #000; margin-top: 10px; padding: 10px; font-size: 0.7rem; color: #ff4444; overflow-y: auto; border: 1px solid #333; font-family: monospace; box-sizing: border-box; }
+        .log { width: 100%; max-width: 400px; height: 120px; background: #000; margin-top: 10px; padding: 10px; font-size: 0.7rem; color: #ff4444; overflow-y: auto; border: 1px solid #333; font-family: monospace; box-sizing: border-box; }
         
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 2000; flex-direction: column; padding: 20px; box-sizing: border-box; }
-        .chart-container { background: #fff; border-radius: 10px; padding: 10px; margin-bottom: 10px; height: 180px; }
+        .chart-container { background: #fff; border-radius: 10px; padding: 10px; margin-bottom: 10px; height: 200px; }
     </style>
 </head>
 <body>
@@ -94,10 +93,10 @@
             <div id="sub-display" style="position:absolute; bottom:5px; right:10px; color:#d00000; font-size:0.6rem; font-weight:bold;">通常</div>
         </div>
 
-        <div class="spec-board" id="spec-board">
+        <div class="spec-board">
             <div class="spec-item">通常確率: <b>1/319.7</b></div>
             <div class="spec-item">ST中確率: <b>1/99.4</b></div>
-            <div class="spec-item">ST突入率: <b>約70%</b>(時短含)</div>
+            <div class="spec-item">ST突入率: <b>約70%</b></div>
             <div class="spec-item">ST継続率: <b>約81%</b></div>
         </div>
 
@@ -105,12 +104,12 @@
             <div class="stat-item"><span class="stat-label">大当り</span><span id="hits" class="stat-val">0</span></div>
             <div class="stat-item"><span class="stat-label">連チャン</span><span id="rush-count" class="stat-val">0</span></div>
             <div class="stat-item"><span class="stat-label">現在回転</span><span id="current-rot" class="stat-val">0</span></div>
-            <div class="stat-item"><span class="stat-label">収支(円)</span><span id="balance" class="stat-val">0</span></div>
+            <div class="stat-item"><span class="stat-label">収支(玉)</span><span id="balance" class="stat-val">0</span></div>
         </div>
         <div class="stat-grid">
             <div class="stat-item"><span class="stat-label">最高連</span><span id="max-rush" class="stat-val">0</span></div>
             <div class="stat-item"><span class="stat-label">初当り</span><span id="first-hits" class="stat-val">0</span></div>
-            <div class="stat-item"><span class="stat-label">突入回数</span><span id="rush-in" class="stat-val">0</span></div>
+            <div class="stat-item"><span class="stat-label">RUSH突入</span><span id="rush-in" class="stat-val">0</span></div>
             <div class="stat-item"><span class="stat-label">最大ハマ</span><span id="max-hamari" class="stat-val">0</span></div>
         </div>
         
@@ -125,7 +124,7 @@
             </div>
         </div>
     </div>
-    <div class="log" id="log">> エヴァ15：全システム再構築完了</div>
+    <div class="log" id="log">> エヴァ15：実機データ読み込み完了</div>
 </div>
 
 <script>
@@ -133,7 +132,7 @@
     let cur = SPECS['EVA15'];
     let hits=0, rushCount=0, currentCount=0, totalBall=0, firstHits=0, rushIn=0, maxRush=0, maxHamari=0;
     let mode='通常', rRem=0, isAuto=false, autoSpeed='slow', isFullAuto=false, isGyakkyo=false, isAnim=false;
-    let hojoCount = 0, balanceHistory=[0], distData=[0,0,0,0,0];
+    let hojoCount = 0, balanceHistory=[0];
 
     function openModal(id) { document.getElementById(id).style.display = 'flex'; }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
@@ -153,17 +152,18 @@
     async function startProcess() {
         if(!isAuto || isAnim) return;
         
-        // 保留追加処理
         if(hojoCount < 4) { hojoCount++; updateHojo(); }
 
-        // 保留がある限り回す
         if(hojoCount > 0) {
             hojoCount--;
             updateHojo();
-            if(mode==='通常') totalBall -= 12.5;
+            if(mode==='通常') totalBall -= 3.125; // 1回転あたり3.125玉(1k16回転換算)
             currentCount++;
 
-            if(currentCount % 20 === 0) { balanceHistory.push(Math.floor(totalBall*4)); if(balanceHistory.length>50) balanceHistory.shift(); }
+            // 高速オート中でも図柄を動かす
+            if(!isGyakkyo) {
+                [1,2,3].forEach(i => document.getElementById('d'+i).innerText = Math.floor(Math.random()*9)+1);
+            }
 
             let prob = (mode==='ST' ? cur.s : cur.n);
             let isHit = Math.random() < (1/prob);
@@ -171,9 +171,9 @@
             if(isHit) {
                 isAnim = true;
                 if(!isGyakkyo) {
-                    if(Math.random()<0.7) document.getElementById('machine').classList.add('vibrate');
-                    if(Math.random()<0.2) document.getElementById('screen').classList.add('flash-active');
-                    await new Promise(r=>setTimeout(r, autoSpeed==='fast'?100:1500));
+                    if(Math.random()<0.7) { document.getElementById('machine').classList.add('vibrate'); addLog("!! レバブル発生 !!"); }
+                    if(Math.random()<0.2) { document.getElementById('screen').classList.add('flash-active'); addLog("⚡ インパクトフラッシュ ⚡"); }
+                    await new Promise(r=>setTimeout(r, autoSpeed==='fast'?200:1500));
                     document.getElementById('machine').classList.remove('vibrate');
                     document.getElementById('screen').classList.remove('flash-active');
                 }
@@ -186,36 +186,35 @@
                 setDigit(d);
 
                 if(isSt) {
-                    if(mode==='通常') { firstHits++; rushIn++; } else if(mode==='時短') { rushIn++; }
+                    let oldMode = mode;
+                    if(mode==='通常') { firstHits++; rushIn++; addLog(`【${d}】初当り RUSH突入 ${currentCount}回転`); } 
+                    else if(mode==='時短') { rushIn++; addLog(`【${d}】時短引き戻し成功 ${currentCount}回転`); }
+                    else { addLog(`【${d}】RUSH継続 ${rushCount+1}連目`); }
+                    
                     mode='ST'; rRem=cur.st; rushCount++;
                     if(rushCount > maxRush) maxRush = rushCount;
                     totalBall += 1400;
-                    addLog(`【${d}】大当り! RUSH入魂`);
                 } else {
                     firstHits++; mode='時短'; rRem=cur.jt; rushCount=0;
                     totalBall += 400;
-                    addLog(`【${d}】大当り! 時短100回`);
+                    addLog(`【${d}】単発(時短100) ${currentCount}回転`);
                 }
                 currentCount=0; isAnim=false;
             } else {
                 if(mode!=='通常') {
                     rRem--;
-                    if(rRem<=0) { addLog(`${mode}終了`); mode='通常'; rushCount=0; if(!isFullAuto) isAuto=false; }
+                    if(rRem<=0) { addLog(`${mode}終了 ${rushCount}連`); mode='通常'; rushCount=0; if(!isFullAuto) isAuto=false; }
                 }
             }
         }
 
         updateUI();
-        let delay = autoSpeed==='fast' ? (isFullAuto?1:30) : 1000;
+        if(currentCount % 10 === 0) balanceHistory.push(totalBall);
+        let delay = autoSpeed==='fast' ? (isFullAuto?1:30) : 800;
         if(isAuto) setTimeout(startProcess, delay);
     }
 
-    function updateHojo() {
-        for(let i=1; i<=4; i++) {
-            document.getElementById('h'+i).classList.toggle('h-on', i <= hojoCount);
-        }
-    }
-
+    function updateHojo() { for(let i=1; i<=4; i++) document.getElementById('h'+i).classList.toggle('h-on', i <= hojoCount); }
     function setDigit(d) { [1,2,3].forEach(i=>{ const e=document.getElementById('d'+i); e.innerText=d; e.className='digit '+(d==7?'gold':(d%2!=0?'odd':'even')); }); }
     
     function updateUI() {
@@ -223,18 +222,18 @@
         document.getElementById('current-rot').innerText=currentCount; document.getElementById('max-rush').innerText=maxRush;
         document.getElementById('first-hits').innerText=firstHits; document.getElementById('rush-in').innerText=rushIn;
         document.getElementById('max-hamari').innerText=maxHamari;
-        const b = Math.floor(totalBall*4); document.getElementById('balance').innerText=b.toLocaleString();
+        document.getElementById('balance').innerText=Math.floor(totalBall).toLocaleString();
         document.getElementById('sub-display').innerText = mode==='通常'?'通常':`${mode}:${rRem}`;
     }
 
     function addLog(m) { const l=document.getElementById('log'); l.innerHTML=`> ${m}<br>${l.innerHTML}`; }
 
-    let sChart, dChart;
+    let sChart;
     function openDataModal() {
         openModal('dataModal');
-        const ctx1 = document.getElementById('slumpChart').getContext('2d');
+        const ctx = document.getElementById('slumpChart').getContext('2d');
         if(sChart) sChart.destroy();
-        sChart = new Chart(ctx1, { type:'line', data:{ labels:balanceHistory.map((_,i)=>i), datasets:[{label:'収支推移', data:balanceHistory, borderColor:'#d00000', tension:0.3}] }, options:{maintainAspectRatio:false}});
+        sChart = new Chart(ctx, { type:'line', data:{ labels:balanceHistory.map((_,i)=>i*10), datasets:[{label:'差玉数推移', data:balanceHistory, borderColor:'#d00000', backgroundColor:'rgba(208,0,0,0.1)', fill:true}] }, options:{maintainAspectRatio:false}});
     }
     function selectSpec(k) { cur=SPECS[k]; location.reload(); }
 </script>
