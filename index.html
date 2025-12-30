@@ -3,107 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pパチンコシミュレーター エヴァ15風</title>
+    <title>EVANGELION Sim -未来への咆哮風-</title>
     <style>
-        body { background: #121212; color: white; font-family: sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&display=swap');
+
+        body { background: #050505; color: white; font-family: sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
         
-        /* サイドバー（引き出し式） */
-        .sidebar { 
-            position: absolute; left: -250px; top: 0; width: 200px; height: 100%; 
-            background: #1e1e1e; border-right: 2px solid #333; padding: 20px; 
-            z-index: 100; transition: 0.3s; 
-        }
+        /* サイドバー */
+        .sidebar { position: absolute; left: -250px; top: 0; width: 220px; height: 100%; background: #000; border-right: 2px solid #d00000; padding: 20px; z-index: 100; transition: 0.3s; box-shadow: 5px 0 15px rgba(208, 0, 0, 0.3); }
         .sidebar.open { left: 0; }
-        .sidebar h3 { font-size: 1rem; color: #aaa; border-bottom: 1px solid #333; padding-bottom: 10px; }
-        .machine-item { padding: 10px; background: #333; border-radius: 5px; margin-bottom: 10px; border-left: 4px solid #7b2cbf; font-size: 0.8rem; }
+        .machine-item { padding: 12px; background: #1a1a1a; border: 1px solid #d00000; color: #ff4444; border-radius: 2px; margin-bottom: 10px; font-size: 0.8rem; font-weight: bold; cursor: pointer; }
 
-        /* メニュー開閉ボタン */
-        .menu-btn { position: absolute; top: 10px; left: 10px; z-index: 101; background: #444; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; }
+        /* ロゴ部分 */
+        .logo-area { text-align: center; margin-bottom: 15px; border-bottom: 2px solid #d00000; padding-bottom: 5px; }
+        .logo-main { font-family: 'Shippori Mincho B1', serif; font-size: 1.2rem; color: #d00000; letter-spacing: 2px; text-shadow: 0 0 5px #d00000; }
 
-        /* メイン画面（スマホ最適化） */
-        .main-content { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px; width: 100%; }
-        .machine { width: 95%; max-width: 400px; background: #2a2a2a; border: 4px solid #444; border-radius: 30px; padding: 15px; box-shadow: 0 0 20px rgba(0,0,0,0.7); box-sizing: border-box; }
+        .menu-btn { position: absolute; top: 10px; left: 10px; z-index: 101; background: #d00000; color: white; border: none; padding: 8px 12px; border-radius: 2px; cursor: pointer; font-weight: bold; }
+
+        /* メイン画面 */
+        .main-content { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 60px 10px 10px; width: 100%; overflow-y: auto; }
+        .machine { width: 100%; max-width: 400px; background: #111; border: 2px solid #d00000; border-radius: 10px; padding: 15px; box-sizing: border-box; }
         
-        .screen { background: #000; height: 200px; border-radius: 15px; border: 3px solid #555; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 15px; position: relative; overflow: hidden; }
-        #display { font-size: 3.5rem; font-weight: bold; z-index: 2; }
+        .screen { background: #000; height: 180px; border-radius: 5px; border: 1px solid #444; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 15px; position: relative; overflow: hidden; box-shadow: inset 0 0 20px #d0000055; }
+        #display { font-size: 4rem; font-weight: 900; z-index: 2; font-family: 'Shippori Mincho B1', serif; }
         
         .flash-overlay { position: absolute; top:0; left:0; width:100%; height:100%; pointer-events: none; z-index: 1; display: none; }
-        @keyframes rainbow { 0%{background:red;} 20%{background:yellow;} 40%{background:green;} 60%{background:blue;} 80%{background:purple;} 100%{background:red;} }
-        .is-hitting { display: block; animation: rainbow 0.1s linear infinite; opacity: 0.5; }
+        .is-hitting { display: block; animation: rainbow 0.1s linear infinite; opacity: 0.6; }
+        @keyframes rainbow { 0%{background:red;} 20%{background:orange;} 40%{background:yellow;} 60%{background:white;} 80%{background:purple;} 100%{background:red;} }
 
-        .mode-badge { position: absolute; top: 8px; left: 8px; padding: 4px 8px; border-radius: 3px; font-size: 0.6rem; font-weight: bold; z-index: 2; }
-        .mode-normal { background: #555; }
-        .mode-st { background: #d00000; }
-        .mode-jititan { background: #0077b6; }
+        /* スペック表 */
+        .spec-table { width: 100%; margin-bottom: 15px; border-collapse: collapse; font-size: 0.75rem; background: #1a1a1a; color: #aaa; }
+        .spec-table th, .spec-table td { border: 1px solid #333; padding: 6px; text-align: center; }
+        .spec-table th { background: #222; color: #ff4444; font-weight: normal; }
+        .highlight { color: #fff; font-weight: bold; }
 
-        .stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 15px; }
-        .stat-item { background: #1e1e1e; padding: 8px; border-radius: 8px; text-align: center; }
-        .stat-val { display: block; font-size: 1rem; font-weight: bold; color: #7b2cbf; }
+        .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 15px; }
+        .stat-item { background: #000; border: 1px solid #333; padding: 5px; text-align: center; }
+        .stat-val { display: block; font-size: 0.9rem; font-weight: bold; color: #d00000; }
+        .stat-label { font-size: 0.5rem; color: #666; }
 
-        #btn { background: linear-gradient(135deg, #ff0000, #990000); color: white; border: none; padding: 15px; font-size: 1.2rem; border-radius: 50px; cursor: pointer; width: 100%; box-shadow: 0 5px #660000; font-weight: bold; touch-action: manipulation; }
-        #btn.active { background: #444; box-shadow: none; transform: translateY(3px); }
+        #btn { background: #d00000; color: white; border: 2px solid #ff4444; padding: 12px; font-size: 1.1rem; cursor: pointer; width: 100%; font-weight: bold; font-family: 'Shippori Mincho B1', serif; transition: 0.2s; }
+        #btn.active { background: #333; color: #666; border-color: #444; }
 
-        .log { width: 95%; max-width: 400px; height: 80px; background: #000; margin-top: 10px; padding: 8px; border-radius: 10px; font-size: 0.7rem; color: #0f0; overflow-y: auto; box-sizing: border-box; }
+        .log { width: 100%; max-width: 400px; height: 100px; background: #000; margin-top: 10px; padding: 8px; border-radius: 5px; font-size: 0.7rem; color: #ff4444; overflow-y: auto; box-sizing: border-box; border: 1px solid #333; font-family: monospace; }
     </style>
 </head>
 <body>
 
-<button class="menu-btn" onclick="toggleSidebar()">≡ 機種</button>
+<button class="menu-btn" onclick="toggleSidebar()">≡ 機種選択</button>
 
 <div class="sidebar" id="sidebar">
-    <h3>機種選択</h3>
-    <ul class="machine-list" style="list-style: none; padding: 0;">
+    <div class="logo-area">
+        <div class="logo-main">汎用シミュ</div>
+    </div>
+    <ul style="list-style: none; padding: 0;">
         <li class="machine-item">Pエヴァ15 未来への咆哮</li>
     </ul>
-    <button onclick="toggleSidebar()" style="width: 100%; margin-top: 20px;">閉じる</button>
+    <button onclick="toggleSidebar()" style="width: 100%; background: #333; color: white; border: none; padding: 10px; cursor: pointer;">閉じる</button>
 </div>
 
 <div class="main-content">
+    <div class="logo-area" style="width: 100%; max-width: 400px;">
+        <div class="logo-main">新機能：未来への咆哮（風）</div>
+    </div>
+
     <div class="machine">
         <div class="screen">
             <div id="flash" class="flash-overlay"></div>
-            <div id="mode-badge" class="mode-badge mode-normal">通常モード</div>
             <div id="display">READY</div>
-            <div id="sub-display" style="color:#aaa; font-size:0.8rem; margin-top:10px;">回転数: 0</div>
+            <div id="sub-display" style="color:#d00000; font-size:0.7rem; margin-top:5px; font-weight:bold;">STANDBY</div>
         </div>
 
+        <table class="spec-table">
+            <tr>
+                <th>通常時</th><td class="highlight">1/319.7</td>
+                <th>ST/時短</th><td class="highlight">1/99.4 / 1/319</td>
+            </tr>
+            <tr>
+                <th>ST突入率</th><td class="highlight">約70%※</td>
+                <th>継続率</th><td class="highlight">約81%</td>
+            </tr>
+        </table>
+
         <div class="stat-grid">
-            <div class="stat-item"><span id="hits" class="stat-val">0</span><span style="font-size:0.6rem">大当り</span></div>
-            <div class="stat-item"><span id="rush-count" class="stat-val">0</span><span style="font-size:0.6rem">連チャン</span></div>
-            <div class="stat-item"><span id="investment" class="stat-val">0</span><span style="font-size:0.6rem">投資</span></div>
-            <div class="stat-item"><span id="balance" class="stat-val">0</span><span style="font-size:0.6rem">収支</span></div>
+            <div class="stat-item"><span class="stat-label">大当り</span><span id="hits" class="stat-val">0</span></div>
+            <div class="stat-item"><span class="stat-label">連チャン</span><span id="rush-count" class="stat-val">0</span></div>
+            <div class="stat-item"><span class="stat-label">回転数</span><span id="current-rot" class="stat-val">0</span></div>
+            <div class="stat-item"><span class="stat-label">収支</span><span id="balance" class="stat-val">0</span></div>
         </div>
 
         <button id="btn" onclick="toggleAuto()">オート開始</button>
     </div>
-    <div class="log" id="log">--- 履歴 ---<br></div>
+
+    <div class="log" id="log">--- 作戦行動履歴 ---<br></div>
 </div>
 
 <script>
-    // 設定
     const SPEC = { normal_prob: 319.7, st_prob: 99.4, st_taps: 163, jititan_taps: 100, st_rush_rate: 0.59, payout: 1500 };
     let totalCount = 0, currentCount = 0, hits = 0, rushCount = 0, investment = 0, totalReturn = 0;
     let mode = 'NORMAL', stRemaining = 0, isAuto = false, autoTimer = null;
 
-    // 音を鳴らす関数 (Web Audio API)
     function playHitSound() {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const oscillator = ctx.createOscillator();
-        const gain = ctx.createGain();
-        oscillator.type = 'square';
-        oscillator.frequency.setValueAtTime(880, ctx.currentTime); // ラの音
-        oscillator.frequency.exponentialRampToValueAtTime(1760, ctx.currentTime + 0.1);
-        gain.gain.setValueAtTime(0.1, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
-        oscillator.connect(gain);
-        gain.connect(ctx.destination);
-        oscillator.start();
-        oscillator.stop(ctx.currentTime + 0.5);
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc1 = ctx.createOscillator();
+            const osc2 = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc1.type = 'sawtooth'; osc2.type = 'square';
+            osc1.frequency.setValueAtTime(440, ctx.currentTime);
+            osc1.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.1);
+            osc2.frequency.setValueAtTime(554, ctx.currentTime);
+            osc2.frequency.exponentialRampToValueAtTime(1108, ctx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.1, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+            osc1.connect(gain); osc2.connect(gain); gain.connect(ctx.destination);
+            osc1.start(); osc2.start(); osc1.stop(ctx.currentTime + 0.5); osc2.stop(ctx.currentTime + 0.5);
+        } catch(e) {}
     }
 
-    function toggleSidebar() {
-        document.getElementById('sidebar').classList.toggle('open');
-    }
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
 
     function toggleAuto() {
         if (isAuto) { stopAuto(); } 
@@ -111,7 +129,7 @@
             isAuto = true;
             document.getElementById('btn').innerText = "ストップ";
             document.getElementById('btn').classList.add('active');
-            autoTimer = setInterval(play, 40); 
+            autoTimer = setInterval(play, 30); 
         }
     }
 
@@ -132,7 +150,7 @@
             if (mode !== 'NORMAL') {
                 stRemaining--;
                 if (stRemaining <= 0) {
-                    addLog(`${mode}終了`);
+                    addLog(`警告：${mode}スルー`);
                     mode = 'NORMAL'; currentCount = 0; rushCount = 0;
                 }
             }
@@ -144,17 +162,13 @@
         stopAuto();
         hits++;
         totalReturn += SPEC.payout;
-        playHitSound(); // 音を鳴らす
-        
+        playHitSound();
         const display = document.getElementById('display');
         const flash = document.getElementById('flash');
-        display.innerText = "V";
+        display.innerText = "VII";
         display.style.color = "#ffeb3b";
-        flash.style.display = 'block';
         flash.classList.add('is-hitting');
-        
         setTimeout(() => {
-            flash.style.display = 'none';
             flash.classList.remove('is-hitting');
             display.style.color = "white";
         }, 2000);
@@ -162,14 +176,14 @@
         if (mode === 'NORMAL') {
             if (Math.random() < SPEC.st_rush_rate) {
                 mode = 'ST'; stRemaining = SPEC.st_taps; rushCount = 1;
-                addLog(`${currentCount}回転: 大当り(ST)`);
+                addLog(`覚醒：大当り(IMPACT RUSH突入)`);
             } else {
                 mode = 'JITITAN'; stRemaining = SPEC.jititan_taps;
-                addLog(`${currentCount}回転: 大当り(時短)`);
+                addLog(`捕捉：大当り(チャンスタイム)`);
             }
         } else {
             mode = 'ST'; stRemaining = SPEC.st_taps; rushCount++;
-            addLog(`${currentCount}回転: ${rushCount}連!`);
+            addLog(`継続：${rushCount}連目`);
         }
         currentCount = 0;
     }
@@ -177,12 +191,10 @@
     function updateUI() {
         document.getElementById('hits').innerText = hits;
         document.getElementById('rush-count').innerText = rushCount;
-        document.getElementById('investment').innerText = investment.toLocaleString();
+        document.getElementById('current-rot').innerText = currentCount;
         document.getElementById('balance').innerText = (totalReturn - investment).toLocaleString();
-        document.getElementById('sub-display').innerText = (mode === 'NORMAL') ? `通常: ${currentCount}` : `残り: ${stRemaining}`;
-        const badge = document.getElementById('mode-badge');
-        badge.innerText = (mode === 'ST') ? "IMPACT RUSH" : (mode === 'JITITAN') ? "チャンスタイム" : "通常モード";
-        badge.className = `mode-badge mode-${mode.toLowerCase()}`;
+        const sub = document.getElementById('sub-display');
+        sub.innerText = (mode === 'ST') ? `ST残り: ${stRemaining}` : (mode === 'JITITAN') ? `時短残り: ${stRemaining}` : "通常時：待機中";
     }
 
     function addLog(msg) {
