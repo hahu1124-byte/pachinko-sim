@@ -86,7 +86,7 @@
                 <button class="btn-auto" id="btn-fast" onclick="toggleAuto('fast')">高速オート</button>
             </div>
         </div>
-        <div class="log" id="log">> 連チャン終了時に終了したモード名を表示するようにしました。</div>
+        <div class="log" id="log">> 通常時の昇格時のみ「(昇格)」を表示するよう条件設定しました。</div>
     </div>
 
 
@@ -139,17 +139,13 @@
 
     async function startProcess() {
         if(!isAuto || isAnim) return;
-        
-        // --- 連チャン終了判定（ここを修正） ---
         if(mode !== '通常' && rRem <= 0) { 
             addLog(`${mode} 【連チャン終了】 ${currentRushHits}回`); 
             let prevMode = mode; 
             mode = '通常'; rushCount = 0; currentRushHits = 0; 
             lcdCount = (prevMode==='ST') ? 0 : 100;
-            updateUI(); 
-            if(!optAll) { isAuto = false; resetBtns(); return; } 
+            updateUI(); if(!optAll) { isAuto = false; resetBtns(); return; } 
         }
-
         let prob = (mode==='ST') ? SPECS.s : SPECS.n;
         let isHit = Math.random() < (1 / prob);
         let eff = selectEffect(isHit);
@@ -186,7 +182,6 @@
                 totalBall += 420; mode='ST'; rRem=SPECS.st; rushCount=currentRushHits; 
             } else { 
                 let d, is10R = false, nextM = '時短', isShokaku = false, logDigit = "";
-                
                 if (mode !== '通常') { 
                     logDigit = [2,4,6,8][Math.floor(Math.random()*4)]; 
                     d = 7; is10R = true; nextM = 'ST'; isShokaku = true;
@@ -203,17 +198,16 @@
                     }
                 }
                 
+                // ログメッセージ構築（通常時の昇格のみに限定）
                 let logMsg = `>> ${mode} ${lcdCount}回転 【${logDigit}】 ${is10R?'10R':'3R'}当り!`;
                 if(isShokaku && mode === '通常') logMsg += " (昇格)";
                 addLog(logMsg);
 
                 [1,2,3].forEach(i => { const el=document.getElementById('d'+i); el.innerText=logDigit; el.className='digit '+(logDigit==7?'gold':(logDigit%2!==0?'odd':'even')); }); 
-                
                 if (isShokaku) {
                     await new Promise(r => setTimeout(r, 1200));
                     document.getElementById('machine').classList.add('vibrate');
                     await new Promise(r => setTimeout(r, 1000));
-                    
                     if (mode === '通常') {
                         let candidates = [logDigit-1, logDigit+1].filter(n => n > 0 && n < 10 && n !== 7 && n % 2 !== 0);
                         d = candidates.length ? candidates[Math.floor(Math.random() * candidates.length)] : 1;
@@ -224,13 +218,11 @@
                     }
                     document.getElementById('machine').classList.remove('vibrate');
                 }
-
                 currentRushHits++; 
                 if(mode==='通常' || mode==='時短') { 
                     if(nextM === 'ST') { mode='ST'; rRem=SPECS.st; } else { mode='時短'; rRem=SPECS.jt; }
                     rushCount = (mode==='時短' && nextM==='ST') ? hits : (nextM==='ST' ? 1 : 0); 
-                } 
-                else { rushCount = currentRushHits; mode='ST'; rRem=SPECS.st; } 
+                } else { rushCount = currentRushHits; mode='ST'; rRem=SPECS.st; } 
                 totalBall += (is10R ? 1400 : 420); 
             } 
             updateUI(); await new Promise(r => setTimeout(r, 1800)); lcdCount=0; document.getElementById('lamp').classList.remove('lamp-active'); 
@@ -255,6 +247,7 @@
 </script>
 </body>
 </html>
+
 
 
 
