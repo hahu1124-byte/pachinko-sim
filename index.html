@@ -28,7 +28,6 @@
         @keyframes vibration { 0% { transform: translate(0,0); } 25% { transform: translate(-4px, 4px); } 50% { transform: translate(4px, -4px); } 75% { transform: translate(-4px, -4px); } 100% { transform: translate(0,0); } }
         .flash-active { animation: flash-white 0.05s 20; }
         @keyframes flash-white { 0%, 100% { background: #000; } 50% { background: #fff; } }
-        
         .heso-overlay { position: absolute; bottom: 10px; display: flex; align-items: flex-end; gap: 10px; }
         .heso-ball { width: 10px; height: 10px; background: #222; border-radius: 50%; border: 1px solid #555; transition: all 0.2s; }
         .heso-current { width: 13px; height: 13px; margin-right: 5px; border-width: 2px; } 
@@ -37,8 +36,8 @@
         .heso-green { background: radial-gradient(circle, #44ff44, #008800); box-shadow: 0 0 8px #00ff00; border-color: #0f0; }
         .heso-blue { background: radial-gradient(circle, #4444ff, #000088); box-shadow: 0 0 8px #0000ff; border-color: #00f; }
         .heso-blink { background: #fff; animation: blink-ball 0.3s infinite; box-shadow: 0 0 8px #fff; border-color: #fff; }
+        .heso-rainbow { animation: rainbow-bg 0.5s infinite; box-shadow: 0 0 10px #fff; border-color: #fff; }
         @keyframes blink-ball { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-
         .effect-text { position: absolute; color: white; font-weight: bold; font-size: 2.2rem; z-index: 5; text-shadow: 0 0 10px #000; background: rgba(0,0,0,0.7); padding: 5px 15px; border-radius: 5px; display: none; text-align: center; }
         .stat-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-top: 12px; }
         .stat-item { background: #000; border: 1px solid #333; padding: 5px 0; text-align: center; border-radius: 4px; }
@@ -100,7 +99,7 @@
                 <button class="btn-auto" id="btn-fast" onclick="toggleAuto('fast')">高速オート</button>
             </div>
         </div>
-        <div class="log" id="log">> 当該昇格演出・赤保留検知オートを実装しました。</div>
+        <div class="log" id="log">> 強保留消化後の高速オート復帰機能を実装しました。</div>
     </div>
 
     
@@ -114,6 +113,7 @@
     let sChart, hChart;
 
     let reservedStock = []; 
+    let originalSpeed = 'slow'; // 低速化前の速度を保持する変数
 
     const TRUST_MAP_N = { "白レバ": 0.90, "赤レバ": 0.965, "赤保留": 0.90, "緑保留": 0.11, "青保留": 0.05, "点滅保留": 0.005, "次回予告": 0.65, "レイ背景": 0.85, "金系": 0.50 };
     const TRUST_MAP_S = { "白レバ": 0.95, "赤レバ": 0.99, "赤保留": 0.95, "緑保留": 0.11, "青保留": 0.05, "点滅保留": 0.005, "次回予告": 1.0, "レイ背景": 0.92, "金系": 0.80, "虹保留": 1.0 };
@@ -127,11 +127,10 @@
         let roll = Math.random() * 100;
 
         if (isHit) {
-            // ST/時短中のみ虹保留を抽選
-            if ((mode === 'ST' || mode === '時短') && roll < 5) {
-                holdType = "rainbow";
-            } else if (roll < 25) holdType = "red";
-            else if (roll < 55) holdType = "green";
+            if (roll < 20.0) {
+                if ((mode === 'ST' || mode === '時短') && Math.random() < 0.25) { holdType = "rainbow"; } 
+                else { holdType = "red"; }
+            } else if (roll < 55) holdType = "green";
             else if (roll < 80) holdType = "blue";
             else holdType = "blink";
         } else {
@@ -143,8 +142,9 @@
         
         reservedStock.push({ isHit: isHit, holdType: holdType });
 
-        // 赤保留、または虹保留を検知したら低速に
+        // 強保留検知時の処理
         if ((holdType === "red" || holdType === "rainbow") && isAuto && autoSpeed === "fast") {
+            originalSpeed = 'fast'; // 高速だったことを記憶
             addLog(`!! ${holdType === "rainbow" ? "虹" : "赤"}保留を検知。低速オートに切り替えます !!`);
             toggleAuto("slow"); 
         }
@@ -156,9 +156,8 @@
     function selectEffect(isHit, forceHold) {
         let res = { heavy: false, name: [], trust: 0, vibe: false, vibeColor: "", flash: false, lamp: false, text: "", holdType: forceHold, isSure: false, isFullSpin: false };
         const roll = () => Math.random() * 100;
-        const isST = (mode === 'ST' || mode === '時短');
+        const isMigi = (mode === 'ST' || mode === '時短');
 
-        // 昇格抽選（当該移動時）
         if (res.holdType !== "red" && res.holdType !== "rainbow") {
             let upgradeRoll = Math.random() * 100;
             if (isHit) {
@@ -166,8 +165,7 @@
                     const steps = ["none", "blink", "blue", "green", "red"];
                     let idx = steps.indexOf(res.holdType);
                     res.holdType = steps[idx + 1] || "red";
-                    // 右打ち中ならさらに虹への昇格も稀にあり
-                    if (isST && Math.random() < 0.1) res.holdType = "rainbow";
+                    if (isMigi && Math.random() < 0.1) res.holdType = "rainbow";
                 }
             } else {
                 if (upgradeRoll < 5) {
@@ -185,21 +183,19 @@
 
         if (isHit) {
             if (roll() < 1.0 || res.holdType === "rainbow") { 
-                res.isSure = true; 
-                res.heavy = true; 
+                res.isSure = true; res.heavy = true; 
                 if (res.holdType === "rainbow") { res.lamp = true; }
                 else { res.name.push("全回転"); res.text="全回転"; res.isFullSpin=true; res.lamp=true; }
-            }
-            else {
+            } else {
                 let hasVibe = false;
-                if (isST && roll() < 10.0) { res.name.push("次回予告"); res.text="次回予告"; res.isSure = true; }
-                else if (isST && roll() < 33.0) { res.name.push("金系"); }
+                if (isMigi && roll() < 10.0) { res.name.push("次回予告"); res.text="次回予告"; res.isSure = true; }
+                else if (isMigi && roll() < 33.0) { res.name.push("金系"); }
                 if (roll() < 3.0) { res.name.push("虹レバ"); res.lamp=true; hasVibe=true; res.vibeColor="rainbow"; }
                 else if (roll() < 15.0) { res.name.push("赤レバ"); hasVibe=true; res.vibeColor="red"; }
                 else if (roll() < 66.7) { res.name.push("白レバ"); hasVibe=true; res.vibeColor="white"; }
                 if (roll() < 5.0) { res.name.push("インフラ"); res.flash=true; res.lamp=true; }
                 if (roll() < 1.0) { res.name.push("カヲル"); res.text="カヲル"; }
-                if (!isST || res.name.length <= 1) {
+                if (!isMigi || res.name.length <= 1) {
                     if (roll() < 3.0) { res.name.push("さよなら"); res.text="さよなら"; }
                     else if (!res.text && roll() < 33.3) { res.name.push("レイ背景"); res.text="レイ背景"; }
                     if (mode === '通常' && !res.text && roll() < 40.0) { res.name.push("次回予告"); res.text="次回予告"; }
@@ -215,9 +211,9 @@
             if (res.holdType === "red" || res.holdType === "green") res.heavy = true;
         }
 
-        const currentMap = (mode === 'ST' || mode === '時短') ? TRUST_MAP_S : TRUST_MAP_N;
+        const currentMap = (isMigi) ? TRUST_MAP_S : TRUST_MAP_N;
         const pNames = ["虹レバ", "インフラ", "カヲル", "さよなら", "全回転", "虹保留"];
-        if (mode === 'ST' || mode === '時短') pNames.push("次回予告");
+        if (isMigi) pNames.push("次回予告");
 
         if (res.name.some(n => pNames.includes(n)) || res.name.length >= 3) { res.trust = 100; res.isSure = true; } 
         else if (res.name.length >= 2) { 
@@ -242,7 +238,7 @@
             mode = '通常'; rushCount = 0; currentRushHits = 0; 
             lcdCount = (prevMode==='ST') ? 0 : 100;
             updateUI(); 
-            if(!(prevMode === '時短' && autoSpeed === 'fast')) {
+            if(!(prevMode === '時短' && originalSpeed === 'fast')) {
                 if(!optAll) { isAuto = false; resetBtns(); return; }
             }
         }
@@ -256,11 +252,9 @@
         
         if(optKokuchi && isHit) { eff.heavy=true; eff.flash=true; eff.lamp=true; eff.displayName="インフラ告知"; eff.trust=100; eff.isSure=true; }
         
-        let originalSpeed = autoSpeed;
-        if(autoSpeed==='fast' && eff.heavy && !optAll && eff.holdType !== "green") { 
-            autoSpeed = 'slow'; resetBtns(); document.getElementById('btn-slow').classList.add('btn-stop'); 
-        }
-        
+        // 速度制御の記憶
+        let wasFastTriggered = (autoSpeed === 'slow' && originalSpeed === 'fast' && (eff.holdType === 'red' || eff.holdType === 'rainbow'));
+
         totalRot++; currentRot++; lcdCount++; 
         updateHesoUI(eff.holdType); 
         
@@ -272,14 +266,8 @@
 
         if(eff.heavy) { 
             let logText = `${mode} ${lcdCount}回【${eff.displayName}】信頼度:${eff.trust.toFixed(1)}%`;
-            const pNames = ["虹レバ", "インフラ", "カヲル", "さよなら", "全回転", "虹保留"];
-            if (mode === 'ST' || mode === '時短') pNames.push("次回予告");
-            if (eff.isSure && eff.name.some(n => pNames.includes(n))) logText += " プレミア出現！";
-            
-            if (!(eff.holdType === "green" && !isHit)) {
-                addLog(logText); 
-            }
-
+            if (eff.isSure) logText += " プレミア出現！";
+            if (!(eff.holdType === "green" && !isHit)) { addLog(logText); }
             if(eff.vibe) {
                 machineEl.classList.add('vibrate'); 
                 if(eff.vibeColor === "white") { machineEl.style.borderColor = "#fff"; machineEl.style.boxShadow = "0 0 20px #fff"; }
@@ -344,42 +332,49 @@
             updateUI(); await new Promise(r => setTimeout(r, 1800)); lcdCount=0; document.getElementById('lamp').classList.remove('lamp-active'); 
             reservedStock = []; 
         } else if(eff.heavy) { 
-            if (!(eff.holdType === "green" && !isHit)) {
-                addLog(`>> ${lcdCount}回転 【${lastDigits[0]}】 ${eff.displayName} ﾊｽﾞﾚ`); 
-            }
+            if (!(eff.holdType === "green" && !isHit)) { addLog(`>> ${lcdCount}回転 【${lastDigits[0]}】 ${eff.displayName} ﾊｽﾞﾚ`); }
         }
-        isAnim=false; updateUI();
-        if(isAuto && originalSpeed==='fast' && !optAll) { autoSpeed='fast'; resetBtns(); document.getElementById('btn-fast').classList.add('btn-stop'); }
-        if(isAuto) setTimeout(startProcess, (autoSpeed==='fast') ? 5 : 300);
+        
+        isAnim=false; 
+        
+        // 元の速度（高速）に戻すロジック
+        if(originalSpeed === 'fast') {
+            autoSpeed = 'fast';
+            originalSpeed = 'slow'; // リセット
+            addLog(`>> 変動終了。高速オートに復帰します。`);
+        }
+        
+        updateUI();
+        resetBtns();
+        if(isAuto) {
+            document.getElementById('btn-' + autoSpeed).classList.add('btn-stop');
+            setTimeout(startProcess, (autoSpeed==='fast') ? 5 : 300);
+        }
     }
 
     function openModal() { document.getElementById('modal-overlay').style.display='flex'; updateCharts(); }
     function closeModal() { document.getElementById('modal-overlay').style.display='none'; }
     function updateCharts() { const cfg = { responsive:true, maintainAspectRatio:false, scales:{ x:{display:false}, y:{grid:{color:'#222'}, ticks:{color:'#888'}} }, plugins:{legend:{display:false}} }; if(sChart) sChart.destroy(); sChart = new Chart(document.getElementById('slumpChart'), { type:'line', data:{ labels:slumpLabels, datasets:[{data:slumpData, borderColor:'#8a2be2', borderWidth:2, pointRadius:0, fill:false}] }, options:cfg }); if(hChart) hChart.destroy(); hChart = new Chart(document.getElementById('historyChart'), { type:'bar', data:{ labels:historyLabels, datasets:[{data:historyData, backgroundColor:'#8a2be2'}] }, options:cfg }); }
     function toggleOpt(t) { if(t==='all') { optAll=!optAll; document.getElementById('btn-all').classList.toggle('active'); } if(t==='kokuchi') { optKokuchi=!optKokuchi; document.getElementById('btn-kokuchi').classList.toggle('active'); } }
-    function toggleAuto(s) { if(isAuto && autoSpeed===s) { isAuto=false; resetBtns(); } else { isAuto=true; autoSpeed=s; resetBtns(); document.getElementById('btn-'+s).classList.add('btn-stop'); if (!isAnim) startProcess(); } }
-    function resetBtns() { document.querySelectorAll('.btn-auto').forEach(b => b.classList.remove('btn-stop')); }
-    function resetData() { hits=0; rushCount=0; currentRot=0; totalRot=0; totalBall=0; heso=0; currentRushHits=0; lcdCount=0; slumpData=[0]; slumpLabels=["0"]; historyData=[]; historyLabels=[]; reservedStock=[]; updateUI(); updateHesoUI("none"); addLog("データを初期化しました。"); }
-    
+    function toggleAuto(s) { if(isAuto && autoSpeed===s) { isAuto=false; originalSpeed='slow'; resetBtns(); } else { isAuto=true; autoSpeed=s; if(s==='fast') originalSpeed='fast'; resetBtns(); document.getElementById('btn-'+s).classList.add('btn-stop'); if (!isAnim) startProcess(); } }
+    function resetBtns() { document.querySelectorAll('.btn-auto').forEach(b => b.classList.remove('btn-stop')); if(isAuto) document.getElementById('btn-' + autoSpeed).classList.add('btn-stop'); }
+    function resetData() { hits=0; rushCount=0; currentRot=0; totalRot=0; totalBall=0; heso=0; currentRushHits=0; lcdCount=0; slumpData=[0]; slumpLabels=["0"]; historyData=[]; historyLabels=[]; reservedStock=[]; originalSpeed='slow'; updateUI(); updateHesoUI("none"); addLog("データを初期化しました。"); }
     function updateHesoUI(currentHoldType) { 
         const h0 = document.getElementById('h0');
         h0.className = 'heso-ball heso-current ' + (currentHoldType === "none" ? "heso-on" : "heso-" + currentHoldType);
         for(let i=1; i<=4; i++) { 
             const el = document.getElementById('h' + i); 
             const stock = reservedStock[i-1];
-            if (stock) {
-                el.className = 'heso-ball heso-on ' + (stock.holdType === "none" ? "" : "heso-" + stock.holdType);
-            } else {
-                el.className = 'heso-ball';
-            }
+            if (stock) { el.className = 'heso-ball heso-on ' + (stock.holdType === "none" ? "" : "heso-" + stock.holdType); } 
+            else { el.className = 'heso-ball'; }
         } 
     }
-    
     function updateUI() { document.getElementById('hits').innerText = hits; document.getElementById('rush-count').innerText = rushCount; document.getElementById('current-rot').innerText = currentRot; document.getElementById('total-rot').innerText = totalRot; const balEl = document.getElementById('balance'); const balVal = Math.floor(totalBall); balEl.innerText = balVal.toLocaleString(); balEl.className = 'stat-val ' + (balVal > 0 ? 'val-blue' : (balVal < 0 ? 'val-red' : 'val-white')); document.getElementById('sub-display').innerText = mode === '通常' ? `通常:${lcdCount}` : `${mode}:${rRem}`; }
     function addLog(m) { const l=document.getElementById('log'); l.innerHTML=`> ${m}<br>${l.innerHTML}`; }
 </script>
 </body>
 </html>
+
 
 
 
