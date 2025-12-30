@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EVANGELION Sim -Dual Auto Ver-</title>
+    <title>EVANGELION Sim -Smart Auto Ver-</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&display=swap');
         
@@ -34,25 +34,43 @@
         .hoju { width: 12px; height: 12px; border-radius: 50%; background: #333; border: 1px solid #555; }
         .hoju-red { background: #ff0000; box-shadow: 0 0 10px #ff0000; border-color: #ff4444; }
         
-        .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 10px; }
-        .stat-item { background: #000; border: 1px solid #333; padding: 5px; text-align: center; }
-        .stat-val { display: block; font-size: 0.8rem; font-weight: bold; color: #d00000; }
-
-        /* ボタンエリア分割 */
         .btn-container { display: flex; gap: 5px; }
-        .btn-auto { flex: 1; background: #d00000; color: white; border: 2px solid #ff4444; padding: 12px; font-size: 1rem; cursor: pointer; font-weight: bold; font-family: 'Shippori Mincho B1', serif; border-radius: 5px; }
-        .btn-auto.active { background: #444; border-color: #666; color: #888; }
-        .btn-stop { background: #333; border-color: #555; color: #fff; }
+        .btn-auto { flex: 1; background: #d00000; color: white; border: 2px solid #ff4444; padding: 12px; font-size: 1rem; cursor: pointer; font-weight: bold; border-radius: 5px; }
+        .btn-stop { background: #333 !important; border-color: #555 !important; }
 
         .log { width: 100%; max-width: 400px; height: 180px; background: #000; margin-top: 10px; padding: 10px; border-radius: 5px; font-size: 0.75rem; color: #ff4444; overflow-y: auto; box-sizing: border-box; border: 1px solid #333; font-family: monospace; }
+
+        /* モーダルメニュー */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-content { background: #111; border: 2px solid #d00000; width: 85%; max-width: 350px; padding: 20px; border-radius: 10px; max-height: 80vh; overflow-y: auto; }
+        .modal-content h3 { color: #d00000; border-bottom: 1px solid #d00000; margin-top: 0; }
+        .spec-table { width: 100%; font-size: 0.8rem; border-collapse: collapse; }
+        .spec-table td { padding: 5px; border-bottom: 1px solid #333; }
+        .close-btn { background: #d00000; color: #fff; border: none; padding: 10px; width: 100%; margin-top: 15px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <header>
-    <button class="menu-btn">MENU</button>
+    <button class="menu-btn" onclick="toggleMenu(true)">MENU</button>
     <div class="logo-main">EVANGELION Sim</div>
 </header>
+
+<div class="modal" id="menuModal">
+    <div class="modal-content">
+        <h3>機種情報・信頼度</h3>
+        <table class="spec-table">
+            <tr><td>通常確率</td><td>1/319.7</td></tr>
+            <tr><td>ST中確率</td><td>1/99.4</td></tr>
+            <tr><td>全回転</td><td>1/8192 (ST確定)</td></tr>
+            <tr><td>赤保留</td><td>信頼度 92%</td></tr>
+            <tr><td>レバブル赤</td><td>信頼度 96.5%</td></tr>
+            <tr><td>レイ背景</td><td>信頼度 80%</td></tr>
+        </table>
+        <p style="font-size:0.7rem; color:#888; margin-top:10px;">※高速オート中は激アツ演出発生時のみ自動で低速化します。</p>
+        <button class="close-btn" onclick="toggleMenu(false)">閉じる</button>
+    </div>
+</div>
 
 <div class="main-content">
     <div class="machine" id="machine-body">
@@ -67,14 +85,14 @@
             </div>
             <div id="sub-display" style="position:absolute; bottom:5px; right:10px; color:#d00000; font-size:0.6rem; font-weight:bold;">STANDBY</div>
         </div>
-        <div class="stat-grid">
+        <div class="stat-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 10px;">
             <div class="stat-item"><span style="font-size:0.5rem">大当り</span><span id="hits" class="stat-val">0</span></div>
             <div class="stat-item"><span style="font-size:0.5rem">連チャン</span><span id="rush-count" class="stat-val">0</span></div>
             <div class="stat-item"><span style="font-size:0.5rem">現在回転</span><span id="current-rot" class="stat-val">0</span></div>
             <div class="stat-item"><span style="font-size:0.5rem">収支</span><span id="balance" class="stat-val">0</span></div>
         </div>
         
-        <div class="btn-container" id="ctrl-panel">
+        <div class="btn-container">
             <button class="btn-auto" id="btn-slow" onclick="toggleAuto('slow')">低速オート</button>
             <button class="btn-auto" id="btn-fast" onclick="toggleAuto('fast')">高速オート</button>
         </div>
@@ -87,30 +105,27 @@
     let hits = 0, rushCount = 0, currentCount = 0, totalBall = 0, sessionBall = 0;
     let mode = 'NORMAL', stRemaining = 0, isAuto = false, autoSpeed = 'slow', isAnimating = false, autoTimer = null;
 
+    function toggleMenu(show) { document.getElementById('menuModal').style.display = show ? 'flex' : 'none'; }
+
     function setDigitStyle(el, num) {
-        el.innerText = num;
-        el.className = 'digit';
+        el.innerText = num; el.className = 'digit';
         if (num == 7) el.classList.add('gold');
         else if (num % 2 !== 0) el.classList.add('odd');
         else el.classList.add('even');
     }
 
     function toggleAuto(speed) {
-        if (isAuto && autoSpeed === speed) {
-            stopAuto();
-        } else {
-            stopAuto(); // 一旦クリア
-            isAuto = true;
-            autoSpeed = speed;
-            document.getElementById(speed === 'slow' ? 'btn-slow' : 'btn-fast').innerText = "STOP";
-            document.getElementById(speed === 'slow' ? 'btn-slow' : 'btn-fast').classList.add('btn-stop');
+        if (isAuto && autoSpeed === speed) { stopAuto(); } 
+        else {
+            stopAuto(); isAuto = true; autoSpeed = speed;
+            const btn = document.getElementById(speed === 'slow' ? 'btn-slow' : 'btn-fast');
+            btn.innerText = "STOP"; btn.classList.add('btn-stop');
             startProcess();
         }
     }
 
     function stopAuto() {
-        isAuto = false;
-        clearTimeout(autoTimer);
+        isAuto = false; clearTimeout(autoTimer);
         document.getElementById('btn-slow').innerText = "低速オート";
         document.getElementById('btn-fast').innerText = "高速オート";
         document.getElementById('btn-slow').classList.remove('btn-stop');
@@ -136,17 +151,18 @@
         let isHit = Math.random() < (1 / prob);
         let isZenKaiten = Math.random() < (1 / 8192); 
 
-        let effect = { type: 'NONE', win: isHit || isZenKaiten };
+        let effect = { type: 'NONE', win: isHit || isZenKaiten, isHot: false };
 
         if (effect.win && Math.random() < 0.1) document.getElementById('lamp').classList.add('lamp-on');
 
         if (isZenKaiten) {
-            effect.type = 'ZEN_KAITEN';
+            effect.type = 'ZEN_KAITEN'; effect.isHot = true;
         } else if (mode === 'NORMAL') {
             let r = Math.random();
-            if (r < 0.0005) { effect.type = '7_REACH'; effect.win = Math.random() < 0.9999; }
-            else if (r < 0.0022) { effect.type = 'RED_HOJU'; effect.win = Math.random() < 0.92; }
-            else if (r < 0.0033) { effect.type = 'VIB_WHITE'; effect.win = Math.random() < 0.90; }
+            if (r < 0.0005) { effect.type = '7_REACH'; effect.win = true; effect.isHot = true; }
+            else if (r < 0.0022) { effect.type = 'RED_HOJU'; effect.isHot = true; }
+            else if (r < 0.0012) { effect.type = 'VIB_RED'; effect.isHot = true; }
+            else if (isHit && Math.random() < 0.2) { effect.type = 'REI_NORMAL'; effect.isHot = true; }
         }
 
         await runAnimation(effect);
@@ -160,10 +176,11 @@
                     addLog(`終了：${rushCount}連 (${Math.floor(sessionBall)}玉)`);
                     mode = 'NORMAL'; rushCount = 0; currentCount = 0; sessionBall = 0;
                     updateStage(); updateUI();
+                    stopAuto(); return; // ★ST/時短終了でオート停止
                 }
             }
             if (isAuto) {
-                let delay = (autoSpeed === 'fast') ? 5 : 50;
+                let delay = (autoSpeed === 'fast') ? 10 : 100;
                 autoTimer = setTimeout(startProcess, delay);
             }
         }
@@ -173,30 +190,34 @@
         isAnimating = true;
         const d1 = document.getElementById('d1'), d2 = document.getElementById('d2'), d3 = document.getElementById('d3');
         const h1 = document.getElementById('h1');
-        const isFast = (autoSpeed === 'fast');
+        // ★高速オートでも「熱い演出(isHot)」なら強制的に低速化
+        const currentIsFast = (autoSpeed === 'fast' && !eff.isHot);
 
         if (eff.type === 'ZEN_KAITEN') {
             addLog("㊗ 歓喜：全回転演出発生 ㊗");
             for(let i=1; i<=7; i++) {
                 setDigitStyle(d1, i); setDigitStyle(d2, i); setDigitStyle(d3, i);
-                await new Promise(r => setTimeout(r, isFast ? 100 : 400));
+                await new Promise(r => setTimeout(r, 400));
             }
         } else {
-            if (eff.type === 'RED_HOJU') h1.classList.add('hoju-red');
+            if (eff.type === 'RED_HOJU') { h1.classList.add('hoju-red'); addLog("!! 赤保留出現 !!"); }
+            if (eff.type === 'VIB_RED') { addLog("!! レバブル(赤)発生 !!"); }
+
             let shuffle = setInterval(() => {
                 setDigitStyle(d1, Math.floor(Math.random()*9)+1);
                 setDigitStyle(d2, Math.floor(Math.random()*9)+1);
                 setDigitStyle(d3, Math.floor(Math.random()*9)+1);
-            }, isFast ? 10 : 40);
+            }, currentIsFast ? 10 : 40);
             
-            await new Promise(r => setTimeout(r, isFast ? 50 : 400));
+            await new Promise(r => setTimeout(r, currentIsFast ? 50 : 500));
             clearInterval(shuffle);
 
             let l = (eff.type === '7_REACH') ? 7 : (eff.win ? Math.floor(Math.random()*9)+1 : Math.floor(Math.random()*9)+1);
             setDigitStyle(d1, l); setDigitStyle(d3, l);
             
-            if (eff.type !== 'NONE' || l == 7) {
-                await new Promise(r => setTimeout(r, isFast ? 200 : 1500));
+            // 低速オートならリーチ演出をしっかり見せる
+            if (!currentIsFast || eff.win) {
+                await new Promise(r => setTimeout(r, currentIsFast ? 200 : 1500));
             }
             setDigitStyle(d2, eff.win ? l : (l % 9) + 1);
         }
@@ -220,13 +241,9 @@
             mode = 'ST'; stRemaining = SPEC.st_taps; rushCount++;
             addLog(`継続(${currentCount}回転)：${rushCount}連目 (${finalNum})`);
         }
-        currentCount = 0;
-        document.getElementById('lamp').classList.remove('lamp-on');
+        currentCount = 0; document.getElementById('lamp').classList.remove('lamp-on');
         updateStage(); updateUI();
-        if (isAuto) {
-            let delay = (autoSpeed === 'fast') ? 300 : 1200;
-            autoTimer = setTimeout(startProcess, delay);
-        }
+        if (isAuto) autoTimer = setTimeout(startProcess, (autoSpeed === 'fast' ? 300 : 1500));
     }
 
     function updateUI() {
