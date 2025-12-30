@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EVANGELION Sim -Smart Auto Ver-</title>
+    <title>EVANGELION Sim -Customized-</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&display=swap');
-        
         body { background: #050505; color: white; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
+        /* ヘッダー */
         header { width: 100%; height: 50px; background: #000; border-bottom: 2px solid #d00000; display: flex; align-items: center; padding: 0 15px; box-sizing: border-box; }
         .menu-btn { background: #d00000; color: white; border: 1px solid #ff4444; padding: 5px 10px; cursor: pointer; font-weight: bold; font-size: 0.8rem; border-radius: 3px; }
         .logo-main { flex-grow: 1; text-align: center; font-family: 'Shippori Mincho B1', serif; font-size: 1rem; color: #d00000; text-shadow: 0 0 5px #d00000; margin-right: 50px; }
@@ -16,64 +16,57 @@
         .main-content { flex-grow: 1; display: flex; flex-direction: column; align-items: center; padding: 10px; width: 100%; overflow-y: auto; box-sizing: border-box; }
         .machine { width: 100%; max-width: 400px; background: #111; border: 2px solid #d00000; border-radius: 10px; padding: 15px; box-sizing: border-box; position: relative; }
         
-        .hidden-lamp { position: absolute; top: 10px; right: 20px; width: 12px; height: 12px; background: #222; clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%); transition: 0.2s; z-index: 10; }
-        .lamp-on { background: #fff; box-shadow: 0 0 15px #fff; }
+        /* 隠しランプ */
+        .hidden-lamp { position: absolute; top: 10px; right: 20px; width: 12px; height: 12px; background: #222; clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%); z-index: 10; }
+        .lamp-on { background: #fff; box-shadow: 0 0 20px #fff; }
 
-        .screen { background: #000; height: 160px; border-radius: 5px; border: 1px solid #444; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 10px; position: relative; overflow: hidden; transition: background 1s; }
-        .stage-normal { background: #000; }
-        .stage-purple { background: radial-gradient(circle, #200030 0%, #000 100%); }
-        .stage-red { background: radial-gradient(circle, #400000 0%, #000 100%); }
-        .stage-rainbow { animation: rainbow-bg-anim 3s linear infinite; }
-        @keyframes rainbow-bg-anim { 0%{background:#200} 25%{background:#220} 50%{background:#020} 75%{background:#002} 100%{background:#200} }
-
-        .reels { display: flex; justify-content: center; gap: 15px; z-index: 5; margin-top: 5px; width: 100%; }
+        .screen { background: #000; height: 160px; border-radius: 5px; border: 1px solid #444; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 10px; position: relative; overflow: hidden; }
+        .reels { display: flex; justify-content: center; gap: 15px; z-index: 5; }
         .digit { font-size: 3.5rem; font-weight: 900; font-family: 'Shippori Mincho B1', serif; width: 60px; text-align: center; }
-        .odd { color: #ff4444; } .even { color: #4444ff; } .gold { color: #ffeb3b; text-shadow: 0 0 10px #ffeb3b; }
-        
-        .shoryu-area { display: flex; gap: 8px; margin-top: 10px; z-index: 5; height: 15px; }
+        .gold { color: #ffeb3b; text-shadow: 0 0 10px #ffeb3b; } .odd { color: #ff4444; } .even { color: #4444ff; }
+
+        /* 保留 */
+        .shoryu-area { display: flex; gap: 8px; margin-top: 10px; height: 15px; }
         .hoju { width: 12px; height: 12px; border-radius: 50%; background: #333; border: 1px solid #555; }
-        .hoju-red { background: #ff0000; box-shadow: 0 0 10px #ff0000; border-color: #ff4444; }
+        .hoju-red { background: #ff0000; box-shadow: 0 0 10px #ff0000; }
+
+        /* 操作パネル */
+        .control-layout { display: flex; gap: 5px; width: 100%; }
+        .side-mini-btns { display: flex; flex-direction: column; gap: 2px; width: 45px; }
+        .mini-btn { flex: 1; font-size: 0.6rem; font-weight: bold; border: 1px solid #444; background: #222; color: #888; cursor: pointer; border-radius: 3px; }
+        .mini-btn.active { background: #d00000; color: white; border-color: #ff4444; }
         
-        .btn-container { display: flex; gap: 5px; }
-        .btn-auto { flex: 1; background: #d00000; color: white; border: 2px solid #ff4444; padding: 12px; font-size: 1rem; cursor: pointer; font-weight: bold; border-radius: 5px; }
-        .btn-stop { background: #333 !important; border-color: #555 !important; }
+        .main-btns { flex: 1; display: flex; gap: 5px; }
+        .btn-auto { flex: 1; background: #d00000; color: white; border: 2px solid #ff4444; padding: 12px; font-size: 0.9rem; cursor: pointer; font-weight: bold; border-radius: 5px; }
+        .btn-stop { background: #444 !important; border-color: #666 !important; }
 
-        .log { width: 100%; max-width: 400px; height: 180px; background: #000; margin-top: 10px; padding: 10px; border-radius: 5px; font-size: 0.75rem; color: #ff4444; overflow-y: auto; box-sizing: border-box; border: 1px solid #333; font-family: monospace; }
+        .log { width: 100%; max-width: 400px; height: 150px; background: #000; margin-top: 10px; padding: 10px; border-radius: 5px; font-size: 0.7rem; color: #ff4444; overflow-y: auto; border: 1px solid #333; }
 
-        /* モーダルメニュー */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center; }
-        .modal-content { background: #111; border: 2px solid #d00000; width: 85%; max-width: 350px; padding: 20px; border-radius: 10px; max-height: 80vh; overflow-y: auto; }
-        .modal-content h3 { color: #d00000; border-bottom: 1px solid #d00000; margin-top: 0; }
-        .spec-table { width: 100%; font-size: 0.8rem; border-collapse: collapse; }
-        .spec-table td { padding: 5px; border-bottom: 1px solid #333; }
-        .close-btn { background: #d00000; color: #fff; border: none; padding: 10px; width: 100%; margin-top: 15px; cursor: pointer; font-weight: bold; }
+        /* モーダル */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-content { background: #111; border: 2px solid #d00000; width: 80%; padding: 20px; border-radius: 10px; }
+        .select-item { background: #222; border: 1px solid #444; padding: 15px; margin: 10px 0; cursor: pointer; text-align: center; font-weight: bold; }
+        .select-item:hover { background: #d00000; }
     </style>
 </head>
 <body>
 
 <header>
-    <button class="menu-btn" onclick="toggleMenu(true)">MENU</button>
-    <div class="logo-main">EVANGELION Sim</div>
+    <button class="menu-btn" onclick="openMenu()">機種変更</button>
+    <div class="logo-main" id="machine-title">EVANGELION 15</div>
 </header>
 
 <div class="modal" id="menuModal">
     <div class="modal-content">
-        <h3>機種情報・信頼度</h3>
-        <table class="spec-table">
-            <tr><td>通常確率</td><td>1/319.7</td></tr>
-            <tr><td>ST中確率</td><td>1/99.4</td></tr>
-            <tr><td>全回転</td><td>1/8192 (ST確定)</td></tr>
-            <tr><td>赤保留</td><td>信頼度 92%</td></tr>
-            <tr><td>レバブル赤</td><td>信頼度 96.5%</td></tr>
-            <tr><td>レイ背景</td><td>信頼度 80%</td></tr>
-        </table>
-        <p style="font-size:0.7rem; color:#888; margin-top:10px;">※高速オート中は激アツ演出発生時のみ自動で低速化します。</p>
-        <button class="close-btn" onclick="toggleMenu(false)">閉じる</button>
+        <h3 style="color:#d00000; text-align:center;">機種を選択してください</h3>
+        <div class="select-item" onclick="selectMachine('EVA15')">新世紀エヴァンゲリオン〜未来への咆哮〜</div>
+        <div class="select-item" onclick="selectMachine('GOD')">GOD Ver. (全回転 1/8192 固定)</div>
+        <button class="close-btn" style="width:100%; padding:10px; margin-top:10px;" onclick="closeMenu()">閉じる</button>
     </div>
 </div>
 
 <div class="main-content">
-    <div class="machine" id="machine-body">
+    <div class="machine">
         <div class="hidden-lamp" id="lamp"></div>
         <div class="screen" id="screen">
             <div class="reels">
@@ -83,182 +76,126 @@
                 <div id="h1" class="hoju"></div><div id="h2" class="hoju"></div>
                 <div id="h3" class="hoju"></div><div id="h4" class="hoju"></div>
             </div>
-            <div id="sub-display" style="position:absolute; bottom:5px; right:10px; color:#d00000; font-size:0.6rem; font-weight:bold;">STANDBY</div>
-        </div>
-        <div class="stat-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 10px;">
-            <div class="stat-item"><span style="font-size:0.5rem">大当り</span><span id="hits" class="stat-val">0</span></div>
-            <div class="stat-item"><span style="font-size:0.5rem">連チャン</span><span id="rush-count" class="stat-val">0</span></div>
-            <div class="stat-item"><span style="font-size:0.5rem">現在回転</span><span id="current-rot" class="stat-val">0</span></div>
-            <div class="stat-item"><span style="font-size:0.5rem">収支</span><span id="balance" class="stat-val">0</span></div>
         </div>
         
-        <div class="btn-container">
-            <button class="btn-auto" id="btn-slow" onclick="toggleAuto('slow')">低速オート</button>
-            <button class="btn-auto" id="btn-fast" onclick="toggleAuto('fast')">高速オート</button>
+        <div class="control-layout">
+            <div class="side-mini-btns">
+                <button class="mini-btn" id="full-auto-toggle" onclick="toggleFullAuto()">全</button>
+                <button class="mini-btn" id="gyakkyo-toggle" onclick="toggleGyakkyo()">逆</button>
+            </div>
+            <div class="main-btns">
+                <button class="btn-auto" id="btn-slow" onclick="toggleAuto('slow')">低速オート</button>
+                <button class="btn-auto" id="btn-fast" onclick="toggleAuto('fast')">高速オート</button>
+            </div>
         </div>
     </div>
     <div class="log" id="log">--- 作戦行動履歴 ---<br></div>
 </div>
 
 <script>
-    const SPEC = { normal_prob: 319.7, st_prob: 99.4, st_taps: 163, jititan_taps: 100, payout_3r: 420, payout_10r: 1400 };
-    let hits = 0, rushCount = 0, currentCount = 0, totalBall = 0, sessionBall = 0;
-    let mode = 'NORMAL', stRemaining = 0, isAuto = false, autoSpeed = 'slow', isAnimating = false, autoTimer = null;
+    let SPEC = { name: "EVA15", normal_prob: 319.7, st_prob: 99.4 };
+    let hits = 0, rushCount = 0, currentCount = 0;
+    let mode = 'NORMAL', isAuto = false, autoSpeed = 'slow', isAnimating = false, autoTimer = null;
+    let isFullAuto = false, isGyakkyo = false;
 
-    function toggleMenu(show) { document.getElementById('menuModal').style.display = show ? 'flex' : 'none'; }
+    function openMenu() { document.getElementById('menuModal').style.display = 'flex'; }
+    function closeMenu() { document.getElementById('menuModal').style.display = 'none'; }
+    function selectMachine(type) {
+        SPEC.name = type;
+        document.getElementById('machine-title').innerText = type === 'EVA15' ? "EVANGELION 15" : "GOD Ver.";
+        addLog(`機種変更：${SPEC.name}`);
+        closeMenu();
+    }
 
-    function setDigitStyle(el, num) {
-        el.innerText = num; el.className = 'digit';
-        if (num == 7) el.classList.add('gold');
-        else if (num % 2 !== 0) el.classList.add('odd');
-        else el.classList.add('even');
+    function toggleFullAuto() { 
+        isFullAuto = !isFullAuto; 
+        document.getElementById('full-auto-toggle').classList.toggle('active', isFullAuto);
+        addLog(`フルオート：${isFullAuto ? 'ON (演出全カット)' : 'OFF'}`);
+    }
+
+    function toggleGyakkyo() { 
+        isGyakkyo = !isGyakkyo; 
+        document.getElementById('gyakkyo-toggle').classList.toggle('active', isGyakkyo);
+        addLog(`逆境モード：${isGyakkyo ? 'ON (無演出/告知特化)' : 'OFF'}`);
     }
 
     function toggleAuto(speed) {
         if (isAuto && autoSpeed === speed) { stopAuto(); } 
         else {
             stopAuto(); isAuto = true; autoSpeed = speed;
-            const btn = document.getElementById(speed === 'slow' ? 'btn-slow' : 'btn-fast');
-            btn.innerText = "STOP"; btn.classList.add('btn-stop');
+            document.getElementById(speed === 'slow' ? 'btn-slow' : 'btn-fast').classList.add('btn-stop');
             startProcess();
         }
     }
 
     function stopAuto() {
         isAuto = false; clearTimeout(autoTimer);
-        document.getElementById('btn-slow').innerText = "低速オート";
-        document.getElementById('btn-fast').innerText = "高速オート";
-        document.getElementById('btn-slow').classList.remove('btn-stop');
-        document.getElementById('btn-fast').classList.remove('btn-stop');
-    }
-
-    function updateStage() {
-        const screen = document.getElementById('screen');
-        screen.className = 'screen';
-        if (rushCount >= 20) screen.classList.add('stage-rainbow');
-        else if (rushCount >= 10) screen.classList.add('stage-red');
-        else if (rushCount >= 5) screen.classList.add('stage-purple');
-        else screen.classList.add('stage-normal');
+        document.querySelectorAll('.btn-auto').forEach(b => b.classList.remove('btn-stop'));
     }
 
     async function startProcess() {
         if (!isAuto || isAnimating) return;
-        if (mode === 'NORMAL') totalBall -= (13 + Math.random() * 2); else totalBall -= 0.05;
         currentCount++;
         updateUI();
 
-        let prob = (mode === 'ST') ? SPEC.st_prob : SPEC.normal_prob;
-        let isHit = Math.random() < (1 / prob);
-        let isZenKaiten = Math.random() < (1 / 8192); 
-
+        let isHit = Math.random() < (1 / (mode === 'ST' ? SPEC.st_prob : SPEC.normal_prob));
+        let isZenKaiten = Math.random() < (1 / 8192);
         let effect = { type: 'NONE', win: isHit || isZenKaiten, isHot: false };
 
         if (effect.win && Math.random() < 0.1) document.getElementById('lamp').classList.add('lamp-on');
-
-        if (isZenKaiten) {
-            effect.type = 'ZEN_KAITEN'; effect.isHot = true;
-        } else if (mode === 'NORMAL') {
-            let r = Math.random();
-            if (r < 0.0005) { effect.type = '7_REACH'; effect.win = true; effect.isHot = true; }
-            else if (r < 0.0022) { effect.type = 'RED_HOJU'; effect.isHot = true; }
-            else if (r < 0.0012) { effect.type = 'VIB_RED'; effect.isHot = true; }
-            else if (isHit && Math.random() < 0.2) { effect.type = 'REI_NORMAL'; effect.isHot = true; }
-        }
-
-        await runAnimation(effect);
-
-        if (effect.win) { 
-            handleHit(effect.type === 'ZEN_KAITEN' || effect.type === '7_REACH'); 
+        
+        // 逆境モード中は全回転かランプ告知以外ほぼ無演出
+        if (isGyakkyo && mode === 'NORMAL') {
+            if (isZenKaiten) effect.type = 'ZEN_KAITEN';
         } else {
-            if (mode !== 'NORMAL') {
-                stRemaining--;
-                if (stRemaining <= 0) {
-                    addLog(`終了：${rushCount}連 (${Math.floor(sessionBall)}玉)`);
-                    mode = 'NORMAL'; rushCount = 0; currentCount = 0; sessionBall = 0;
-                    updateStage(); updateUI();
-                    stopAuto(); return; // ★ST/時短終了でオート停止
-                }
-            }
-            if (isAuto) {
-                let delay = (autoSpeed === 'fast') ? 10 : 100;
-                autoTimer = setTimeout(startProcess, delay);
-            }
+            if (isZenKaiten) effect.type = 'ZEN_KAITEN';
+            else if (isHit && Math.random() < 0.2) effect.type = 'REI_NORMAL';
+            if (Math.random() < 0.002) effect.type = 'RED_HOJU';
         }
+        if (effect.type !== 'NONE') effect.isHot = true;
+
+        if (!isFullAuto) await runAnimation(effect);
+
+        if (effect.win) {
+            hits++;
+            let isSt = isZenKaiten || Math.random() < 0.6;
+            mode = isSt ? 'ST' : 'NORMAL';
+            addLog(`大当り(${currentCount}回転) ${isSt ? '【ST】' : '【通常】'}`);
+            currentCount = 0;
+            if (mode === 'NORMAL') stopAuto(); // 時短なし簡易版
+        }
+        
+        document.getElementById('lamp').classList.remove('lamp-on');
+        if (isAuto) autoTimer = setTimeout(startProcess, isFullAuto ? 10 : (autoSpeed === 'fast' ? 100 : 1000));
     }
 
     async function runAnimation(eff) {
         isAnimating = true;
         const d1 = document.getElementById('d1'), d2 = document.getElementById('d2'), d3 = document.getElementById('d3');
-        const h1 = document.getElementById('h1');
-        // ★高速オートでも「熱い演出(isHot)」なら強制的に低速化
-        const currentIsFast = (autoSpeed === 'fast' && !eff.isHot);
-
         if (eff.type === 'ZEN_KAITEN') {
-            addLog("㊗ 歓喜：全回転演出発生 ㊗");
-            for(let i=1; i<=7; i++) {
-                setDigitStyle(d1, i); setDigitStyle(d2, i); setDigitStyle(d3, i);
-                await new Promise(r => setTimeout(r, 400));
-            }
+            addLog("㊗ 全回転発生 ㊗");
+            for(let i=1; i<=7; i++){ setDigitStyle(d1,i);setDigitStyle(d2,i);setDigitStyle(d3,i); await new Promise(r=>setTimeout(r,300)); }
         } else {
-            if (eff.type === 'RED_HOJU') { h1.classList.add('hoju-red'); addLog("!! 赤保留出現 !!"); }
-            if (eff.type === 'VIB_RED') { addLog("!! レバブル(赤)発生 !!"); }
-
-            let shuffle = setInterval(() => {
-                setDigitStyle(d1, Math.floor(Math.random()*9)+1);
-                setDigitStyle(d2, Math.floor(Math.random()*9)+1);
-                setDigitStyle(d3, Math.floor(Math.random()*9)+1);
-            }, currentIsFast ? 10 : 40);
-            
-            await new Promise(r => setTimeout(r, currentIsFast ? 50 : 500));
-            clearInterval(shuffle);
-
-            let l = (eff.type === '7_REACH') ? 7 : (eff.win ? Math.floor(Math.random()*9)+1 : Math.floor(Math.random()*9)+1);
-            setDigitStyle(d1, l); setDigitStyle(d3, l);
-            
-            // 低速オートならリーチ演出をしっかり見せる
-            if (!currentIsFast || eff.win) {
-                await new Promise(r => setTimeout(r, currentIsFast ? 200 : 1500));
-            }
-            setDigitStyle(d2, eff.win ? l : (l % 9) + 1);
+            let s = setInterval(() => { [d1,d2,d3].forEach(d => setDigitStyle(d, Math.floor(Math.random()*9)+1)); }, 40);
+            await new Promise(r => setTimeout(r, autoSpeed === 'fast' && !eff.isHot ? 50 : 500));
+            clearInterval(s);
+            let res = eff.win ? 7 : 1;
+            setDigitStyle(d1, res); setDigitStyle(d3, res); 
+            if (eff.isHot) await new Promise(r => setTimeout(r, 1000));
+            setDigitStyle(d2, eff.win ? res : 2);
         }
-        h1.classList.remove('hoju-red');
         isAnimating = false;
     }
 
-    function handleHit(isStForced) {
-        hits++;
-        let finalNum = parseInt(document.getElementById('d1').innerText);
-        let getBall = (mode === 'NORMAL' && !isStForced && (finalNum % 2 === 0)) ? SPEC.payout_3r : SPEC.payout_10r;
-        totalBall += getBall; sessionBall += getBall;
-        
-        if (mode === 'NORMAL') {
-            let isSt = isStForced || (finalNum % 2 !== 0) || (Math.random() < 0.35); 
-            mode = isSt ? 'ST' : 'JITITAN';
-            stRemaining = isSt ? SPEC.st_taps : SPEC.jititan_taps;
-            rushCount = isSt ? 1 : 0;
-            addLog(`大当り(${currentCount}回転)：${finalNum}揃い ${isSt ? 'RUSH' : '時短'}`);
-        } else {
-            mode = 'ST'; stRemaining = SPEC.st_taps; rushCount++;
-            addLog(`継続(${currentCount}回転)：${rushCount}連目 (${finalNum})`);
-        }
-        currentCount = 0; document.getElementById('lamp').classList.remove('lamp-on');
-        updateStage(); updateUI();
-        if (isAuto) autoTimer = setTimeout(startProcess, (autoSpeed === 'fast' ? 300 : 1500));
+    function setDigitStyle(el, num) { el.innerText = num; el.className = 'digit ' + (num==7?'gold':(num%2!=0?'odd':'even')); }
+    function updateUI() { 
+        document.getElementById('hits').innerText = hits; 
+        document.getElementById('current-rot').innerText = currentCount; 
+        document.getElementById('sub-display').innerText = mode;
     }
-
-    function updateUI() {
-        document.getElementById('hits').innerText = hits;
-        document.getElementById('rush-count').innerText = rushCount;
-        document.getElementById('current-rot').innerText = currentCount;
-        let bal = Math.floor(totalBall * 4);
-        document.getElementById('balance').innerText = bal.toLocaleString();
-        document.getElementById('balance').style.color = bal >= 0 ? "#4caf50" : "#ff4444";
-        document.getElementById('sub-display').innerText = (mode === 'ST') ? `ST: ${stRemaining}` : (mode === 'JITITAN') ? `時短: ${stRemaining}` : "通常時";
-    }
-
-    function addLog(msg) {
-        const log = document.getElementById('log');
-        log.innerHTML = `> ${msg}<br>` + log.innerHTML;
+    function addLog(msg) { 
+        const log = document.getElementById('log'); 
+        log.innerHTML = `> ${msg}<br>` + log.innerHTML; 
     }
 </script>
 </body>
