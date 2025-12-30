@@ -3,32 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EVANGELION Sim -未来への咆哮風-</title>
+    <title>EVANGELION Sim -激アツ演出実装-</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&display=swap');
 
         body { background: #050505; color: white; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         header { width: 100%; height: 50px; background: #000; border-bottom: 2px solid #d00000; display: flex; align-items: center; padding: 0 15px; box-sizing: border-box; z-index: 110; }
-        .sidebar { position: absolute; left: -250px; top: 0; width: 220px; height: 100%; background: #000; border-right: 2px solid #d00000; padding: 20px; z-index: 120; transition: 0.3s; box-shadow: 5px 0 15px rgba(208, 0, 0, 0.5); }
-        .sidebar.open { left: 0; }
         .menu-btn { background: #d00000; color: white; border: 1px solid #ff4444; padding: 5px 10px; cursor: pointer; font-weight: bold; font-size: 0.8rem; }
         .logo-main { flex-grow: 1; text-align: center; font-family: 'Shippori Mincho B1', serif; font-size: 1rem; color: #d00000; text-shadow: 0 0 5px #d00000; margin-right: 40px; }
 
         .main-content { flex-grow: 1; display: flex; flex-direction: column; align-items: center; padding: 10px; width: 100%; overflow-y: auto; box-sizing: border-box; }
-        .machine { width: 100%; max-width: 400px; background: #111; border: 2px solid #d00000; border-radius: 10px; padding: 15px; box-sizing: border-box; margin-bottom: 10px; }
         
-        .screen { background: #000; height: 150px; border-radius: 5px; border: 1px solid #444; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; position: relative; overflow: hidden; box-shadow: inset 0 0 20px #d0000055; }
+        /* 筐体・画面 */
+        .machine { width: 100%; max-width: 400px; background: #111; border: 2px solid #d00000; border-radius: 10px; padding: 15px; box-sizing: border-box; position: relative; }
+        
+        /* レバブル用アニメーション */
+        @keyframes vibration { 0% { transform: translate(0); } 20% { transform: translate(-2px, 2px); } 40% { transform: translate(-2px, -2px); } 60% { transform: translate(2px, 2px); } 80% { transform: translate(2px, -2px); } 100% { transform: translate(0); } }
+        .vibrate { animation: vibration 0.1s infinite; border-color: #ff0000 !important; box-shadow: 0 0 20px #ff0000 !important; }
+
+        .screen { background: #000; height: 150px; border-radius: 5px; border: 1px solid #444; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; position: relative; overflow: hidden; transition: 0.1s; }
         .reels { display: flex; gap: 15px; z-index: 2; }
         .digit { font-size: 3.5rem; font-weight: 900; font-family: 'Shippori Mincho B1', serif; width: 50px; text-align: center; }
         
+        /* 保留表示 */
+        .shoryu-area { position: absolute; bottom: 5px; left: 10px; display: flex; gap: 5px; }
+        .hoju { width: 10px; height: 10px; border-radius: 50%; background: #333; }
+        .hoju-red { background: #ff0000; box-shadow: 0 0 10px #ff0000; }
+
         .flash-overlay { position: absolute; top:0; left:0; width:100%; height:100%; pointer-events: none; z-index: 3; display: none; }
         .is-hitting { display: block; animation: rainbow 0.1s linear infinite; opacity: 0.6; }
         @keyframes rainbow { 0%{background:red;} 20%{background:orange;} 40%{background:yellow;} 60%{background:white;} 80%{background:purple;} 100%{background:red;} }
 
-        /* 記録エリア */
+        /* 記録・統計 */
         .record-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 10px; font-size: 0.7rem; color: #ffeb3b; }
-        .record-item { border: 1px border: 1px solid #555; padding: 3px; background: #1a1a1a; text-align: center; }
-
+        .record-item { border: 1px solid #555; padding: 3px; background: #1a1a1a; text-align: center; }
         .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 10px; }
         .stat-item { background: #000; border: 1px solid #333; padding: 5px; text-align: center; }
         .stat-val { display: block; font-size: 0.8rem; font-weight: bold; color: #d00000; }
@@ -43,33 +51,31 @@
 <body>
 
 <header>
-    <button class="menu-btn" onclick="toggleSidebar()">MENU</button>
+    <button class="menu-btn">MENU</button>
     <div class="logo-main">EVANGELION Sim</div>
 </header>
 
-<div class="sidebar" id="sidebar">
-    <div style="color:#d00000; font-weight:bold; margin-bottom:20px; text-align:center;">MACHINE LIST</div>
-    <ul style="list-style: none; padding: 0;">
-        <li class="machine-item" style="padding:10px; background:#111; border:1px solid #d00000; color:#ff4444; font-size:0.8rem; text-align:center;">Pエヴァ15 未来への咆哮</li>
-    </ul>
-    <button onclick="toggleSidebar()" style="width: 100%; background: #333; color: white; border: none; padding: 10px; margin-top: 10px;">CLOSE</button>
-</div>
-
 <div class="main-content">
-    <div class="machine">
+    <div class="machine" id="machine-body">
         <div class="record-grid">
             <div class="record-item">MAX連: <span id="max-rush">0</span></div>
             <div class="record-item">MAX出玉: <span id="max-payout">0</span></div>
         </div>
 
-        <div class="screen">
+        <div class="screen" id="screen">
             <div id="flash" class="flash-overlay"></div>
             <div class="reels">
-                <div id="d1" class="digit">0</div>
-                <div id="d2" class="digit">0</div>
-                <div id="d3" class="digit">0</div>
+                <div id="d1" class="digit">1</div>
+                <div id="d2" class="digit">2</div>
+                <div id="d3" class="digit">3</div>
             </div>
-            <div id="sub-display" style="position:absolute; bottom:10px; color:#d00000; font-size:0.6rem; font-weight:bold;">STANDBY</div>
+            <div class="shoryu-area">
+                <div id="h1" class="hoju"></div>
+                <div id="h2" class="hoju"></div>
+                <div id="h3" class="hoju"></div>
+                <div id="h4" class="hoju"></div>
+            </div>
+            <div id="sub-display" style="position:absolute; bottom:5px; right:10px; color:#d00000; font-size:0.6rem; font-weight:bold;">STANDBY</div>
         </div>
 
         <div class="stat-grid">
@@ -85,115 +91,130 @@
 </div>
 
 <script>
-    const SPEC = { 
-        normal_prob: 319.7, 
-        st_prob: 99.4, 
-        st_taps: 163, 
-        jititan_taps: 100, 
-        st_rush_rate: 0.59, 
-        payout_3r: 420,  // 通常時実出玉
-        payout_10r: 1400 // 右打ち実出玉
-    };
-
-    let hits = 0, rushCount = 0, currentCount = 0, investment = 0;
-    let totalBall = 0, sessionBall = 0; // 持ち玉, 今回の大当りでの一撃出玉
-    let maxRush = 0, maxPayout = 0;
+    const SPEC = { normal_prob: 319.7, st_prob: 99.4, st_taps: 163, jititan_taps: 100, st_rush_rate: 0.59, payout_3r: 420, payout_10r: 1400 };
+    let hits = 0, rushCount = 0, currentCount = 0, investment = 0, totalBall = 0, sessionBall = 0, maxRush = 0, maxPayout = 0;
     let mode = 'NORMAL', stRemaining = 0, isAuto = false, isAnimating = false, autoTimer = null;
 
-    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+    function playSound(freq, duration) {
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.frequency.setValueAtTime(freq, ctx.currentTime);
+            gain.gain.setValueAtTime(0.1, ctx.currentTime);
+            osc.connect(gain); gain.connect(ctx.destination);
+            osc.start(); osc.stop(ctx.currentTime + duration);
+        } catch(e) {}
+    }
 
     function toggleAuto() {
         if (isAuto) { stopAuto(); } 
-        else {
-            isAuto = true;
-            document.getElementById('btn').innerText = "STOP";
-            document.getElementById('btn').classList.add('active');
-            startProcess();
-        }
+        else { isAuto = true; document.getElementById('btn').innerText = "STOP"; document.getElementById('btn').classList.add('active'); startProcess(); }
     }
 
-    function stopAuto() {
-        isAuto = false;
-        clearTimeout(autoTimer);
-        document.getElementById('btn').innerText = "オート開始";
-        document.getElementById('btn').classList.remove('active');
-    }
+    function stopAuto() { isAuto = false; clearTimeout(autoTimer); document.getElementById('btn').innerText = "オート開始"; document.getElementById('btn').classList.remove('active'); }
 
     async function startProcess() {
         if (!isAuto || isAnimating) return;
-        
-        investment += 20; // 1回転20円(1k/50回相当)
+        investment += 20;
         currentCount++;
         updateUI();
 
         let prob = (mode === 'ST') ? SPEC.st_prob : SPEC.normal_prob;
-        let hit = Math.random() < 1 / prob;
+        let isHit = Math.random() < 1 / prob;
+        
+        // 演出抽選 (通常時のみ)
+        let isHot = false;
+        if (mode === 'NORMAL') {
+            let rnd = Math.random();
+            if (isHit) {
+                isHot = rnd < 0.8; // 当たりの時は80%で熱い演出
+            } else {
+                isHot = rnd < 0.05; // 外れの時は5%で熱い演出（ガセ）
+            }
+        }
 
-        await runAnimation(hit);
+        await runAnimation(isHit, isHot);
 
-        if (hit) {
-            handleHit();
-        } else {
+        if (isHit) { handleHit(); } 
+        else {
             if (mode !== 'NORMAL') {
                 stRemaining--;
                 if (stRemaining <= 0) {
-                    addLog(`警告：${(mode === 'ST') ? "ST" : "時短"}スルー (一撃 ${sessionBall}玉)`);
-                    // 記録更新
+                    addLog(`警告：終了 (一撃 ${sessionBall}玉)`);
                     if (rushCount > maxRush) maxRush = rushCount;
                     if (sessionBall > maxPayout) maxPayout = sessionBall;
-                    
                     mode = 'NORMAL'; rushCount = 0; currentCount = 0; sessionBall = 0;
-                    updateUI();
-                    stopAuto();
-                    return;
+                    updateUI(); stopAuto(); return;
                 }
             }
-            if (isAuto) autoTimer = setTimeout(startProcess, 50);
+            if (isAuto) autoTimer = setTimeout(startProcess, 30);
         }
     }
 
-    function runAnimation(isHit) {
-        return new Promise(resolve => {
-            isAnimating = true;
-            const d1 = document.getElementById('d1'), d2 = document.getElementById('d2'), d3 = document.getElementById('d3');
-            let count = 0;
-            let shuffle = setInterval(() => {
-                d1.innerText = Math.floor(Math.random()*10);
+    async function runAnimation(isHit, isHot) {
+        isAnimating = true;
+        const d1 = document.getElementById('d1'), d2 = document.getElementById('d2'), d3 = document.getElementById('d3');
+        const machine = document.getElementById('machine-body');
+        const h1 = document.getElementById('h1');
+
+        // 先読みレバブル演出
+        if (isHot && Math.random() < 0.4) {
+            addLog("!! 先読み：レバブル発生 !!");
+            machine.classList.add('vibrate');
+            playSound(100, 0.5);
+            await new Promise(r => setTimeout(r, 500));
+            machine.classList.remove('vibrate');
+        }
+
+        // 保留変化演出
+        if (isHot && Math.random() < 0.5) {
+            h1.classList.add('hoju-red');
+            addLog("保留変化：赤");
+        }
+
+        // 高速回転
+        let count = 0;
+        let shuffle = setInterval(() => {
+            d1.innerText = Math.floor(Math.random()*10);
+            d2.innerText = Math.floor(Math.random()*10);
+            d3.innerText = Math.floor(Math.random()*10);
+        }, 50);
+        await new Promise(r => setTimeout(r, 300));
+        clearInterval(shuffle);
+
+        // リーチ判定
+        let l = isHit ? (Math.floor(Math.random()*3)*2+1) : Math.floor(Math.random()*10);
+        d1.innerText = l; d3.innerText = l;
+
+        // 熱い演出の時だけ低速リーチ
+        if (isHot) {
+            if (Math.random() < 0.3) addLog("演出：レイ背景「さよなら」");
+            let midCount = 0;
+            let midShuffle = setInterval(() => {
                 d2.innerText = Math.floor(Math.random()*10);
-                d3.innerText = Math.floor(Math.random()*10);
-                count++;
-                if (count > 4) {
-                    clearInterval(shuffle);
-                    let l = isHit ? 7 : Math.floor(Math.random()*10);
-                    d1.innerText = l; d3.innerText = l;
-                    let midCount = 0;
-                    let midShuffle = setInterval(() => {
-                        d2.innerText = Math.floor(Math.random()*10);
-                        midCount++;
-                        if (midCount > 8) {
-                            clearInterval(midShuffle);
-                            d2.innerText = isHit ? l : (l + 1) % 10;
-                            isAnimating = false;
-                            resolve();
-                        }
-                    }, 80);
-                }
-            }, 40);
-        });
+                playSound(440, 0.05);
+            }, 200); // 低速
+            await new Promise(r => setTimeout(r, 2000));
+            clearInterval(midShuffle);
+        }
+
+        d2.innerText = isHit ? l : (l + 1) % 10;
+        h1.classList.remove('hoju-red');
+        isAnimating = false;
     }
 
     function handleHit() {
         hits++;
         let getBall = (mode === 'NORMAL') ? SPEC.payout_3r : SPEC.payout_10r;
-        totalBall += getBall;
-        sessionBall += getBall;
-
+        totalBall += getBall; sessionBall += getBall;
         document.getElementById('flash').classList.add('is-hitting');
-        
+        playSound(880, 1);
+
         if (mode === 'NORMAL') {
             if (Math.random() < SPEC.st_rush_rate) {
                 mode = 'ST'; stRemaining = SPEC.st_taps; rushCount = 1;
-                addLog(`覚醒：大当り(ST突入) +${getBall}玉`);
+                addLog(`覚醒：IMPACT RUSH突入 +${getBall}玉`);
             } else {
                 mode = 'JITITAN'; stRemaining = SPEC.jititan_taps;
                 addLog(`捕捉：大当り(時短100) +${getBall}玉`);
@@ -202,16 +223,10 @@
             mode = 'ST'; stRemaining = SPEC.st_taps; rushCount++;
             addLog(`継続：${rushCount}連目 +${getBall}玉`);
         }
-        currentCount = 0;
-        updateUI();
-
+        currentCount = 0; updateUI();
         setTimeout(() => {
             document.getElementById('flash').classList.remove('is-hitting');
-            if (isAuto && (mode === 'ST' || mode === 'JITITAN')) {
-                startProcess();
-            } else {
-                stopAuto();
-            }
+            if (isAuto && (mode === 'ST' || mode === 'JITITAN')) startProcess(); else stopAuto();
         }, 1500);
     }
 
@@ -219,18 +234,14 @@
         document.getElementById('hits').innerText = hits;
         document.getElementById('rush-count').innerText = rushCount;
         document.getElementById('current-rot').innerText = currentCount;
-        
-        // 収支計算 (持ち玉4円換算 - 投資額)
         let balance = (totalBall * 4) - investment;
         const balEl = document.getElementById('balance');
         balEl.innerText = balance.toLocaleString();
         balEl.style.color = balance >= 0 ? "#4caf50" : "#d00000";
-
         document.getElementById('max-rush').innerText = maxRush;
         document.getElementById('max-payout').innerText = maxPayout.toLocaleString();
-
         const sub = document.getElementById('sub-display');
-        sub.innerText = (mode === 'ST') ? `IMPACT RUSH残り: ${stRemaining}` : (mode === 'JITITAN') ? `チャンスタイム残り: ${stRemaining}` : "通常時：作戦待機中";
+        sub.innerText = (mode === 'ST') ? `ST中: ${stRemaining}` : (mode === 'JITITAN') ? `時短中: ${stRemaining}` : "通常時：作戦待機中";
     }
 
     function addLog(msg) {
