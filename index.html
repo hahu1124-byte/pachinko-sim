@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>EVANGELION Sim -Auto Return Edition-</title>
+    <title>EVANGELION Sim -Motion Restore-</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&display=swap');
@@ -43,8 +43,7 @@
         .log { width: 100%; max-width: 440px; height: 195px; background: #000; margin-top: 10px; padding: 12px; font-size: 1rem; color: #ff4444; overflow-y: auto; border: 1px solid #333; font-family: monospace; box-sizing: border-box; }
         #modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; }
         #modal-content { background: #111; border: 2px solid #d00000; width: 95%; max-width: 480px; padding: 20px; border-radius: 12px; }
-        .graph-container { margin-bottom: 20px; }
-        .graph-area { background: #000; height: 180px; }
+        .graph-area { background: #000; height: 180px; margin-bottom: 20px; }
     </style>
 </head>
 <body>
@@ -56,8 +55,8 @@
 <div id="modal-overlay">
     <div id="modal-content">
         <span style="float:right; cursor:pointer; font-size:1.5rem;" onclick="closeModal()">×</span>
-        <div class="graph-container"><div style="font-size:0.8rem; color:#888;">■ 差玉スランプグラフ</div><div class="graph-area"><canvas id="slumpChart"></canvas></div></div>
-        <div class="graph-container"><div style="font-size:0.8rem; color:#888;">■ 大当り履歴グラフ</div><div class="graph-area"><canvas id="historyChart"></canvas></div></div>
+        <div style="font-size:0.8rem; color:#888;">■ 差玉スランプグラフ</div><div class="graph-area"><canvas id="slumpChart"></canvas></div>
+        <div style="font-size:0.8rem; color:#888;">■ 大当り履歴グラフ</div><div class="graph-area"><canvas id="historyChart"></canvas></div>
     </div>
 </div>
 <div class="main-content">
@@ -86,7 +85,7 @@
             <button class="btn-auto" id="btn-fast" onclick="toggleAuto('fast')">高速オート</button>
         </div>
     </div>
-    <div class="log" id="log">> 演出終了後の高速復帰ロジックを実装。</div>
+    <div class="log" id="log">> 高速オート中も図柄が動くように戻しました。</div>
 </div>
 
 <script>
@@ -117,35 +116,27 @@
         else { isAuto=true; autoSpeed=s; resetBtns(); document.getElementById('btn-'+s).classList.add('btn-stop'); startProcess(); }
     }
     function resetBtns() { document.querySelectorAll('.btn-auto').forEach(b => b.classList.remove('btn-stop')); }
-    function resetData() { hits=0; rushCount=0; currentCount=0; totalBall=0; totalRot=0; heso=0; slumpData=[0]; slumpLabels=["0"]; historyData=[]; historyLabels=[]; updateUI(); updateHeso(); addLog("リセット完了"); }
+    function resetData() { hits=0; rushCount=0; currentCount=0; totalBall=0; totalRot=0; heso=0; slumpData=[0]; slumpLabels=["0"]; historyData=[]; historyLabels=[]; updateUI(); updateHeso(); addLog("リセット"); }
 
     async function startProcess() {
         if(!isAuto || isAnim) return;
         if(heso < 4) heso++;
 
-        let prob = (mode==='ST' ? SPECS.s : SPECS.n);
-        let isHit = Math.random() < (1/prob);
+        let isHit = Math.random() < (1 / (mode==='ST' ? SPECS.s : SPECS.n));
         let willEnterRush = isHit && (mode !== '通常' || Math.random() < 0.59);
         let eff = selectEffect(isHit, willEnterRush);
 
         if(optKokuchi && isHit) { eff.heavy=true; eff.flash=true; eff.lamp=true; eff.name="完全告知"; }
-
-        // 演出検知用：一時的なスピード保持
+        
         let originalSpeed = autoSpeed;
-        let isTemporarySlow = false;
-
-        if(autoSpeed==='fast' && eff.heavy && !optAll) {
-            isTemporarySlow = true;
-            addLog("!! 激アツ検知：一時的に低速化 !!");
-        }
+        if(autoSpeed==='fast' && eff.heavy && !optAll) { autoSpeed='slow'; resetBtns(); document.getElementById('btn-slow').classList.add('btn-stop'); addLog("激アツ：低速化"); }
 
         currentCount++; totalRot++; heso--; updateHeso(eff.isRedHold);
-        if(mode==='通常') totalBall -= (13 + Math.random()*2); else totalBall -= 0.05;
+        totalBall -= (mode==='通常' ? 14 : 0.05);
         slumpData.push(Math.floor(totalBall)); slumpLabels.push(totalRot.toString());
 
-        // スピード決定：一時的低速なら2500ms、高速なら20ms
-        let spinTime = (eff.heavy || (isTemporarySlow)) ? 2500 : (autoSpeed==='fast'?20:500);
-
+        let spinTime = (eff.heavy || (originalSpeed==='fast' && autoSpeed==='slow')) ? 2500 : (autoSpeed==='fast'?60:600);
+        
         if(eff.heavy) {
             isAnim=true;
             if(eff.vibe) document.getElementById('machine').classList.add('vibrate');
@@ -154,7 +145,8 @@
             if(eff.lamp) document.getElementById('lamp').classList.add('lamp-active');
         }
 
-        let spin = setInterval(() => { [1,2,3].forEach(i => { const n=Math.floor(Math.random()*9)+1; const el=document.getElementById('d'+i); el.innerText=n; el.className='digit '+(n%2===0?'even':'odd'); }); }, 50);
+        // 高速オート時でも図柄が動くように修正
+        let spin = setInterval(() => { [1,2,3].forEach(i => { const n=Math.floor(Math.random()*9)+1; const el=document.getElementById('d'+i); el.innerText=n; el.className='digit '+(n%2===0?'even':'odd'); }); }, 40);
         await new Promise(r => setTimeout(r, spinTime));
         clearInterval(spin);
         
@@ -168,26 +160,20 @@
             let d = willEnterRush ? 7 : 2;
             [1,2,3].forEach(i => { const el=document.getElementById('d'+i); el.innerText=d; el.className='digit '+(d===7?'gold':'even'); });
             if(willEnterRush) { 
-                addLog("RUSH!"); totalBall += (mode==='通常' || mode==='時短') ? 420 : 1400;
+                addLog("RUSH!"); totalBall += (mode==='通常'||mode==='時短') ? 420 : 1400;
                 mode='ST'; rRem=SPECS.st; rushCount++;
             } else {
                 mode='時短'; rRem=SPECS.jt; rushCount=0; totalBall += 420; addLog("通常当り");
             }
-            updateUI(); await new Promise(r => setTimeout(r, 2000));
+            updateUI(); await new Promise(r => setTimeout(r, 1800));
             currentCount=0; document.getElementById('lamp').classList.remove('lamp-active');
         }
 
-        if(mode!=='通常' && !isHit) { 
-            rRem--; 
-            if(rRem<=0) { 
-                addLog(mode + "終了"); mode='通常'; rushCount=0; 
-                if(!optAll) { isAuto=false; resetBtns(); }
-            } 
-        }
-
-        // 変動終了後に高速オートを維持（または復帰）
+        if(mode!=='通常' && !isHit) { rRem--; if(rRem<=0) { addLog(mode+"終了"); mode='通常'; rushCount=0; if(!optAll){isAuto=false; resetBtns();}} }
+        
         isAnim=false; updateUI();
-        if(isAuto) setTimeout(startProcess, (autoSpeed==='fast') ? 5 : 400);
+        if(originalSpeed==='fast' && !optAll) { autoSpeed='fast'; resetBtns(); document.getElementById('btn-fast').classList.add('btn-stop'); }
+        if(isAuto) setTimeout(startProcess, (autoSpeed==='fast') ? 5 : 300);
     }
 
     function selectEffect(isHit, willEnterRush) {
@@ -207,15 +193,7 @@
         }
         return {heavy:false};
     }
-
-    function updateHeso(isRed) {
-        for(let i=1; i<=4; i++) {
-            const el = document.getElementById('h'+i);
-            if(i === 1 && isRed) el.className = 'heso-ball heso-red';
-            else el.className = (i <= heso) ? 'heso-ball heso-on' : 'heso-ball';
-        }
-    }
-
+    function updateHeso(isRed) { for(let i=1; i<=4; i++) { const el=document.getElementById('h'+i); if(i===1&&isRed) el.className='heso-ball heso-red'; else el.className=(i<=heso)?'heso-ball heso-on':'heso-ball'; } }
     function updateUI() {
         document.getElementById('hits').innerText=hits; document.getElementById('rush-count').innerText=rushCount;
         document.getElementById('current-rot').innerText=currentCount; document.getElementById('balance').innerText=Math.floor(totalBall).toLocaleString();
