@@ -140,7 +140,7 @@
         
         reservedStock.push({ isHit: isHit, holdType: holdType });
 
-        // 赤保留が入賞したら高速オートを解除して低速にする
+        // 赤保留の時だけ減速（緑保留では減速しない）
         if (holdType === "red" && isAuto && autoSpeed === "fast") {
             addLog("!! 赤保留を検知。低速オートに切り替えます !!");
             toggleAuto("slow"); 
@@ -159,15 +159,12 @@
         if (res.holdType !== "red") {
             let upgradeRoll = Math.random() * 100;
             if (isHit) {
-                // 当たり時は昇格しやすい
                 if (upgradeRoll < 30) {
                     const steps = ["none", "blink", "blue", "green", "red"];
                     let idx = steps.indexOf(res.holdType);
                     res.holdType = steps[idx + 1] || "red";
-                    // ログには出さないが内部で確定
                 }
             } else {
-                // ハズレでも稀に昇格ガセ
                 if (upgradeRoll < 5) {
                     const steps = ["none", "blink", "blue", "green"];
                     let idx = steps.indexOf(res.holdType);
@@ -205,6 +202,7 @@
             if (roll() < 0.0017) { res.name.push("赤レバ"); res.vibe=true; res.vibeColor="red"; res.heavy = true; }
             else if (roll() < 0.023) { res.name.push("白レバ"); res.vibe=true; res.vibeColor="white"; res.heavy = true; }
             else if (roll() < 0.150) { res.name.push("金系"); res.heavy = true; }
+            // 緑保留以上は演出を重くするが、ログ表示の有無は下で判定
             if (res.holdType === "red" || res.holdType === "green") res.heavy = true;
         }
 
@@ -250,7 +248,10 @@
         if(optKokuchi && isHit) { eff.heavy=true; eff.flash=true; eff.lamp=true; eff.displayName="インフラ告知"; eff.trust=100; eff.isSure=true; }
         
         let originalSpeed = autoSpeed;
-        if(autoSpeed==='fast' && eff.heavy && !optAll) { autoSpeed = 'slow'; resetBtns(); document.getElementById('btn-slow').classList.add('btn-stop'); }
+        // 緑保留では減速させないための判定
+        if(autoSpeed==='fast' && eff.heavy && !optAll && eff.holdType !== "green") { 
+            autoSpeed = 'slow'; resetBtns(); document.getElementById('btn-slow').classList.add('btn-stop'); 
+        }
         
         totalRot++; currentRot++; lcdCount++; 
         updateHesoUI(eff.holdType); 
@@ -261,12 +262,17 @@
         let spinTime = (eff.heavy) ? (eff.isFullSpin ? 4000 : 2500) : (autoSpeed==='fast'?60:600);
         const machineEl = document.getElementById('machine');
 
+        // 緑保留のハズレ履歴は表示しない
         if(eff.heavy) { 
             let logText = `${mode} ${lcdCount}回【${eff.displayName}】信頼度:${eff.trust.toFixed(1)}%`;
             const pNames = ["虹レバ", "インフラ", "カヲル", "さよなら", "全回転"];
             if (mode === 'ST') pNames.push("次回予告");
             if (eff.isSure && eff.name.some(n => pNames.includes(n))) logText += " プレミア出現！";
-            addLog(logText); 
+            
+            // 緑保留単体（または弱演出）のハズレならログをスキップ
+            if (!(eff.holdType === "green" && !isHit)) {
+                addLog(logText); 
+            }
 
             if(eff.vibe) {
                 machineEl.classList.add('vibrate'); 
@@ -331,7 +337,12 @@
             } 
             updateUI(); await new Promise(r => setTimeout(r, 1800)); lcdCount=0; document.getElementById('lamp').classList.remove('lamp-active'); 
             reservedStock = []; 
-        } else if(eff.heavy) { addLog(`>> ${lcdCount}回転 【${lastDigits[0]}】 ${eff.displayName} ﾊｽﾞﾚ`); }
+        } else if(eff.heavy) { 
+            // 緑保留単体のハズレ時はログを出さない
+            if (!(eff.holdType === "green" && !isHit)) {
+                addLog(`>> ${lcdCount}回転 【${lastDigits[0]}】 ${eff.displayName} ﾊｽﾞﾚ`); 
+            }
+        }
         isAnim=false; updateUI();
         if(isAuto && originalSpeed==='fast' && !optAll) { autoSpeed='fast'; resetBtns(); document.getElementById('btn-fast').classList.add('btn-stop'); }
         if(isAuto) setTimeout(startProcess, (autoSpeed==='fast') ? 5 : 300);
@@ -374,6 +385,7 @@
 </script>
 </body>
 </html>
+
 
 
 
