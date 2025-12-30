@@ -116,18 +116,21 @@
     let reservedStock = []; 
 
     const TRUST_MAP_N = { "白レバ": 0.90, "赤レバ": 0.965, "赤保留": 0.90, "緑保留": 0.11, "青保留": 0.05, "点滅保留": 0.005, "次回予告": 0.65, "レイ背景": 0.85, "金系": 0.50 };
-    const TRUST_MAP_S = { "白レバ": 0.95, "赤レバ": 0.99, "赤保留": 0.95, "緑保留": 0.11, "青保留": 0.05, "点滅保留": 0.005, "次回予告": 1.0, "レイ背景": 0.92, "金系": 0.80 };
+    const TRUST_MAP_S = { "白レバ": 0.95, "赤レバ": 0.99, "赤保留": 0.95, "緑保留": 0.11, "青保留": 0.05, "点滅保留": 0.005, "次回予告": 1.0, "レイ背景": 0.92, "金系": 0.80, "虹保留": 1.0 };
 
     function preCheck() {
         if (reservedStock.length >= 4) return;
-        let prob = (mode === 'ST') ? SPECS.s : SPECS.n;
+        let prob = (mode === 'ST' || mode === '時短') ? SPECS.s : SPECS.n;
         let isHit = Math.random() < (1 / prob);
         
         let holdType = "none";
         let roll = Math.random() * 100;
 
         if (isHit) {
-            if (roll < 25) holdType = "red";
+            // ST/時短中のみ虹保留を抽選
+            if ((mode === 'ST' || mode === '時短') && roll < 5) {
+                holdType = "rainbow";
+            } else if (roll < 25) holdType = "red";
             else if (roll < 55) holdType = "green";
             else if (roll < 80) holdType = "blue";
             else holdType = "blink";
@@ -140,9 +143,9 @@
         
         reservedStock.push({ isHit: isHit, holdType: holdType });
 
-        // 赤保留の時だけ減速（緑保留では減速しない）
-        if (holdType === "red" && isAuto && autoSpeed === "fast") {
-            addLog("!! 赤保留を検知。低速オートに切り替えます !!");
+        // 赤保留、または虹保留を検知したら低速に
+        if ((holdType === "red" || holdType === "rainbow") && isAuto && autoSpeed === "fast") {
+            addLog(`!! ${holdType === "rainbow" ? "虹" : "赤"}保留を検知。低速オートに切り替えます !!`);
             toggleAuto("slow"); 
         }
 
@@ -153,16 +156,18 @@
     function selectEffect(isHit, forceHold) {
         let res = { heavy: false, name: [], trust: 0, vibe: false, vibeColor: "", flash: false, lamp: false, text: "", holdType: forceHold, isSure: false, isFullSpin: false };
         const roll = () => Math.random() * 100;
-        const isST = (mode === 'ST');
+        const isST = (mode === 'ST' || mode === '時短');
 
         // 昇格抽選（当該移動時）
-        if (res.holdType !== "red") {
+        if (res.holdType !== "red" && res.holdType !== "rainbow") {
             let upgradeRoll = Math.random() * 100;
             if (isHit) {
                 if (upgradeRoll < 30) {
                     const steps = ["none", "blink", "blue", "green", "red"];
                     let idx = steps.indexOf(res.holdType);
                     res.holdType = steps[idx + 1] || "red";
+                    // 右打ち中ならさらに虹への昇格も稀にあり
+                    if (isST && Math.random() < 0.1) res.holdType = "rainbow";
                 }
             } else {
                 if (upgradeRoll < 5) {
@@ -174,12 +179,17 @@
         }
 
         if (res.holdType !== "none") {
-            let hName = res.holdType === "red" ? "赤保留" : res.holdType === "green" ? "緑保留" : res.holdType === "blue" ? "青保留" : "点滅保留";
+            let hName = res.holdType === "red" ? "赤保留" : res.holdType === "green" ? "緑保留" : res.holdType === "blue" ? "青保留" : res.holdType === "rainbow" ? "虹保留" : "点滅保留";
             res.name.push(hName);
         }
 
         if (isHit) {
-            if (roll() < 1.0) { res.name.push("全回転"); res.text="全回転"; res.isSure=true; res.isFullSpin=true; res.lamp=true; }
+            if (roll() < 1.0 || res.holdType === "rainbow") { 
+                res.isSure = true; 
+                res.heavy = true; 
+                if (res.holdType === "rainbow") { res.lamp = true; }
+                else { res.name.push("全回転"); res.text="全回転"; res.isFullSpin=true; res.lamp=true; }
+            }
             else {
                 let hasVibe = false;
                 if (isST && roll() < 10.0) { res.name.push("次回予告"); res.text="次回予告"; res.isSure = true; }
@@ -192,23 +202,22 @@
                 if (!isST || res.name.length <= 1) {
                     if (roll() < 3.0) { res.name.push("さよなら"); res.text="さよなら"; }
                     else if (!res.text && roll() < 33.3) { res.name.push("レイ背景"); res.text="レイ背景"; }
-                    if (!isST && !res.text && roll() < 40.0) { res.name.push("次回予告"); res.text="次回予告"; }
+                    if (mode === '通常' && !res.text && roll() < 40.0) { res.name.push("次回予告"); res.text="次回予告"; }
                 }
                 if (res.name.length <= 1 && !res.text) { res.name.push("金系"); }
                 if (hasVibe) res.vibe = true;
+                res.heavy = true;
             }
-            res.heavy = true;
         } else {
             if (roll() < 0.0017) { res.name.push("赤レバ"); res.vibe=true; res.vibeColor="red"; res.heavy = true; }
             else if (roll() < 0.023) { res.name.push("白レバ"); res.vibe=true; res.vibeColor="white"; res.heavy = true; }
             else if (roll() < 0.150) { res.name.push("金系"); res.heavy = true; }
-            // 緑保留以上は演出を重くするが、ログ表示の有無は下で判定
             if (res.holdType === "red" || res.holdType === "green") res.heavy = true;
         }
 
-        const currentMap = isST ? TRUST_MAP_S : TRUST_MAP_N;
-        const pNames = ["虹レバ", "インフラ", "カヲル", "さよなら", "全回転"];
-        if (isST) pNames.push("次回予告");
+        const currentMap = (mode === 'ST' || mode === '時短') ? TRUST_MAP_S : TRUST_MAP_N;
+        const pNames = ["虹レバ", "インフラ", "カヲル", "さよなら", "全回転", "虹保留"];
+        if (mode === 'ST' || mode === '時短') pNames.push("次回予告");
 
         if (res.name.some(n => pNames.includes(n)) || res.name.length >= 3) { res.trust = 100; res.isSure = true; } 
         else if (res.name.length >= 2) { 
@@ -248,7 +257,6 @@
         if(optKokuchi && isHit) { eff.heavy=true; eff.flash=true; eff.lamp=true; eff.displayName="インフラ告知"; eff.trust=100; eff.isSure=true; }
         
         let originalSpeed = autoSpeed;
-        // 緑保留では減速させないための判定
         if(autoSpeed==='fast' && eff.heavy && !optAll && eff.holdType !== "green") { 
             autoSpeed = 'slow'; resetBtns(); document.getElementById('btn-slow').classList.add('btn-stop'); 
         }
@@ -262,14 +270,12 @@
         let spinTime = (eff.heavy) ? (eff.isFullSpin ? 4000 : 2500) : (autoSpeed==='fast'?60:600);
         const machineEl = document.getElementById('machine');
 
-        // 緑保留のハズレ履歴は表示しない
         if(eff.heavy) { 
             let logText = `${mode} ${lcdCount}回【${eff.displayName}】信頼度:${eff.trust.toFixed(1)}%`;
-            const pNames = ["虹レバ", "インフラ", "カヲル", "さよなら", "全回転"];
-            if (mode === 'ST') pNames.push("次回予告");
+            const pNames = ["虹レバ", "インフラ", "カヲル", "さよなら", "全回転", "虹保留"];
+            if (mode === 'ST' || mode === '時短') pNames.push("次回予告");
             if (eff.isSure && eff.name.some(n => pNames.includes(n))) logText += " プレミア出現！";
             
-            // 緑保留単体（または弱演出）のハズレならログをスキップ
             if (!(eff.holdType === "green" && !isHit)) {
                 addLog(logText); 
             }
@@ -338,7 +344,6 @@
             updateUI(); await new Promise(r => setTimeout(r, 1800)); lcdCount=0; document.getElementById('lamp').classList.remove('lamp-active'); 
             reservedStock = []; 
         } else if(eff.heavy) { 
-            // 緑保留単体のハズレ時はログを出さない
             if (!(eff.holdType === "green" && !isHit)) {
                 addLog(`>> ${lcdCount}回転 【${lastDigits[0]}】 ${eff.displayName} ﾊｽﾞﾚ`); 
             }
@@ -352,17 +357,7 @@
     function closeModal() { document.getElementById('modal-overlay').style.display='none'; }
     function updateCharts() { const cfg = { responsive:true, maintainAspectRatio:false, scales:{ x:{display:false}, y:{grid:{color:'#222'}, ticks:{color:'#888'}} }, plugins:{legend:{display:false}} }; if(sChart) sChart.destroy(); sChart = new Chart(document.getElementById('slumpChart'), { type:'line', data:{ labels:slumpLabels, datasets:[{data:slumpData, borderColor:'#8a2be2', borderWidth:2, pointRadius:0, fill:false}] }, options:cfg }); if(hChart) hChart.destroy(); hChart = new Chart(document.getElementById('historyChart'), { type:'bar', data:{ labels:historyLabels, datasets:[{data:historyData, backgroundColor:'#8a2be2'}] }, options:cfg }); }
     function toggleOpt(t) { if(t==='all') { optAll=!optAll; document.getElementById('btn-all').classList.toggle('active'); } if(t==='kokuchi') { optKokuchi=!optKokuchi; document.getElementById('btn-kokuchi').classList.toggle('active'); } }
-    
-    function toggleAuto(s) { 
-        if(isAuto && autoSpeed===s) { 
-            isAuto=false; resetBtns(); 
-        } else { 
-            isAuto=true; autoSpeed=s; resetBtns(); 
-            document.getElementById('btn-'+s).classList.add('btn-stop'); 
-            if (!isAnim) startProcess(); 
-        } 
-    }
-    
+    function toggleAuto(s) { if(isAuto && autoSpeed===s) { isAuto=false; resetBtns(); } else { isAuto=true; autoSpeed=s; resetBtns(); document.getElementById('btn-'+s).classList.add('btn-stop'); if (!isAnim) startProcess(); } }
     function resetBtns() { document.querySelectorAll('.btn-auto').forEach(b => b.classList.remove('btn-stop')); }
     function resetData() { hits=0; rushCount=0; currentRot=0; totalRot=0; totalBall=0; heso=0; currentRushHits=0; lcdCount=0; slumpData=[0]; slumpLabels=["0"]; historyData=[]; historyLabels=[]; reservedStock=[]; updateUI(); updateHesoUI("none"); addLog("データを初期化しました。"); }
     
@@ -385,6 +380,7 @@
 </script>
 </body>
 </html>
+
 
 
 
