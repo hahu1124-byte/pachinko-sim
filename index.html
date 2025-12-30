@@ -30,12 +30,12 @@
         @keyframes flash-white { 0%, 100% { background: #000; } 50% { background: #fff; } }
         .heso-overlay { position: absolute; bottom: 10px; display: flex; align-items: flex-end; gap: 10px; }
         .heso-ball { width: 10px; height: 10px; background: #222; border-radius: 50%; border: 1px solid #555; transition: all 0.2s; }
-        .heso-current { width: 13px; height: 13px; margin-right: 5px; border-width: 2px; } 
+        .heso-current { width: 13.0px; height: 13.0px; margin-right: 5px; border-width: 2px; } 
         .heso-migi { border-radius: 2px !important; width: 15.6px !important; height: 15.6px !important; border: 1.5px solid #fff; }
         .heso-on { background: #888; }
         .heso-red { background: radial-gradient(circle, #ff4444, #880000); box-shadow: 0 0 8px #ff0000; border-color: #f00; }
         .heso-green { background: radial-gradient(circle, #44ff44, #008800); box-shadow: 0 0 8px #00ff00; border-color: #0f0; }
-        .heso-blue { background: radial-gradient(circle, #4444ff, #000088); box-shadow: 0 0 8px #00ff00; border-color: #00f; }
+        .heso-blue { background: radial-gradient(circle, #4444ff, #000088); box-shadow: 0 0 8px #0000ff; border-color: #00f; }
         .heso-blink { background: #fff; animation: blink-ball 0.3s infinite; box-shadow: 0 0 8px #fff; border-color: #fff; }
         .heso-rainbow { animation: rainbow-bg 0.5s infinite; box-shadow: 0 0 10px #fff; border-color: #fff; }
         @keyframes blink-ball { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
@@ -100,7 +100,7 @@
                 <button class="btn-auto" id="btn-fast" onclick="toggleAuto('fast')">高速オート</button>
             </div>
         </div>
-        <div class="log" id="log">> 保留と強演出の複合を制限し、バランスを調整しました。</div>
+        <div class="log" id="log">> ST中の占有率を調整しました（虹10%, 赤33%, 緑5%, 青5%, 点滅5%）。</div>
     </div>
     
 <script>
@@ -134,25 +134,34 @@
         let holdType = "none", preVibe = "none", roll = Math.random() * 100;
 
         if (isHit) {
-            // 当たり時：保留変化かレバブルのどちらか一方のみが発生するように調整
-            if (roll < 40) { // 40%で保留変化
-                if ((mode === 'ST' || mode === '時短') && Math.random() < 0.25) holdType = "rainbow";
-                else holdType = "red";
-            } else if (roll < 70) { // 30%でレバブル（保留は変化させない）
-                let vibeRoll = Math.random() * 100;
-                if (vibeRoll < 10) preVibe = "rainbow";
-                else if (vibeRoll < 40) preVibe = "red";
-                else preVibe = "white";
-            } else { // 残り30%は当該での強予告当り用（保留もレバブルもなし）
-                holdType = "none";
+            if (mode === 'ST' || mode === '時短') {
+                // ST中占有率：虹10%, 赤33%, 緑5%, 青5%, 点滅5%, なし42%
+                if (roll < 10) holdType = "rainbow";
+                else if (roll < 43) holdType = "red";
+                else if (roll < 48) holdType = "green";
+                else if (roll < 53) holdType = "blue";
+                else if (roll < 58) holdType = "blink";
+                else holdType = "none";
+                
+                // レバブル複合制限（ST中のみ）
+                if (holdType === "none") {
+                    let vRoll = Math.random() * 100;
+                    if (vRoll < 10) preVibe = "rainbow";
+                    else if (vRoll < 40) preVibe = "red";
+                    else if (vRoll < 70) preVibe = "white";
+                }
+            } else {
+                // 通常時：従来バランス
+                if (roll < 20) holdType = "red";
+                else if (roll < 50) holdType = "green";
+                else if (roll < 70) holdType = "blue";
             }
         } else {
-            // ハズレ時：青保留や緑保留が単独で出るように
+            // ハズレ時：青・緑が「しっかりハズレる」ように出現率を維持
             if (roll < 0.1) holdType = "red";
-            else if (roll < 3.0) holdType = "green";
-            else if (roll < 12.0) holdType = "blue";
-            else if (roll < 20.0) holdType = "blink";
-            // ハズレレバブルも保留変化がない時のみ
+            else if (roll < 5.0) holdType = "green";
+            else if (roll < 15.0) holdType = "blue";
+            else if (roll < 25.0) holdType = "blink";
             if (holdType === "none" && Math.random() < 0.005) preVibe = "white";
         }
         reservedStock.push({ isHit: isHit, holdType: holdType, preVibe: preVibe });
@@ -166,16 +175,11 @@
         const roll = () => Math.random() * 100;
         const isMigi = (mode === 'ST' || mode === '時短');
 
-        // 保留変化がある場合、他の強演出（複合）をカットする
-        const hasHoldChange = (res.holdType !== "none" && res.holdType !== "blink");
-
         if (res.holdType !== "none") {
             let hName = res.holdType === "red" ? "赤保留" : res.holdType === "green" ? "緑保留" : res.holdType === "blue" ? "青保留" : res.holdType === "rainbow" ? "虹保留" : "点滅保留";
             res.name.push(hName);
         }
-
-        // レバブル（先読み引き継ぎ）
-        if (res.vibeColor !== "none" && res.vibeColor !== "") {
+        if (res.vibeColor !== "" && res.vibeColor !== "none") {
             res.vibe = true;
             res.name.push(res.vibeColor === "rainbow" ? "虹レバ" : res.vibeColor === "red" ? "赤レバ" : "白レバ");
             if (res.vibeColor === "rainbow") res.lamp = true;
@@ -183,25 +187,36 @@
         }
 
         if (isHit) {
-            if (!hasHoldChange && !res.vibe) { // 保留もレバブルもない時のみ特殊演出
-                if (roll() < 5.0) { res.name.push("全回転"); res.text="全回転"; res.isFullSpin=true; res.lamp=true; res.isSure=true; }
-                else if (roll() < 10.0) { res.name.push("インフラ"); res.flash=true; res.lamp=true; res.isSure=true; }
-                else if (roll() < 10.0) { res.name.push("カヲル"); res.text="カヲル"; res.isSure=true; }
-                else { res.name.push(isMigi ? "金系" : "次回予告"); }
+            // 当たり時の追加演出
+            if (isMigi) {
+                if (res.holdType === "none" && !res.vibe) {
+                    // 保留変化もレバブルもない当たり（42%の枠）
+                    let eRoll = roll();
+                    if (eRoll < 10) { res.name.push("次回予告"); res.text="次回予告"; res.isSure=true; }
+                    else if (eRoll < 40) { res.name.push("金系"); }
+                    else if (eRoll < 45) { res.name.push("インフラ"); res.flash=true; res.lamp=true; res.isSure=true; }
+                    else if (eRoll < 50) { res.name.push("カヲル"); res.text="カヲル"; res.isSure=true; }
+                }
+            } else {
+                // 通常時当たり
+                if (roll() < 10) { res.name.push("次回予告"); res.text="次回予告"; }
+                else if (roll() < 30) { res.name.push("レイ背景"); res.text="レイ背景"; }
             }
-            // 復活当り
-            if (!res.isSure && roll() < 8.0) res.isFukkatsu = true;
+            if (roll() < 8) res.isFukkatsu = true;
             res.heavy = true;
         } else {
-            // ハズレ時は信頼度通りの名前だけ入れる
             if (res.holdType === "red" || res.vibe) res.heavy = true;
         }
 
         const currentMap = (isMigi) ? TRUST_MAP_S : TRUST_MAP_N;
         res.name = [...new Set(res.name)];
-        if (res.name.some(n => ["虹レバ", "インフラ", "カヲル", "さよなら", "全回転", "虹保留"].includes(n))) { res.trust = 100; res.isSure = true; } 
-        else if (res.name.length >= 1) { res.trust = (currentMap[res.name[0]] || 0) * 100; }
-        
+        const premia = ["虹レバ", "インフラ", "カヲル", "さよなら", "全回転", "虹保留"];
+        if (res.name.some(n => premia.includes(n))) { res.trust = 100; res.isSure = true; }
+        else if (res.name.length >= 1) { 
+            let base = 1;
+            res.name.forEach(n => { base *= (1 - (currentMap[n] || 0.01)); });
+            res.trust = (1 - base) * 100;
+        }
         if (res.trust >= 100) res.isSure = true;
         res.displayName = res.name.join("+") || "弱予告";
         return res;
@@ -314,6 +329,7 @@
 </script>
 </body>
 </html>
+
 
 
 
