@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>EVANGELION Sim -Motion Restore-</title>
+    <title>EVANGELION Sim -Kaworu & Detail-</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&display=swap');
@@ -40,7 +40,7 @@
         .side-btn.active { background: #d00000; color: #fff; border-color: #ff4444; }
         .btn-auto { flex: 1; background: #d00000; color: white; border: 1px solid #ff4444; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 1.1rem; }
         .btn-stop { background: #444 !important; border-color: #666 !important; }
-        .log { width: 100%; max-width: 440px; height: 195px; background: #000; margin-top: 10px; padding: 12px; font-size: 1rem; color: #ff4444; overflow-y: auto; border: 1px solid #333; font-family: monospace; box-sizing: border-box; }
+        .log { width: 100%; max-width: 440px; height: 195px; background: #000; margin-top: 10px; padding: 12px; font-size: 0.9rem; color: #ff4444; overflow-y: auto; border: 1px solid #333; font-family: monospace; box-sizing: border-box; }
         #modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; }
         #modal-content { background: #111; border: 2px solid #d00000; width: 95%; max-width: 480px; padding: 20px; border-radius: 12px; }
         .graph-area { background: #000; height: 180px; margin-bottom: 20px; }
@@ -85,7 +85,7 @@
             <button class="btn-auto" id="btn-fast" onclick="toggleAuto('fast')">高速オート</button>
         </div>
     </div>
-    <div class="log" id="log">> 高速オート中も図柄が動くように戻しました。</div>
+    <div class="log" id="log">> ロジック更新完了（カヲル君＆詳細表示）</div>
 </div>
 
 <script>
@@ -126,10 +126,10 @@
         let willEnterRush = isHit && (mode !== '通常' || Math.random() < 0.59);
         let eff = selectEffect(isHit, willEnterRush);
 
-        if(optKokuchi && isHit) { eff.heavy=true; eff.flash=true; eff.lamp=true; eff.name="完全告知"; }
+        if(optKokuchi && isHit) { eff.heavy=true; eff.flash=true; eff.lamp=true; eff.name="完全告知"; eff.trust=100; eff.freq=0.3; }
         
         let originalSpeed = autoSpeed;
-        if(autoSpeed==='fast' && eff.heavy && !optAll) { autoSpeed='slow'; resetBtns(); document.getElementById('btn-slow').classList.add('btn-stop'); addLog("激アツ：低速化"); }
+        if(autoSpeed==='fast' && eff.heavy && !optAll) { autoSpeed='slow'; resetBtns(); document.getElementById('btn-slow').classList.add('btn-stop'); }
 
         currentCount++; totalRot++; heso--; updateHeso(eff.isRedHold);
         totalBall -= (mode==='通常' ? 14 : 0.05);
@@ -139,13 +139,13 @@
         
         if(eff.heavy) {
             isAnim=true;
+            addLog(`${currentCount}回 【${eff.name}】 信頼度:${eff.trust}% (出現率:${eff.freq}%)`);
             if(eff.vibe) document.getElementById('machine').classList.add('vibrate');
             if(eff.flash) document.getElementById('screen').classList.add('flash-active');
             if(eff.text) { const ov = document.getElementById('effect-overlay'); ov.innerText = eff.text; ov.style.display = 'block'; }
             if(eff.lamp) document.getElementById('lamp').classList.add('lamp-active');
         }
 
-        // 高速オート時でも図柄が動くように修正
         let spin = setInterval(() => { [1,2,3].forEach(i => { const n=Math.floor(Math.random()*9)+1; const el=document.getElementById('d'+i); el.innerText=n; el.className='digit '+(n%2===0?'even':'odd'); }); }, 40);
         await new Promise(r => setTimeout(r, spinTime));
         clearInterval(spin);
@@ -160,16 +160,16 @@
             let d = willEnterRush ? 7 : 2;
             [1,2,3].forEach(i => { const el=document.getElementById('d'+i); el.innerText=d; el.className='digit '+(d===7?'gold':'even'); });
             if(willEnterRush) { 
-                addLog("RUSH!"); totalBall += (mode==='通常'||mode==='時短') ? 420 : 1400;
+                addLog("--- RUSH突入 ---"); totalBall += (mode==='通常'||mode==='時短') ? 420 : 1400;
                 mode='ST'; rRem=SPECS.st; rushCount++;
             } else {
-                mode='時短'; rRem=SPECS.jt; rushCount=0; totalBall += 420; addLog("通常当り");
+                mode='時短'; rRem=SPECS.jt; rushCount=0; totalBall += 420; addLog("--- 通常当り ---");
             }
             updateUI(); await new Promise(r => setTimeout(r, 1800));
             currentCount=0; document.getElementById('lamp').classList.remove('lamp-active');
         }
 
-        if(mode!=='通常' && !isHit) { rRem--; if(rRem<=0) { addLog(mode+"終了"); mode='通常'; rushCount=0; if(!optAll){isAuto=false; resetBtns();}} }
+        if(mode!=='通常' && !isHit) { rRem--; if(rRem<=0) { addLog("--- " + mode + "終了 ---"); mode='通常'; rushCount=0; if(!optAll){isAuto=false; resetBtns();}} }
         
         isAnim=false; updateUI();
         if(originalSpeed==='fast' && !optAll) { autoSpeed='fast'; resetBtns(); document.getElementById('btn-fast').classList.add('btn-stop'); }
@@ -180,16 +180,17 @@
         let r = Math.random() * 100;
         if(isHit) {
             if(willEnterRush) {
-                if(r < 10) return {name:"インフラ", heavy:true, flash:true, lamp:true, vibe:true, text:"当確"};
-                if(r < 20) return {name:"虹レバブル", heavy:true, vibe:true, lamp:true, text:"祝"};
-                if(r < 30) return {name:"さよなら", heavy:true, text:"さよなら"};
+                if(r < 5) return {name:"カヲル", heavy:true, flash:true, lamp:true, vibe:true, text:"カヲル", trust:100, freq:0.05};
+                if(r < 15) return {name:"インフラ", heavy:true, flash:true, lamp:true, vibe:true, text:"当確", trust:100, freq:0.1};
+                if(r < 25) return {name:"虹レバブル", heavy:true, vibe:true, lamp:true, text:"祝", trust:100, freq:0.1};
+                if(r < 35) return {name:"さよなら", heavy:true, text:"さよなら", trust:100, freq:0.1};
             }
-            if(r < 50) return {name:"赤レバブル", heavy:true, vibe:true, text:"激熱"};
-            if(r < 75) return {name:"赤保留", heavy:true, isRedHold:true, text:"赤保留"};
-            return {name:"レイ背景", heavy:true, text:"レイ背景"};
+            if(r < 55) return {name:"赤レバブル", heavy:true, vibe:true, text:"激熱", trust:96.5, freq:1.2};
+            if(r < 75) return {name:"赤保留", heavy:true, isRedHold:true, text:"赤保留", trust:90, freq:1.5};
+            return {name:"レイ背景", heavy:true, text:"レイ背景", trust:85, freq:2.0};
         } else {
-            if(r < 0.2) return {name:"赤保留", heavy:true, isRedHold:true, text:"赤保留"};
-            if(r < 0.5) return {name:"次回予告", heavy:true, text:"次回予告"};
+            if(r < 0.2) return {name:"赤保留", heavy:true, isRedHold:true, text:"赤保留", trust:90, freq:1.5};
+            if(r < 0.5) return {name:"次回予告", heavy:true, text:"次回予告", trust:65, freq:0.3};
         }
         return {heavy:false};
     }
