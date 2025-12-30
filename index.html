@@ -141,7 +141,6 @@
 
     async function startProcess() {
         if(!isAuto || isAnim) return;
-
         if(mode !== '通常' && rRem <= 0) {
             addLog(`【連チャン終了】 ${currentRushHits}回`);
             mode = '通常'; rushCount = 0; currentRushHits = 0; currentCount = 0;
@@ -246,13 +245,14 @@
             else if (r < 550) { res.heavy=true; res.vibe=true; res.name="白レバブル"; res.trust=90; }
             else if (r < 700) { res.heavy=true; res.isRedHold=true; res.name="赤保留"; res.trust=90; }
             else if (r < 850) { res.heavy=true; res.name="レイ背景"; res.text="レイ背景"; res.trust=85; }
-            else if (r < 950) { res.heavy=true; res.name="次回予告"; res.text="次回予告"; res.trust=65; }
+            else { res.heavy=true; res.name="次回予告"; res.text="次回予告"; res.trust=65; }
         } else {
-            if (r < 0.5) { res.heavy=true; res.vibe=true; res.name="赤レバブル"; res.trust=96.5; }
-            else if (r < 5.0) { res.heavy=true; res.vibe=true; res.name="白レバブル"; res.trust=90; }
-            else if (r < 10.0) { res.heavy=true; res.isRedHold=true; res.name="赤保留"; res.trust=90; }
-            else if (r < 20.0) { res.heavy=true; res.name="レイ背景"; res.text="レイ背景"; res.trust=85; }
-            else if (r < 45.0) { res.heavy=true; res.name="次回予告"; res.text="次回予告"; res.trust=65; }
+            // 外れ時の激アツ出現率を大幅に下方修正（現実的な数値へ）
+            if (r < 0.2) { res.heavy=true; res.vibe=true; res.name="赤レバブル"; res.trust=96.5; }
+            else if (r < 1.0) { res.heavy=true; res.vibe=true; res.name="白レバブル"; res.trust=90; }
+            else if (r < 2.0) { res.heavy=true; res.isRedHold=true; res.name="赤保留"; res.trust=90; }
+            else if (r < 4.0) { res.heavy=true; res.name="レイ背景"; res.text="レイ背景"; res.trust=85; }
+            else if (r < 10.0) { res.heavy=true; res.name="次回予告"; res.text="次回予告"; res.trust=65; }
         }
         return res;
     }
@@ -280,6 +280,7 @@
 </script>
 </body>
 </html>
+
 
 
 
