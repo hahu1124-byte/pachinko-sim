@@ -8,15 +8,27 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&display=swap');
         body { background: #000; color: white; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; overflow-x: hidden; }
-        header { width: 100%; height: 50px; background: #111; border-bottom: 2px solid #d00000; display: flex; align-items: center; padding: 0 10px; box-sizing: border-box; gap: 10px; position: sticky; top: 0; z-index: 100; }
+        header { width: 100%; height: 50px; background: #111; border-bottom: 2px solid #8a2be2; display: flex; align-items: center; padding: 0 10px; box-sizing: border-box; gap: 10px; position: sticky; top: 0; z-index: 100; }
         .header-btn { background: #333; color: #ccc; border: 1px solid #555; padding: 5px 8px; font-size: 0.7rem; cursor: pointer; border-radius: 4px; }
-        .btn-graph { background: #d00000; color: white; border-color: #ff4444; }
+        .btn-graph { background: #8a2be2; color: white; border-color: #a450ff; }
         .main-content { width: 100%; max-width: 440px; display: flex; flex-direction: column; align-items: center; padding: 10px; box-sizing: border-box; }
-        .machine { width: 100%; background: #111; border: 2px solid #d00000; border-radius: 15px; padding: 12px; position: relative; box-sizing: border-box; }
+        
+        /* 筐体外枠: 基本は紫色 */
+        .machine { 
+            width: 100%; 
+            background: #111; 
+            border: 3px solid #8a2be2; 
+            border-radius: 15px; 
+            padding: 12px; 
+            position: relative; 
+            box-sizing: border-box; 
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        
         .screen { background: #000; height: 300px; border-radius: 10px; border: 2px solid #444; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; width: 100%; }
         .digit-container { display: flex; gap: 5px; }
         .digit { font-size: 8.5rem; font-weight: 900; font-family: 'Shippori Mincho B1', serif; width: 110px; text-align: center; } 
-        .mode-display { position: absolute; bottom: 35px; right: 15px; color: #d00000; font-weight: bold; font-size: 0.9rem; text-shadow: 0 0 5px #000; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 3px; border-right: 3px solid #d00000; text-align: right; min-width: 90px; }
+        .mode-display { position: absolute; bottom: 35px; right: 15px; color: #8a2be2; font-weight: bold; font-size: 0.9rem; text-shadow: 0 0 5px #000; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 3px; border-right: 3px solid #8a2be2; text-align: right; min-width: 90px; }
         .gold { color: #ffeb3b; text-shadow: 0 0 30px #ffeb3b; }
         .odd { color: #ff4444; text-shadow: 0 0 20px #ff4444; }
         .even { color: #4444ff; text-shadow: 0 0 20px #4444ff; }
@@ -24,8 +36,10 @@
         .hidden-lamp { position: absolute; top: 12px; right: 20px; width: 15px; height: 15px; background: #222; border-radius: 50%; border: 1px solid #444; z-index: 10; }
         .lamp-active { animation: rainbow-bg 0.3s infinite; box-shadow: 0 0 20px #fff; }
         @keyframes rainbow-bg { 0% { background: #f00; } 20% { background: #ff0; } 40% { background: #0f0; } 60% { background: #0ff; } 80% { background: #00f; } 100% { background: #f0f; } }
+        
         .vibrate { animation: vibration 0.05s infinite; }
         @keyframes vibration { 0% { transform: translate(0,0); } 25% { transform: translate(-4px, 4px); } 50% { transform: translate(4px, -4px); } 75% { transform: translate(-4px, -4px); } 100% { transform: translate(0,0); } }
+        
         .flash-active { animation: flash-white 0.05s 20; }
         @keyframes flash-white { 0%, 100% { background: #000; } 50% { background: #fff; } }
         .heso-overlay { position: absolute; bottom: 10px; display: flex; gap: 8px; }
@@ -43,13 +57,23 @@
         .control-panel { margin-top: 12px; display: flex; gap: 8px; width: 100%; height: 65px; }
         .side-btns { display: flex; flex-direction: column; gap: 4px; width: 55px; }
         .side-btn { flex: 1; background: #222; color: #666; border: 1px solid #444; font-size: 0.7rem; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .side-btn.active { background: #d00000; color: #fff; border-color: #ff4444; }
-        .btn-auto { flex: 1; background: #d00000; color: white; border: 1px solid #ff4444; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 1rem; }
+        .side-btn.active { background: #8a2be2; color: #fff; border-color: #a450ff; }
+        .btn-auto { flex: 1; background: #8a2be2; color: white; border: 1px solid #a450ff; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 1rem; }
         .btn-stop { background: #444 !important; border-color: #666 !important; }
-        .log { width: 100%; max-width: 440px; height: 290px; background: #000; margin-top: 10px; padding: 10px; font-size: 0.77rem; color: #ff4444; overflow-y: auto; border: 1px solid #333; font-family: monospace; box-sizing: border-box; line-height: 1.4; } 
+        .log { width: 100%; max-width: 440px; height: 290px; background: #000; margin-top: 10px; padding: 10px; font-size: 0.77rem; color: #a450ff; overflow-y: auto; border: 1px solid #333; font-family: monospace; box-sizing: border-box; line-height: 1.4; } 
         #modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; justify-content: center; align-items: center; }
-        #modal-content { background: #111; border: 2px solid #d00000; width: 92%; max-width: 400px; padding: 15px; border-radius: 12px; }
+        #modal-content { background: #111; border: 2px solid #8a2be2; width: 92%; max-width: 400px; padding: 15px; border-radius: 12px; }
         .graph-area { background: #000; height: 160px; margin-bottom: 15px; }
+
+        /* 虹色レバブル用アニメーション */
+        @keyframes rainbow-border {
+            0% { border-color: #f00; box-shadow: 0 0 15px #f00; }
+            20% { border-color: #ff0; box-shadow: 0 0 15px #ff0; }
+            40% { border-color: #0f0; box-shadow: 0 0 15px #0f0; }
+            60% { border-color: #0ff; box-shadow: 0 0 15px #0ff; }
+            80% { border-color: #00f; box-shadow: 0 0 15px #00f; }
+            100% { border-color: #f0f; box-shadow: 0 0 15px #f0f; }
+        }
     </style>
 </head>
 <body>
@@ -86,7 +110,7 @@
                 <button class="btn-auto" id="btn-fast" onclick="toggleAuto('fast')">高速オート</button>
             </div>
         </div>
-        <div class="log" id="log">> 通常時の昇格時のみ「(昇格)」を表示するよう条件設定しました。</div>
+        <div class="log" id="log">> 筐体カラーを紫色に変更しました。レバブル時はその色に発光します。</div>
     </div>
 
 
@@ -102,16 +126,16 @@
     const TRUST_MAP = { "白レバ": 0.90, "赤レバ": 0.965, "赤保留": 0.90, "次回予告": 0.65, "レイ背景": 0.85, "金系": 0.50 };
 
     function selectEffect(isHit) {
-        let res = { heavy: false, name: [], trust: 0, vibe: false, flash: false, lamp: false, text: "", isRedHold: false, isSure: false, isFullSpin: false };
+        let res = { heavy: false, name: [], trust: 0, vibe: false, vibeColor: "", flash: false, lamp: false, text: "", isRedHold: false, isSure: false, isFullSpin: false };
         const roll = () => Math.random() * 100;
 
         if (isHit) {
             if (roll() < 1.0) { res.name.push("全回転"); res.text="全回転"; res.isSure=true; res.isFullSpin=true; res.lamp=true; }
             else {
                 let hasVibe = false;
-                if (roll() < 3.0) { res.name.push("虹レバ"); res.lamp=true; hasVibe=true; }
-                else if (roll() < 15.0) { res.name.push("赤レバ"); hasVibe=true; }
-                else if (roll() < 66.7) { res.name.push("白レバ"); hasVibe=true; }
+                if (roll() < 3.0) { res.name.push("虹レバ"); res.lamp=true; hasVibe=true; res.vibeColor="rainbow"; }
+                else if (roll() < 15.0) { res.name.push("赤レバ"); hasVibe=true; res.vibeColor="red"; }
+                else if (roll() < 66.7) { res.name.push("白レバ"); hasVibe=true; res.vibeColor="white"; }
                 if (roll() < 3.0) { res.name.push("さよなら"); res.text="さよなら"; }
                 else if (roll() < 33.3) { res.name.push("レイ背景"); res.text="レイ背景"; }
                 if (roll() < 25.0) { res.isRedHold=true; res.name.push("赤保留"); }
@@ -123,8 +147,8 @@
             }
             res.heavy = true;
         } else {
-            if (roll() < 0.0017) { res.name.push("赤レバ"); res.vibe=true; }
-            else if (roll() < 0.023) { res.name.push("白レバ"); res.vibe=true; }
+            if (roll() < 0.0017) { res.name.push("赤レバ"); res.vibe=true; res.vibeColor="red"; }
+            else if (roll() < 0.023) { res.name.push("白レバ"); res.vibe=true; res.vibeColor="white"; }
             else if (roll() < 0.0087) { res.isRedHold=true; res.name.push("赤保留"); }
             else if (roll() < 0.150) { res.name.push("金系"); }
             if (res.name.length > 0) res.heavy = true;
@@ -158,9 +182,17 @@
         totalBall -= (mode==='通常' ? 14 : 0.05); slumpData.push(Math.floor(totalBall)); slumpLabels.push(totalRot.toString());
         
         let spinTime = (eff.heavy) ? (eff.isFullSpin ? 4000 : 2500) : (autoSpeed==='fast'?60:600);
+        const machineEl = document.getElementById('machine');
+
         if(eff.heavy) { 
             addLog(`${mode} ${lcdCount}回【${eff.displayName}】信頼度:${eff.trust.toFixed(1)}%`); 
-            if(eff.vibe) document.getElementById('machine').classList.add('vibrate'); 
+            if(eff.vibe) {
+                machineEl.classList.add('vibrate'); 
+                // レバブル色設定
+                if(eff.vibeColor === "white") { machineEl.style.borderColor = "#fff"; machineEl.style.boxShadow = "0 0 20px #fff"; }
+                else if(eff.vibeColor === "red") { machineEl.style.borderColor = "#f00"; machineEl.style.boxShadow = "0 0 20px #f00"; }
+                else if(eff.vibeColor === "rainbow") { machineEl.style.animation = "vibration 0.05s infinite, rainbow-border 0.3s infinite"; }
+            }
             if(eff.flash) document.getElementById('screen').classList.add('flash-active'); 
             if(eff.text) { const ov = document.getElementById('effect-overlay'); ov.innerText = eff.text; ov.style.display = 'block'; } 
             if(eff.lamp && (isHit || eff.displayName.includes("虹"))) document.getElementById('lamp').classList.add('lamp-active'); 
@@ -170,7 +202,14 @@
         let spin = setInterval(() => { [1,2,3].forEach((i, idx) => { let n; do { n = Math.floor(Math.random()*9)+1; } while(mode==='通常' && n===7); const el=document.getElementById('d'+i); el.innerText=n; el.className='digit '+(n%2===0?'even':'odd'); if(n===7) el.classList.add('gold'); lastDigits[idx]=n; }); }, 40);
         await new Promise(r => setTimeout(r, spinTime));
         clearInterval(spin);
-        document.getElementById('machine').classList.remove('vibrate'); document.getElementById('screen').classList.remove('flash-active'); document.getElementById('effect-overlay').style.display = 'none';
+        
+        // レバブル・色リセット
+        machineEl.classList.remove('vibrate'); 
+        machineEl.style.borderColor = ""; 
+        machineEl.style.boxShadow = ""; 
+        machineEl.style.animation = ""; 
+        document.getElementById('screen').classList.remove('flash-active'); 
+        document.getElementById('effect-overlay').style.display = 'none';
         
         if(isHit) { 
             isAnim=true; hits++; historyData.push(currentRot); historyLabels.push(hits); currentRot = 0;
@@ -197,17 +236,17 @@
                         else { d = [2,4,6,8][Math.floor(Math.random()*4)]; nextM = '時短'; logDigit = d; }
                     }
                 }
-                
-                // ログメッセージ構築（通常時の昇格のみに限定）
                 let logMsg = `>> ${mode} ${lcdCount}回転 【${logDigit}】 ${is10R?'10R':'3R'}当り!`;
                 if(isShokaku && mode === '通常') logMsg += " (昇格)";
                 addLog(logMsg);
-
                 [1,2,3].forEach(i => { const el=document.getElementById('d'+i); el.innerText=logDigit; el.className='digit '+(logDigit==7?'gold':(logDigit%2!==0?'odd':'even')); }); 
                 if (isShokaku) {
                     await new Promise(r => setTimeout(r, 1200));
-                    document.getElementById('machine').classList.add('vibrate');
+                    machineEl.classList.add('vibrate');
+                    // 昇格時の色は赤固定
+                    machineEl.style.borderColor = "#f00"; machineEl.style.boxShadow = "0 0 20px #f00";
                     await new Promise(r => setTimeout(r, 1000));
+                    machineEl.classList.remove('vibrate'); machineEl.style.borderColor = ""; machineEl.style.boxShadow = "";
                     if (mode === '通常') {
                         let candidates = [logDigit-1, logDigit+1].filter(n => n > 0 && n < 10 && n !== 7 && n % 2 !== 0);
                         d = candidates.length ? candidates[Math.floor(Math.random() * candidates.length)] : 1;
@@ -216,7 +255,6 @@
                         d = 7;
                         [1,2,3].forEach(i => { const el=document.getElementById('d'+i); el.innerText=d; el.className='digit gold'; });
                     }
-                    document.getElementById('machine').classList.remove('vibrate');
                 }
                 currentRushHits++; 
                 if(mode==='通常' || mode==='時短') { 
@@ -236,7 +274,7 @@
     // --- 共通関数 ---
     function openModal() { document.getElementById('modal-overlay').style.display='flex'; updateCharts(); }
     function closeModal() { document.getElementById('modal-overlay').style.display='none'; }
-    function updateCharts() { const cfg = { responsive:true, maintainAspectRatio:false, scales:{ x:{display:false}, y:{grid:{color:'#222'}, ticks:{color:'#888'}} }, plugins:{legend:{display:false}} }; if(sChart) sChart.destroy(); sChart = new Chart(document.getElementById('slumpChart'), { type:'line', data:{ labels:slumpLabels, datasets:[{data:slumpData, borderColor:'#d00000', borderWidth:2, pointRadius:0, fill:false}] }, options:cfg }); if(hChart) hChart.destroy(); hChart = new Chart(document.getElementById('historyChart'), { type:'bar', data:{ labels:historyLabels, datasets:[{data:historyData, backgroundColor:'#d00000'}] }, options:cfg }); }
+    function updateCharts() { const cfg = { responsive:true, maintainAspectRatio:false, scales:{ x:{display:false}, y:{grid:{color:'#222'}, ticks:{color:'#888'}} }, plugins:{legend:{display:false}} }; if(sChart) sChart.destroy(); sChart = new Chart(document.getElementById('slumpChart'), { type:'line', data:{ labels:slumpLabels, datasets:[{data:slumpData, borderColor:'#8a2be2', borderWidth:2, pointRadius:0, fill:false}] }, options:cfg }); if(hChart) hChart.destroy(); hChart = new Chart(document.getElementById('historyChart'), { type:'bar', data:{ labels:historyLabels, datasets:[{data:historyData, backgroundColor:'#8a2be2'}] }, options:cfg }); }
     function toggleOpt(t) { if(t==='all') { optAll=!optAll; document.getElementById('btn-all').classList.toggle('active'); } if(t==='kokuchi') { optKokuchi=!optKokuchi; document.getElementById('btn-kokuchi').classList.toggle('active'); } }
     function toggleAuto(s) { if(isAuto && autoSpeed===s) { isAuto=false; resetBtns(); } else { isAuto=true; autoSpeed=s; resetBtns(); document.getElementById('btn-'+s).classList.add('btn-stop'); startProcess(); } }
     function resetBtns() { document.querySelectorAll('.btn-auto').forEach(b => b.classList.remove('btn-stop')); }
@@ -247,6 +285,7 @@
 </script>
 </body>
 </html>
+
 
 
 
