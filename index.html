@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EVANGELION Sim -Stage Change Ver-</title>
+    <title>EVANGELION Sim -Ultimate-</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&display=swap');
         body { background: #050505; color: white; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
@@ -12,29 +12,32 @@
         .main-content { flex-grow: 1; display: flex; flex-direction: column; align-items: center; padding: 10px; width: 100%; overflow-y: auto; box-sizing: border-box; }
         .machine { width: 100%; max-width: 400px; background: #111; border: 2px solid #d00000; border-radius: 10px; padding: 15px; box-sizing: border-box; position: relative; }
         
-        /* ステージ背景設定 */
-        .screen { background: #000; height: 150px; border-radius: 5px; border: 1px solid #444; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; position: relative; overflow: hidden; transition: background 1s; }
+        /* 隠しランプ（インパクトフラッシュ用） */
+        .hidden-lamp { position: absolute; top: 10px; right: 20px; width: 12px; height: 12px; background: #222; clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%); transition: 0.2s; }
+        .lamp-on { background: #fff; box-shadow: 0 0 15px #fff; }
+
+        .screen { background: #000; height: 160px; border-radius: 5px; border: 1px solid #444; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 10px; position: relative; overflow: hidden; transition: background 1s; }
         .stage-normal { background: #000; }
-        .stage-purple { background: radial-gradient(circle, #200030 0%, #000 100%); } /* 5連〜 */
-        .stage-red { background: radial-gradient(circle, #400000 0%, #000 100%); }    /* 10連〜 */
-        .stage-rainbow { animation: rainbow-bg-anim 3s linear infinite; }           /* 20連〜 */
+        .stage-purple { background: radial-gradient(circle, #200030 0%, #000 100%); }
+        .stage-red { background: radial-gradient(circle, #400000 0%, #000 100%); }
+        .stage-rainbow { animation: rainbow-bg-anim 3s linear infinite; }
         @keyframes rainbow-bg-anim { 0%{background:#200} 20%{background:#220} 40%{background:#020} 60%{background:#022} 80%{background:#002} 100%{background:#200} }
 
-        /* レバブル色別 */
+        .reels { display: flex; gap: 15px; z-index: 5; margin-top: 10px; }
+        .digit { font-size: 3.5rem; font-weight: 900; font-family: 'Shippori Mincho B1', serif; width: 50px; text-align: center; }
+        .odd { color: #ff4444; } .even { color: #4444ff; } .gold { color: #ffeb3b; text-shadow: 0 0 10px #ffeb3b; }
+        
+        /* 保留位置（中央下） */
+        .shoryu-area { display: flex; gap: 8px; margin-top: 10px; z-index: 5; }
+        .hoju { width: 12px; height: 12px; border-radius: 50%; background: #333; border: 1px solid #555; }
+        .hoju-red { background: #ff0000; box-shadow: 0 0 10px #ff0000; border-color: #ff4444; }
+        
+        /* レバブル */
         @keyframes vibration { 0%{transform:translate(0)} 20%{transform:translate(-2px,2px)} 40%{transform:translate(-2px,-2px)} 60%{transform:translate(2px,2px)} 80%{transform:translate(2px,-2px)} 100%{transform:translate(0)} }
         .vibrate-white { animation: vibration 0.1s infinite; border-color: #fff !important; box-shadow: 0 0 15px #fff !important; }
         .vibrate-red { animation: vibration 0.1s infinite; border-color: #f00 !important; box-shadow: 0 0 20px #f00 !important; }
         .vibrate-rainbow { animation: vibration 0.1s infinite; border-color: #0f0 !important; box-shadow: 0 0 25px #f0f, 0 0 15px #0ff !important; }
 
-        .digit { font-size: 3.5rem; font-weight: 900; font-family: 'Shippori Mincho B1', serif; width: 50px; text-align: center; z-index: 5; }
-        .odd { color: #ff4444; } .even { color: #4444ff; } .gold { color: #ffeb3b; text-shadow: 0 0 10px #ffeb3b; }
-        
-        .shoryu-area { position: absolute; bottom: 5px; left: 10px; display: flex; gap: 5px; }
-        .hoju { width: 10px; height: 10px; border-radius: 50%; background: #333; }
-        .hoju-red { background: #ff0000; box-shadow: 0 0 10px #ff0000; }
-        
-        .record-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 10px; font-size: 0.7rem; color: #ffeb3b; }
-        .record-item { border: 1px solid #555; padding: 3px; background: #1a1a1a; text-align: center; }
         .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 10px; }
         .stat-item { background: #000; border: 1px solid #333; padding: 5px; text-align: center; }
         .stat-val { display: block; font-size: 0.8rem; font-weight: bold; color: #d00000; }
@@ -48,13 +51,15 @@
 
 <div class="main-content">
     <div class="machine" id="machine-body">
-        <div class="record-grid">
-            <div class="record-item">MAX連: <span id="max-rush">0</span></div>
-            <div class="record-item">MAX出玉: <span id="max-payout">0</span></div>
-        </div>
+        <div class="hidden-lamp" id="lamp"></div>
         <div class="screen" id="screen">
-            <div class="reels"><div id="d1" class="digit">1</div><div id="d2" class="digit">2</div><div id="d3" class="digit">3</div></div>
-            <div class="shoryu-area"><div id="h1" class="hoju"></div><div id="h2" class="hoju"></div><div id="h3" class="hoju"></div><div id="h4" class="hoju"></div></div>
+            <div class="reels">
+                <div id="d1" class="digit">1</div><div id="d2" class="digit">2</div><div id="d3" class="digit">3</div>
+            </div>
+            <div class="shoryu-area">
+                <div id="h1" class="hoju"></div><div id="h2" class="hoju"></div>
+                <div id="h3" class="hoju"></div><div id="h4" class="hoju"></div>
+            </div>
             <div id="sub-display" style="position:absolute; bottom:5px; right:10px; color:#d00000; font-size:0.6rem; font-weight:bold;">STANDBY</div>
         </div>
         <div class="stat-grid">
@@ -104,9 +109,20 @@
 
         let prob = (mode === 'ST') ? SPEC.st_prob : SPEC.normal_prob;
         let isHit = Math.random() < (1 / prob);
-        let effect = { type: 'NONE', win: isHit };
+        
+        // 究極：全回転抽選 (1/8192)
+        let isZenKaiten = Math.random() < (1 / 8192); 
 
-        if (mode === 'NORMAL') {
+        let effect = { type: 'NONE', win: isHit || isZenKaiten };
+
+        // 隠しランプ抽選（当たり変動の10%で点灯）
+        if (effect.win && Math.random() < 0.1) {
+            document.getElementById('lamp').classList.add('lamp-on');
+        }
+
+        if (isZenKaiten) {
+            effect.type = 'ZEN_KAITEN';
+        } else if (mode === 'NORMAL') {
             let r = Math.random();
             if (r < 0.0005) { effect.type = '7_REACH'; effect.win = Math.random() < 0.9999; }
             else if (r < 0.0022) { effect.type = 'RED_HOJU'; effect.win = Math.random() < 0.92; }
@@ -116,11 +132,11 @@
             else if (isHit && Math.random() < 0.2) { effect.type = 'REI_NORMAL'; }
         }
 
-        if (isHit && effect.type === 'NONE' && Math.random() < 0.1) effect.type = 'REI_SAYONARA';
+        if (isHit && !isZenKaiten && effect.type === 'NONE' && Math.random() < 0.1) effect.type = 'REI_SAYONARA';
 
         await runAnimation(effect);
 
-        if (effect.win) { handleHit(effect.type === '7_REACH' ? 7 : null); } 
+        if (effect.win) { handleHit(effect.type === 'ZEN_KAITEN' || effect.type === '7_REACH'); } 
         else {
             if (mode !== 'NORMAL') {
                 stRemaining--;
@@ -138,48 +154,59 @@
 
     async function runAnimation(eff) {
         isAnimating = true;
+        const screen = document.getElementById('screen');
         const machine = document.getElementById('machine-body');
         const h1 = document.getElementById('h1');
         const d1 = document.getElementById('d1'), d2 = document.getElementById('d2'), d3 = document.getElementById('d3');
 
-        if (eff.type.startsWith('VIB')) {
-            let cls = eff.type === 'VIB_RAINBOW' ? 'vibrate-rainbow' : (eff.type === 'VIB_RED' ? 'vibrate-red' : 'vibrate-white');
-            addLog(`!! レバブル発生(${eff.type.replace('VIB_','')}) !!`);
-            machine.classList.add(cls); await new Promise(r => setTimeout(r, 600)); machine.classList.remove(cls);
+        if (eff.type === 'ZEN_KAITEN') {
+            addLog("㊗ 歓喜：全回転演出発生 ㊗");
+            screen.classList.add('stage-rainbow');
+            for(let i=1; i<=7; i++) {
+                setDigitStyle(d1, i); setDigitStyle(d2, i); setDigitStyle(d3, i);
+                await new Promise(r => setTimeout(r, 400));
+            }
+            await new Promise(r => setTimeout(r, 800));
+        } else {
+            if (eff.type.startsWith('VIB')) {
+                let cls = eff.type === 'VIB_RAINBOW' ? 'vibrate-rainbow' : (eff.type === 'VIB_RED' ? 'vibrate-red' : 'vibrate-white');
+                addLog(`!! レバブル発生(${eff.type.replace('VIB_','')}) !!`);
+                machine.classList.add(cls); await new Promise(r => setTimeout(r, 600)); machine.classList.remove(cls);
+            }
+            if (eff.type === 'RED_HOJU') { h1.classList.add('hoju-red'); addLog("!! 赤保留 !!"); }
+
+            let shuffle = setInterval(() => {
+                setDigitStyle(d1, Math.floor(Math.random()*9)+1);
+                setDigitStyle(d2, Math.floor(Math.random()*9)+1);
+                setDigitStyle(d3, Math.floor(Math.random()*9)+1);
+            }, 40);
+            await new Promise(r => setTimeout(r, 200)); clearInterval(shuffle);
+
+            let l = (eff.type === '7_REACH') ? 7 : (eff.win ? Math.floor(Math.random()*9)+1 : Math.floor(Math.random()*9)+1);
+            setDigitStyle(d1, l); setDigitStyle(d3, l);
+
+            if (eff.type === 'REI_NORMAL') addLog("演出：レイ背景");
+            if (eff.type === 'REI_SAYONARA') addLog("演出：レイ背景「さよなら」");
+
+            if (eff.type !== 'NONE' || l == 7) {
+                let midS = setInterval(() => setDigitStyle(d2, Math.floor(Math.random()*9)+1), 150);
+                await new Promise(r => setTimeout(r, 1800)); clearInterval(midS);
+            }
+            setDigitStyle(d2, eff.win ? l : (l % 9) + 1);
         }
-        if (eff.type === 'RED_HOJU') { h1.classList.add('hoju-red'); addLog("!! 赤保留 !!"); }
-
-        let shuffle = setInterval(() => {
-            setDigitStyle(d1, Math.floor(Math.random()*9)+1);
-            setDigitStyle(d2, Math.floor(Math.random()*9)+1);
-            setDigitStyle(d3, Math.floor(Math.random()*9)+1);
-        }, 40);
-        await new Promise(r => setTimeout(r, 200)); clearInterval(shuffle);
-
-        let l = (eff.type === '7_REACH') ? 7 : (eff.win ? Math.floor(Math.random()*9)+1 : Math.floor(Math.random()*9)+1);
-        setDigitStyle(d1, l); setDigitStyle(d3, l);
-
-        if (eff.type === 'REI_NORMAL') addLog("演出：レイ背景");
-        if (eff.type === 'REI_SAYONARA') addLog("演出：レイ背景「さよなら」");
-
-        if (eff.type !== 'NONE' || l == 7) {
-            let midS = setInterval(() => setDigitStyle(d2, Math.floor(Math.random()*9)+1), 150);
-            await new Promise(r => setTimeout(r, 1800)); clearInterval(midS);
-        }
-        setDigitStyle(d2, eff.win ? l : (l % 9) + 1);
         h1.classList.remove('hoju-red');
         isAnimating = false;
     }
 
-    function handleHit(forcedNum) {
+    function handleHit(isStForced) {
         hits++;
-        let finalNum = forcedNum || parseInt(document.getElementById('d1').innerText);
-        let getBall = (mode === 'NORMAL' && finalNum !== 7 && (finalNum % 2 === 0)) ? SPEC.payout_3r : SPEC.payout_10r;
+        let finalNum = parseInt(document.getElementById('d1').innerText);
+        let getBall = (mode === 'NORMAL' && !isStForced && (finalNum % 2 === 0)) ? SPEC.payout_3r : SPEC.payout_10r;
         totalBall += getBall; sessionBall += getBall;
         
         let hitRot = currentCount;
         if (mode === 'NORMAL') {
-            let isSt = (finalNum % 2 !== 0) || (Math.random() < 0.35); 
+            let isSt = isStForced || (finalNum % 2 !== 0) || (Math.random() < 0.35); 
             if (isSt) {
                 mode = 'ST'; stRemaining = SPEC.st_taps; rushCount = 1;
                 addLog(`大当り(${hitRot}回転)：${finalNum}揃い 覚醒`);
@@ -191,7 +218,9 @@
             mode = 'ST'; stRemaining = SPEC.st_taps; rushCount++;
             addLog(`継続(${hitRot}回転)：${rushCount}連目 (${finalNum})`);
         }
-        currentCount = 0; updateStage(); updateUI();
+        currentCount = 0; 
+        document.getElementById('lamp').classList.remove('lamp-on');
+        updateStage(); updateUI();
         setTimeout(() => { if (isAuto && (mode === 'ST' || mode === 'JITITAN')) startProcess(); else stopAuto(); }, 1200);
     }
 
