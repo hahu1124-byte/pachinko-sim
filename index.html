@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>EVANGELION Sim -Occupancy Update-</title>
+    <title>EVANGELION Sim -Layout Update-</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&display=swap');
@@ -12,26 +12,38 @@
         .header-btn { background: #333; color: #ccc; border: 1px solid #555; padding: 5px 8px; font-size: 0.7rem; cursor: pointer; border-radius: 4px; }
         .btn-graph { background: #d00000; color: white; border-color: #ff4444; }
         .main-content { width: 100%; max-width: 440px; display: flex; flex-direction: column; align-items: center; padding: 10px; box-sizing: border-box; }
+        
         .machine { width: 100%; background: #111; border: 2px solid #d00000; border-radius: 15px; padding: 12px; position: relative; box-sizing: border-box; }
+        /* 図柄表示部分（1.5倍サイズ） */
         .screen { background: #000; height: 350px; border-radius: 10px; border: 2px solid #444; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; width: 100%; }
         .digit-container { display: flex; gap: 5px; }
         .digit { font-size: 8.5rem; font-weight: 900; font-family: 'Shippori Mincho B1', serif; width: 110px; text-align: center; }
+        
+        /* モード・残り回数表示を右下へ移動 */
+        .mode-display { position: absolute; bottom: 35px; right: 15px; color: #d00000; font-weight: bold; font-size: 0.9rem; text-shadow: 0 0 5px #000; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 3px; border-right: 3px solid #d00000; }
+        
         .gold { color: #ffeb3b; text-shadow: 0 0 30px #ffeb3b; }
         .odd { color: #ff4444; text-shadow: 0 0 20px #ff4444; }
         .even { color: #4444ff; text-shadow: 0 0 20px #4444ff; }
         .beast { color: #00ff00; text-shadow: 0 0 20px #00ff00; }
+        
         .hidden-lamp { position: absolute; top: 12px; right: 20px; width: 15px; height: 15px; background: #222; border-radius: 50%; border: 1px solid #444; z-index: 10; }
         .lamp-active { animation: rainbow-bg 0.3s infinite; box-shadow: 0 0 20px #fff; }
         @keyframes rainbow-bg { 0% { background: #f00; } 20% { background: #ff0; } 40% { background: #0f0; } 60% { background: #0ff; } 80% { background: #00f; } 100% { background: #f0f; } }
+        
         .vibrate { animation: vibration 0.05s infinite; }
         @keyframes vibration { 0% { transform: translate(0,0); } 25% { transform: translate(-4px, 4px); } 50% { transform: translate(4px, -4px); } 75% { transform: translate(-4px, -4px); } 100% { transform: translate(0,0); } }
+        
         .flash-active { animation: flash-white 0.05s 20; }
         @keyframes flash-white { 0%, 100% { background: #000; } 50% { background: #fff; } }
+        
         .heso-overlay { position: absolute; bottom: 10px; display: flex; gap: 8px; }
         .heso-ball { width: 10px; height: 10px; background: #222; border-radius: 50%; border: 1px solid #555; }
         .heso-red { background: radial-gradient(circle, #ff4444, #880000); box-shadow: 0 0 8px #ff0000; border-color: #f00; }
         .heso-on { background: #888; }
+        
         .effect-text { position: absolute; color: white; font-weight: bold; font-size: 2.2rem; z-index: 5; text-shadow: 0 0 10px #000; background: rgba(0,0,0,0.7); padding: 5px 15px; border-radius: 5px; display: none; text-align: center; }
+        
         .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-top: 12px; }
         .stat-item { background: #000; border: 1px solid #333; padding: 5px 0; text-align: center; border-radius: 4px; }
         .stat-val { font-size: 0.9rem; font-weight: bold; font-family: monospace; }
@@ -39,13 +51,20 @@
         .val-red { color: #ff4444; }
         .val-blue { color: #4444ff; }
         .stat-label { font-size: 0.6rem; color: #888; display: block; }
+        
         .control-panel { margin-top: 12px; display: flex; gap: 8px; width: 100%; height: 65px; }
         .side-btns { display: flex; flex-direction: column; gap: 4px; width: 55px; }
         .side-btn { flex: 1; background: #222; color: #666; border: 1px solid #444; font-size: 0.7rem; border-radius: 4px; cursor: pointer; font-weight: bold; }
         .side-btn.active { background: #d00000; color: #fff; border-color: #ff4444; }
         .btn-auto { flex: 1; background: #d00000; color: white; border: 1px solid #ff4444; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 1rem; }
         .btn-stop { background: #444 !important; border-color: #666 !important; }
+        
+        /* 履歴表示部分（1.5倍サイズ） */
         .log { width: 100%; max-width: 440px; height: 290px; background: #000; margin-top: 10px; padding: 10px; font-size: 0.9rem; color: #ff4444; overflow-y: auto; border: 1px solid #333; font-family: monospace; box-sizing: border-box; line-height: 1.4; }
+        
+        #modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; justify-content: center; align-items: center; }
+        #modal-content { background: #111; border: 2px solid #d00000; width: 92%; max-width: 400px; padding: 15px; border-radius: 12px; }
+        .graph-area { background: #000; height: 160px; margin-bottom: 15px; }
     </style>
 </head>
 <body>
@@ -63,7 +82,7 @@
                 <div class="digit-container">
                     <div id="d1" class="digit odd">1</div><div id="d2" class="digit even">2</div><div id="d3" class="digit odd">3</div>
                 </div>
-                <div id="sub-display" style="position:absolute; top:10px; right:12px; color:#d00000; font-weight:bold; font-size:0.8rem;">通常</div>
+                <div id="sub-display" class="mode-display">通常</div>
                 <div class="heso-overlay"><div id="h1" class="heso-ball"></div><div id="h2" class="heso-ball"></div><div id="h3" class="heso-ball"></div><div id="h4" class="heso-ball"></div></div>
             </div>
             <div class="stat-grid">
@@ -81,7 +100,7 @@
                 <button class="btn-auto" id="btn-fast" onclick="toggleAuto('fast')">高速オート</button>
             </div>
         </div>
-        <div class="log" id="log">> 指定された占有率を反映しました。次回予告(40%)、赤保留(25%)、レイ背景等の複合が発生します。</div>
+        <div class="log" id="log">> レイアウトを調整しました（液晶右下にST回数を表示）。</div>
     </div>
 
 <script>
@@ -205,30 +224,23 @@
         let names = [];
 
         if (isHit) {
-            // 指定された占有率で独立抽選（複合あり）
             if (Math.random() < 0.667) { res.vibe = true; names.push("白レバブル"); }
             if (Math.random() < 0.03) { res.vibe = true; res.lamp = true; names.push("虹レバブル"); }
             if (Math.random() < 0.05) { res.lamp = true; names.push("インフラ"); }
             if (Math.random() < 0.01) { names.push("カヲル"); res.text = "カヲル"; }
             if (Math.random() < 0.40) { names.push("次回予告"); res.text = "次回予告"; }
             if (Math.random() < 0.25) { res.isRedHold = true; names.push("赤保留"); }
-            
-            // レイ背景排他処理
-            if (Math.random() < 0.03) { 
-                names.push("レイ背景(さよなら)"); res.text = "さよなら"; 
-            } else if (Math.random() < 0.333) { 
-                names.push("レイ背景"); res.text = "レイ背景"; 
-            }
+            if (Math.random() < 0.03) { names.push("レイ背景(さよなら)"); res.text = "さよなら"; } 
+            else if (Math.random() < 0.333) { names.push("レイ背景"); res.text = "レイ背景"; }
 
             if (names.length > 0) {
                 res.heavy = true;
                 res.name = names.join("+");
-                res.trust = 100; // 当たり時は便宜上100表示
+                res.trust = 100;
             } else {
                 res.heavy = true; res.name = "インパクト予告"; res.text = "当"; res.trust = 100;
             }
         } else {
-            // ハズレ時
             let r = Math.random() * 100;
             if (r < 0.15) { res.heavy = true; res.vibe = true; res.name = "白レバブル"; res.text = "激熱"; res.trust = 90; }
             else if (r < 0.3) { res.heavy = true; res.isRedHold = true; res.name = "赤保留"; res.text = "赤保留"; res.trust = 90; }
@@ -254,6 +266,7 @@
 </script>
 </body>
 </html>
+
 
 
 
