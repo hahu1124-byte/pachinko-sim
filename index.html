@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EVANGELION Sim -Size Adjusted-</title>
+    <title>EVANGELION Sim -300px Optimized-</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&display=swap');
@@ -30,14 +30,14 @@
         .main-content { flex-grow: 1; display: flex; flex-direction: column; align-items: center; padding: 10px; overflow-y: auto; }
         .machine { width: 100%; max-width: 450px; background: #111; border: 2px solid #d00000; border-radius: 15px; padding: 12px; position: relative; }
         
-        /* 液晶：気持ち小さく修正 (280px) */
-        .screen { background: #000; height: 280px; border-radius: 10px; border: 2px solid #444; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; margin-bottom: 10px; }
+        /* 液晶：300pxに調整 */
+        .screen { background: #000; height: 300px; border-radius: 10px; border: 2px solid #444; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; margin-bottom: 10px; }
         .digit-container { display: flex; gap: 12px; }
-        .digit { font-size: 7.5rem; font-weight: 900; font-family: 'Shippori Mincho B1', serif; width: 100px; text-align: center; }
+        .digit { font-size: 8rem; font-weight: 900; font-family: 'Shippori Mincho B1', serif; width: 110px; text-align: center; }
         
-        .gold { color: #ffeb3b; text-shadow: 0 0 30px #ffeb3b; }
-        .odd { color: #ff4444; text-shadow: 0 0 20px #ff4444; }
-        .even { color: #4444ff; text-shadow: 0 0 20px #4444ff; }
+        .gold { color: #ffeb3b; text-shadow: 0 0 35px #ffeb3b; }
+        .odd { color: #ff4444; text-shadow: 0 0 25px #ff4444; }
+        .even { color: #4444ff; text-shadow: 0 0 25px #4444ff; }
 
         .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-bottom: 4px; }
         .stat-item { background: #000; border: 1px solid #333; padding: 4px 1px; text-align: center; border-radius: 3px; }
@@ -51,7 +51,7 @@
         .btn-auto { flex: 1; background: #d00000; color: white; border: 1px solid #ff4444; padding: 12px 0; font-weight: bold; border-radius: 5px; cursor: pointer; font-size: 0.85rem; }
         .btn-stop { background: #444 !important; border-color: #666 !important; }
 
-        /* 履歴ログ：1.5倍 (195px) を維持 */
+        /* 履歴ログ：1.5倍を維持 */
         .log { width: 100%; max-width: 450px; height: 195px; background: #000; margin-top: 10px; padding: 10px; font-size: 0.95rem; color: #ff4444; overflow-y: auto; border: 1px solid #333; font-family: monospace; box-sizing: border-box; }
     </style>
 </head>
@@ -80,7 +80,7 @@
             <div class="digit-container">
                 <div id="d1" class="digit odd">1</div><div id="d2" class="digit even">2</div><div id="d3" class="digit odd">3</div>
             </div>
-            <div id="sub-display" style="position:absolute; bottom:10px; right:15px; color:#d00000; font-weight:bold; font-size:1.1rem;">通常</div>
+            <div id="sub-display" style="position:absolute; bottom:12px; right:15px; color:#d00000; font-weight:bold; font-size:1.2rem;">通常</div>
         </div>
 
         <div class="stat-grid">
@@ -107,7 +107,7 @@
             </div>
         </div>
     </div>
-    <div class="log" id="log">> 液晶サイズを微調整しました（約1.3倍）。</div>
+    <div class="log" id="log">> 液晶サイズを300pxに固定し、図柄サイズを最適化しました。</div>
 </div>
 
 <script>
