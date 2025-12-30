@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>EVANGELION Sim -Log Detail Update-</title>
+    <title>EVANGELION Sim -357 Origin-</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&display=swap');
@@ -14,12 +14,9 @@
         .main-content { width: 100%; max-width: 440px; display: flex; flex-direction: column; align-items: center; padding: 10px; box-sizing: border-box; }
         
         .machine { width: 100%; background: #111; border: 2px solid #d00000; border-radius: 15px; padding: 12px; position: relative; box-sizing: border-box; }
-        /* 図柄表示（1.5倍） */
         .screen { background: #000; height: 350px; border-radius: 10px; border: 2px solid #444; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; width: 100%; }
         .digit-container { display: flex; gap: 5px; }
         .digit { font-size: 8.5rem; font-weight: 900; font-family: 'Shippori Mincho B1', serif; width: 110px; text-align: center; }
-        
-        /* ST回数表示（右下） */
         .mode-display { position: absolute; bottom: 35px; right: 15px; color: #d00000; font-weight: bold; font-size: 0.9rem; text-shadow: 0 0 5px #000; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 3px; border-right: 3px solid #d00000; }
         
         .gold { color: #ffeb3b; text-shadow: 0 0 30px #ffeb3b; }
@@ -58,7 +55,6 @@
         .btn-auto { flex: 1; background: #d00000; color: white; border: 1px solid #ff4444; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 1rem; }
         .btn-stop { background: #444 !important; border-color: #666 !important; }
         
-        /* 履歴表示：フォントサイズ縮小（保存済み基準） */
         .log { width: 100%; max-width: 440px; height: 290px; background: #000; margin-top: 10px; padding: 10px; font-size: 0.77rem; color: #ff4444; overflow-y: auto; border: 1px solid #333; font-family: monospace; box-sizing: border-box; line-height: 1.4; }
         
         #modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; justify-content: center; align-items: center; }
@@ -79,7 +75,7 @@
             <div class="screen" id="screen">
                 <div id="effect-overlay" class="effect-text"></div>
                 <div class="digit-container">
-                    <div id="d1" class="digit odd">1</div><div id="d2" class="digit even">2</div><div id="d3" class="digit odd">3</div>
+                    <div id="d1" class="digit odd">3</div><div id="d2" class="digit odd">5</div><div id="d3" class="digit gold">7</div>
                 </div>
                 <div id="sub-display" class="mode-display">通常</div>
                 <div class="heso-overlay"><div id="h1" class="heso-ball"></div><div id="h2" class="heso-ball"></div><div id="h3" class="heso-ball"></div><div id="h4" class="heso-ball"></div></div>
@@ -99,7 +95,7 @@
                 <button class="btn-auto" id="btn-fast" onclick="toggleAuto('fast')">高速オート</button>
             </div>
         </div>
-        <div class="log" id="log">> 履歴にST/時短の判別を追記しました。</div>
+        <div class="log" id="log">> 初期図柄を357にセットしました。信頼度計算を厳格化済みです。</div>
     </div>
 
 <script>
@@ -279,6 +275,7 @@
 </script>
 </body>
 </html>
+
 
 
 
