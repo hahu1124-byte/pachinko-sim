@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>EVANGELION Sim -3% 10R-</title>
+    <title>EVANGELION Sim -Full Log-</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&display=swap');
@@ -33,7 +33,10 @@
         .effect-text { position: absolute; color: white; font-weight: bold; font-size: 2.2rem; z-index: 5; text-shadow: 0 0 10px #000; background: rgba(0,0,0,0.7); padding: 5px 15px; border-radius: 5px; display: none; }
         .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-top: 12px; }
         .stat-item { background: #000; border: 1px solid #333; padding: 5px 0; text-align: center; border-radius: 4px; }
-        .stat-val { font-size: 0.9rem; font-weight: bold; color: #d00000; font-family: monospace; }
+        .stat-val { font-size: 0.9rem; font-weight: bold; font-family: monospace; }
+        .val-white { color: #ffffff; }
+        .val-red { color: #ff4444; }
+        .val-blue { color: #4444ff; }
         .stat-label { font-size: 0.6rem; color: #888; display: block; }
         .control-panel { margin-top: 12px; display: flex; gap: 8px; width: 100%; height: 65px; }
         .side-btns { display: flex; flex-direction: column; gap: 4px; width: 55px; }
@@ -66,10 +69,10 @@
             <div class="heso-overlay"><div id="h1" class="heso-ball"></div><div id="h2" class="heso-ball"></div><div id="h3" class="heso-ball"></div><div id="h4" class="heso-ball"></div></div>
         </div>
         <div class="stat-grid">
-            <div class="stat-item"><span class="stat-label">大当り</span><span id="hits" class="stat-val">0</span></div>
-            <div class="stat-item"><span class="stat-label">連チャン</span><span id="rush-count" class="stat-val">0</span></div>
-            <div class="stat-item"><span class="stat-label">現在回転</span><span id="current-rot" class="stat-val">0</span></div>
-            <div class="stat-item"><span class="stat-label">差玉数</span><span id="balance" class="stat-val">0</span></div>
+            <div class="stat-item"><span class="stat-label">大当り</span><span id="hits" class="stat-val val-white">0</span></div>
+            <div class="stat-item"><span class="stat-label">連チャン</span><span id="rush-count" class="stat-val val-white">0</span></div>
+            <div class="stat-item"><span class="stat-label">現在回転</span><span id="current-rot" class="stat-val val-white">0</span></div>
+            <div class="stat-item"><span class="stat-label">差玉数</span><span id="balance" class="stat-val val-white">0</span></div>
         </div>
         <div class="control-panel">
             <div class="side-btns">
@@ -80,7 +83,7 @@
             <button class="btn-auto" id="btn-fast" onclick="toggleAuto('fast')">高速オート</button>
         </div>
     </div>
-    <div class="log" id="log">> 通常時7図柄(10R:1400個)を3%に設定しました。</div>
+    <div class="log" id="log">> ハズレ時の演出履歴表示を有効にしました。</div>
 </div>
 
 <script>
@@ -132,8 +135,8 @@
             }
         }
         
-        let eff = selectEffect(isHit, willEnterRush);
-        if(optKokuchi && isHit) { eff.heavy=true; eff.flash=true; eff.lamp=true; eff.name="完全告知"; eff.trust=100; eff.freq=0.3; }
+        let eff = selectEffect(isHit, willEnterRush, mode !== '通常');
+        if(optKokuchi && isHit) { eff.heavy=true; eff.flash=true; eff.lamp=true; eff.name="完全告知"; eff.trust=100; }
         
         let originalSpeed = autoSpeed;
         if(autoSpeed==='fast' && eff.heavy && !optAll) { autoSpeed='slow'; resetBtns(); document.getElementById('btn-slow').classList.add('btn-stop'); }
@@ -144,20 +147,20 @@
 
         let spinTime = (eff.heavy || (originalSpeed==='fast' && autoSpeed==='slow')) ? 2500 : (autoSpeed==='fast'?60:600);
         
-        // 当たった時だけ強い演出のログを表示
-        if(eff.heavy && isHit && mode==='通常') {
-            isAnim=true;
-            addLog(`${currentCount}回【${eff.name}】信頼度:${eff.trust}%`);
+        // 演出発生時のログとアニメーション（当たっても外れても表示）
+        if(eff.heavy) {
+            if(isHit || mode==='通常') {
+                addLog(`${mode} ${currentCount}回【${eff.name}】信頼度:${eff.trust}%`);
+            }
             if(eff.vibe) document.getElementById('machine').classList.add('vibrate');
             if(eff.flash) document.getElementById('screen').classList.add('flash-active');
             if(eff.text) { const ov = document.getElementById('effect-overlay'); ov.innerText = eff.text; ov.style.display = 'block'; }
-            if(eff.lamp) document.getElementById('lamp').classList.add('lamp-active');
+            if(eff.lamp && isHit) document.getElementById('lamp').classList.add('lamp-active');
         }
 
         let lastDigits = [0,0,0];
         let spin = setInterval(() => { 
             [1,2,3].forEach((i, idx) => { 
-                // 通常時、10R当り(is10R)以外は7図柄を表示しない
                 let n;
                 do { n = Math.floor(Math.random()*9)+1; } while(mode==='通常' && !is10R && n===7);
                 const el=document.getElementById('d'+i); el.innerText=n; el.className='digit '+(n%2===0?'even':'odd'); lastDigits[idx]=n; 
@@ -178,24 +181,21 @@
             
             if(mode==='通常') {
                 addLog(`>> ${currentCount}回転 【${d}】 大当り! ${is10R ? '(10R)' : '(3R)'}`);
-                if(willEnterRush) { 
-                    addLog(">>> RUSH突入！");
-                    mode='ST'; rRem=SPECS.st; rushCount=1; currentRushHits=1;
-                } else {
-                    mode='時短'; rRem=SPECS.jt; rushCount=0; currentRushHits=1; addLog(">>> 通常当り");
-                }
+                if(willEnterRush) { addLog(">>> RUSH突入！"); mode='ST'; rRem=SPECS.st; rushCount=1; currentRushHits=1; } 
+                else { mode='時短'; rRem=SPECS.jt; rushCount=0; currentRushHits=1; addLog(">>> 通常当り"); }
             } else {
                 currentRushHits++;
                 if(mode==='ST') rushCount = currentRushHits;
                 addLog(`>> ${mode} ${currentCount}回転 【${d}】 10R当り! (${currentRushHits}連)`);
-                if(willEnterRush) { mode='ST'; rRem=SPECS.st; } else { mode='時短'; rRem=SPECS.jt; }
+                mode='ST'; rRem=SPECS.st;
             }
             totalBall += (is10R ? 1400 : 420);
             updateUI(); await new Promise(r => setTimeout(r, 1800));
             currentCount=0; document.getElementById('lamp').classList.remove('lamp-active');
-        } else if(eff.heavy && mode==='通常') {
-            // ハズレ時はシンプルな表示
-            addLog(`>> ${currentCount}回転 【${lastDigits[0]}】 ハズレ`);
+        } else {
+            if(eff.heavy) {
+                addLog(`>> ${currentCount}回転 【${lastDigits[0]}】 ${eff.name} ハズレ`);
+            }
         }
 
         if(mode!=='通常' && !isHit) { 
@@ -213,34 +213,45 @@
         if(isAuto) setTimeout(startProcess, (autoSpeed==='fast') ? 5 : 300);
     }
 
-    function selectEffect(isHit, willEnterRush) {
+    function selectEffect(isHit, willEnterRush, isRight) {
         let r = Math.random() * 100;
         if(isHit) {
-            if(willEnterRush) {
-                if(r < 5) return {name:"カヲル", heavy:true, flash:true, lamp:true, vibe:true, text:"カヲル", trust:100};
-                if(r < 15) return {name:"インフラ", heavy:true, flash:true, lamp:true, vibe:true, text:"当確", trust:100};
-                if(r < 25) return {name:"虹レバブル", heavy:true, vibe:true, lamp:true, text:"祝", trust:100};
-                if(r < 35) return {name:"レイ背景（さよなら）", heavy:true, text:"さよなら", trust:100};
-            }
-            if(r < 55) return {name:"赤レバブル", heavy:true, vibe:true, text:"激熱", trust:96.5};
-            if(r < 75) return {name:"赤保留", heavy:true, isRedHold:true, text:"赤保留", trust:90};
-            return {name:"レイ背景", heavy:true, text:"レイ背景", trust:85};
+            if(r < 10) return {name:"カヲル", heavy:true, flash:true, lamp:true, vibe:true, text:"カヲル", trust:100};
+            if(r < 25) return {name:"インフラ", heavy:true, flash:true, lamp:true, vibe:true, text:"当確", trust:100};
+            if(r < 40) return {name:"赤レバブル", heavy:true, vibe:true, text:"激熱", trust:96.5};
+            if(r < 60) return {name:"レイ背景", heavy:true, text:"レイ背景", trust:85};
+            return {name:"インパクト予告", heavy:true, flash:true, text:"当", trust:100};
         } else {
+            // ハズレ時も演出を選択して返すように調整
             if(r < 0.2) return {name:"赤保留", heavy:true, isRedHold:true, text:"赤保留", trust:90};
-            if(r < 0.5) return {name:"次回予告", heavy:true, text:"次回予告", trust:65};
+            if(r < 0.3) return {name:"赤レバブル", heavy:true, vibe:true, text:"激熱", trust:96.5};
+            if(r < 0.8) return {name:"レイ背景", heavy:true, text:"レイ背景", trust:85};
+            if(r < 1.3) return {name:"次回予告", heavy:true, text:"次回予告", trust:65};
+            if(r < 2.5) return {name:"金予告", heavy:true, text:"金系", trust:50};
         }
         return {heavy:false};
     }
+
     function updateHeso(isRed) { for(let i=1; i<=4; i++) { const el=document.getElementById('h'+i); if(i===1&&isRed) el.className='heso-ball heso-red'; else el.className=(i<=heso)?'heso-ball heso-on':'heso-ball'; } }
+    
     function updateUI() {
-        document.getElementById('hits').innerText=hits; document.getElementById('rush-count').innerText=rushCount;
-        document.getElementById('current-rot').innerText=currentCount; document.getElementById('balance').innerText=Math.floor(totalBall).toLocaleString();
+        document.getElementById('hits').innerText=hits; 
+        document.getElementById('rush-count').innerText=rushCount;
+        document.getElementById('current-rot').innerText=currentCount;
+        const balEl = document.getElementById('balance');
+        const balVal = Math.floor(totalBall);
+        balEl.innerText = balVal.toLocaleString();
+        balEl.className = 'stat-val';
+        if(balVal > 0) balEl.classList.add('val-blue');
+        else if(balVal < 0) balEl.classList.add('val-red');
+        else balEl.classList.add('val-white');
         document.getElementById('sub-display').innerText = mode==='通常'?'通常':`${mode}:${rRem}`;
     }
     function addLog(m) { const l=document.getElementById('log'); l.innerHTML=`> ${m}<br>${l.innerHTML}`; }
 </script>
 </body>
 </html>
+
 
 
 
