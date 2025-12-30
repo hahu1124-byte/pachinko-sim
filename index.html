@@ -101,7 +101,7 @@
                 <button class="btn-auto" id="btn-fast" onclick="toggleAuto('fast')">高速オート</button>
             </div>
         </div>
-        <div class="log" id="log">> 履歴表示を修正：50%以上の演出・当たり時・リザルトのみ表示します。</div>
+        <div class="log" id="log">> ハズレ時に図柄が揃わないよう修正しました。高速オート維持は時短終了後のみ有効です。</div>
     </div>
     
 <script>
@@ -128,7 +128,6 @@
         if (reservedStock.length >= 4) return;
         let isHit = Math.random() < (1 / (mode !== '通常' ? SPECS.s : SPECS.n));
         let holdType = "none", preVibe = "none", roll = Math.random() * 100;
-
         if (isHit) {
             if (mode !== '通常') {
                 if (roll < 10) holdType = "rainbow"; else if (roll < 50) holdType = "red";
@@ -137,7 +136,6 @@
                 if (roll < 25) holdType = "red"; else { let vr = Math.random()*100; preVibe = vr < 20 ? "white" : (vr < 40 ? "red" : "none"); }
             }
         } else {
-            // ハズレ時の強演出抑制
             if (mode === '通常') {
                 if (roll < 0.005) holdType = "red"; else if (roll < 2.0) holdType = "green";
                 if (holdType === "none" && Math.random() < 0.002) preVibe = "white";
@@ -173,29 +171,18 @@
     async function startProcess() {
         if(!isAuto || isAnim) return;
 
-        // モード終了判定
         if(mode !== '通常' && rRem <= 0) {
             let prev = mode;
             addLog(`【${prev}終了】 ${currentRushHits <= 1 ? '1回(' + prev + ')' : currentRushHits + '連'}`);
             mode = '通常'; rushCount = 0; currentRushHits = 0; lcdCount = 0;
             updateUI();
-            
-            // ★修正: 時短終了時かつ高速オート設定時のみループ
-            if (prev === '時短' && originalSpeedSetting === 'fast') {
-                autoSpeed = 'fast'; 
-                resetBtns();
-            } else {
-                // ST終了時、または低速オート時は停止
-                isAuto = false; 
-                resetBtns(); 
-                return; 
-            }
+            if (prev === '時短' && originalSpeedSetting === 'fast') { autoSpeed = 'fast'; resetBtns(); }
+            else { isAuto = false; resetBtns(); return; }
         }
 
         while(reservedStock.length < 4) preCheck();
         let job = reservedStock.shift();
         let eff = selectEffect(job.isHit, job.holdType, job.preVibe);
-
         if(optKokuchi && job.isHit) { eff.flash=true; eff.isSure=true; eff.trust=100; eff.displayName="インフラ告知"; }
         if (mode !== '通常' && eff.trust >= 50 && autoSpeed === 'fast') { autoSpeed = 'slow'; resetBtns(); }
 
@@ -212,7 +199,28 @@
         }
 
         let spinTime = (eff.heavy) ? 2500 : (autoSpeed === 'fast' ? 60 : 600);
-        let spin = setInterval(() => { [1,2,3].forEach(i => { let n; do { n = Math.floor(Math.random()*9)+1; } while(mode === '通常' && n === 7); const el = document.getElementById('d'+i); el.innerText=n; el.className='digit '+(n%2===0?'even':'odd'); if(n===7) el.classList.add('gold'); }); }, 40);
+        
+        // ★修正: 図柄停止ロジック（ハズレ時は揃わないよう補正）
+        let spin = setInterval(() => { 
+            let n1 = Math.floor(Math.random()*9)+1;
+            let n2 = Math.floor(Math.random()*9)+1;
+            let n3 = Math.floor(Math.random()*9)+1;
+            
+            // 通常時に7が出ないように、かつハズレ時に揃わないようにチェック
+            if (!job.isHit) {
+                while(n1 === n2 && n2 === n3) { n3 = Math.floor(Math.random()*9)+1; }
+            }
+            if (mode === '通常') {
+                if (n1 === 7) n1 = 8; if (n2 === 7) n2 = 8; if (n3 === 7) n3 = 8;
+            }
+
+            const d1=document.getElementById('d1'), d2=document.getElementById('d2'), d3=document.getElementById('d3');
+            d1.innerText=n1; d1.className='digit '+(n1%2===0?'even':'odd');
+            d2.innerText=n2; d2.className='digit '+(n2%2===0?'even':'odd');
+            d3.innerText=n3; d3.className='digit '+(n3%2===0?'even':'odd');
+            if(n1===7) d1.classList.add('gold'); if(n2===7) d2.classList.add('gold'); if(n3===7) d3.classList.add('gold');
+        }, 40);
+
         await new Promise(r => setTimeout(r, spinTime));
         clearInterval(spin);
         document.getElementById('screen').classList.remove('flash-active');
@@ -252,6 +260,7 @@
 </script>
 </body>
 </html>
+
 
 
 
