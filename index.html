@@ -15,10 +15,7 @@
         .machine { width: 100%; background: #111; border: 2px solid #d00000; border-radius: 15px; padding: 12px; position: relative; box-sizing: border-box; }
         .screen { background: #000; height: 300px; border-radius: 10px; border: 2px solid #444; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; width: 100%; }
         .digit-container { display: flex; gap: 5px; }
-        
-        /* 図柄サイズを元のサイズへ変更 */
         .digit { font-size: 8.5rem; font-weight: 900; font-family: 'Shippori Mincho B1', serif; width: 110px; text-align: center; } 
-
         .mode-display { position: absolute; bottom: 35px; right: 15px; color: #d00000; font-weight: bold; font-size: 0.9rem; text-shadow: 0 0 5px #000; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 3px; border-right: 3px solid #d00000; text-align: right; min-width: 90px; }
         .gold { color: #ffeb3b; text-shadow: 0 0 30px #ffeb3b; }
         .odd { color: #ff4444; text-shadow: 0 0 20px #ff4444; }
@@ -38,10 +35,7 @@
         .effect-text { position: absolute; color: white; font-weight: bold; font-size: 2.2rem; z-index: 5; text-shadow: 0 0 10px #000; background: rgba(0,0,0,0.7); padding: 5px 15px; border-radius: 5px; display: none; text-align: center; }
         .stat-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-top: 12px; }
         .stat-item { background: #000; border: 1px solid #333; padding: 5px 0; text-align: center; border-radius: 4px; }
-        
-        /* ステータス部分は1.5倍を維持 */
         .stat-val { font-size: 1.2rem; font-weight: bold; font-family: monospace; } 
-        
         .val-white { color: #ffffff; }
         .val-red { color: #ff4444; }
         .val-blue { color: #4444ff; }
@@ -52,10 +46,7 @@
         .side-btn.active { background: #d00000; color: #fff; border-color: #ff4444; }
         .btn-auto { flex: 1; background: #d00000; color: white; border: 1px solid #ff4444; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 1rem; }
         .btn-stop { background: #444 !important; border-color: #666 !important; }
-        
-        /* ログの文字サイズを元のサイズへ変更 */
         .log { width: 100%; max-width: 440px; height: 290px; background: #000; margin-top: 10px; padding: 10px; font-size: 0.77rem; color: #ff4444; overflow-y: auto; border: 1px solid #333; font-family: monospace; box-sizing: border-box; line-height: 1.4; } 
-        
         #modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; justify-content: center; align-items: center; }
         #modal-content { background: #111; border: 2px solid #d00000; width: 92%; max-width: 400px; padding: 15px; border-radius: 12px; }
         .graph-area { background: #000; height: 160px; margin-bottom: 15px; }
@@ -95,7 +86,7 @@
                 <button class="btn-auto" id="btn-fast" onclick="toggleAuto('fast')">高速オート</button>
             </div>
         </div>
-        <div class="log" id="log">></div>
+        <div class="log" id="log">> 右打ち中のログから「(昇格)」を削除しました。</div>
     </div>
 
 <script>
@@ -190,10 +181,10 @@
             } else { 
                 let d, is10R = false, nextM = '時短', isShokaku = false, logDigit = "";
                 
-                if (mode !== '通常') { // 右打ち中
-                    logDigit = [2,4,6,8][Math.floor(Math.random()*4)]; // ログには偶数を記録
+                if (mode !== '通常') { 
+                    logDigit = [2,4,6,8][Math.floor(Math.random()*4)]; 
                     d = 7; is10R = true; nextM = 'ST'; isShokaku = true;
-                } else { // 通常時
+                } else { 
                     if (eff.isFullSpin) { d = 7; is10R = true; nextM = 'ST'; logDigit = "7"; }
                     else if (eff.isSure) {
                         if (rand < 15) { d = 7; is10R = true; nextM = 'ST'; logDigit = "7"; }
@@ -206,12 +197,11 @@
                     }
                 }
                 
-                // ログ出力（昇格前の図柄を表示）
-                let logMsg = `>> ${mode} ${lcdCount}回転 【${logDigit}】 大当り!(${is10R?'10R':'3R'})`;
-                if(isShokaku) logMsg += " (昇格)";
+                // ログ出力（右打ち中は昇格の記述を削除）
+                let logMsg = `>> ${mode} ${lcdCount}回転 【${logDigit}】 ${is10R?'10R':'3R'}当り!`;
+                if(isShokaku && mode === '通常') logMsg += " (昇格)";
                 addLog(logMsg);
 
-                // 一旦図柄を表示（昇格前）
                 [1,2,3].forEach(i => { const el=document.getElementById('d'+i); el.innerText=logDigit; el.className='digit '+(logDigit==7?'gold':(logDigit%2!==0?'odd':'even')); }); 
                 
                 if (isShokaku) {
@@ -223,7 +213,7 @@
                         let candidates = [logDigit-1, logDigit+1].filter(n => n > 0 && n < 10 && n !== 7 && n % 2 !== 0);
                         d = candidates.length ? candidates[Math.floor(Math.random() * candidates.length)] : 1;
                         [1,2,3].forEach(i => { const el=document.getElementById('d'+i); el.innerText=d; el.className='digit odd'; });
-                    } else { // 右打ちは必ず7へ
+                    } else { 
                         d = 7;
                         [1,2,3].forEach(i => { const el=document.getElementById('d'+i); el.innerText=d; el.className='digit gold'; });
                     }
@@ -257,6 +247,7 @@
 </script>
 </body>
 </html>
+
 
 
 
