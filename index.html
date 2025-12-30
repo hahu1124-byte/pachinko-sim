@@ -126,8 +126,9 @@
     let sChart, hChart, reservedStock = [], activeJob = null, originalSpeedSetting = 'slow';
     let maxHamari = 0, maxHamariDetail = "記録なし";
 
-    const TRUST_MAP_N = { "白レバ": 0.90, "赤レバ": 0.965, "赤保留": 0.90, "次回予告": 0.65, "レイ背景": 0.85, "金系": 0.50, "緑保留": 0.11, "青保留": 0.05, "ぷるぷる保留": 0.93 };
-    const TRUST_MAP_S = { "白レバ": 0.95, "赤レバ": 0.99, "赤保留": 0.95, "次回予告": 1.0, "レイ背景": 0.92, "金系": 0.80, "緑保留": 0.10, "青保留": 0.03 };
+    // 信頼度マップ
+    const TRUST_MAP_N = { "白レバ": 0.90, "赤レバ": 0.965, "赤保留": 0.90, "次回予告": 0.65, "レイ背景": 0.85, "金系": 0.50, "緑保留": 0.11, "青保留": 0.05, "ぷるぷる保留": 0.93, "カウントダウン": 0.88 };
+    const TRUST_MAP_S = { "白レバ": 0.95, "赤レバ": 0.99, "赤保留": 0.95, "次回予告": 1.0, "レイ背景": 0.92, "金系": 0.80, "緑保留": 0.10, "青保留": 0.03, "カウントダウン": 0.88 };
 
     function triggerVibeUI(color) {
         const m = document.getElementById('machine');
@@ -141,19 +142,23 @@
     function preCheck() {
         if (reservedStock.length >= 4) return;
         let isHit = Math.random() < (1 / (mode !== '通常' ? SPECS.s : SPECS.n));
-        let holdType = "none", preVibe = "none";
+        let holdType = "none", preVibe = "none", hasCountdown = false;
         
         if (isHit) {
+            // カウントダウン予告 占有率5%
+            if (Math.random() < 0.05) hasCountdown = true;
+
             if (mode === '通常') {
                 let hRoll = Math.random() * 100;
                 if (hRoll < 33) holdType = "red";
-                else if (hRoll < 45) { // 虹合算
+                else if (hRoll < 45) {
                     holdType = "vibe"; 
                     let vr = Math.random() * 100;
                     preVibe = vr < 50 ? "white" : (vr < 90 ? "red" : "rainbow"); 
                 }
                 else if (hRoll < 48) holdType = "green";
                 else if (hRoll < 50) holdType = "blue";
+                
                 if (preVibe === "none" && Math.random() < 0.5) { 
                     let vr = Math.random() * 100;
                     preVibe = vr < 50 ? "white" : (vr < 85 ? "red" : "rainbow");
@@ -161,15 +166,22 @@
             } else {
                 let hRoll = Math.random() * 100;
                 if (hRoll < 30) holdType = "red";
-                else if (hRoll < 35) { holdType = "vibe"; preVibe = (Math.random() < 0.7 ? "white" : "red"); }
+                else if (hRoll < 35) {
+                    holdType = "vibe";
+                    preVibe = (Math.random() < 0.7 ? "white" : "red");
+                }
                 else if (hRoll < 38) holdType = "green";
                 else if (hRoll < 39) holdType = "blue";
                 else if (hRoll < 45) holdType = "rainbow";
+                
                 if (preVibe === "none" && Math.random() < 0.3) {
                     preVibe = (Math.random() < 0.8 ? "white" : "red");
                 }
             }
         } else {
+            // ハズレ時 (極稀にカウントダウンがガセる 信頼度88%なので)
+            if (Math.random() < 0.001) hasCountdown = true;
+
             let hRoll = Math.random() * 100;
             if (mode === '通常') {
                 if (hRoll < 0.1) holdType = "red";
@@ -180,14 +192,16 @@
                 else if (hRoll < 2.0) holdType = "blue";
             }
         }
-        reservedStock.push({ isHit: isHit, holdType: holdType, preVibe: preVibe });
+        
+        reservedStock.push({ isHit: isHit, holdType: holdType, preVibe: preVibe, hasCountdown: hasCountdown });
         if (preVibe !== "none") triggerVibeUI(preVibe);
-        if ((holdType === "red" || holdType === "vibe" || preVibe !== "none") && isAuto && autoSpeed === "fast") { autoSpeed = 'slow'; resetBtns(); }
+        // カウントダウン発生時も低速に
+        if ((holdType === "red" || holdType === "vibe" || preVibe !== "none" || hasCountdown) && isAuto && autoSpeed === "fast") { autoSpeed = 'slow'; resetBtns(); }
         updateHesoUI();
     }
 
     function selectEffect(job) {
-        let res = { heavy: false, name: [], trust: 0, vibe: false, vibeColor: job.preVibe, flash: false, text: "", holdType: job.holdType, isSure: false };
+        let res = { heavy: false, name: [], trust: 0, vibe: false, vibeColor: job.preVibe, flash: false, text: "", holdType: job.holdType, isSure: false, hasCountdown: job.hasCountdown };
         const map = (mode !== '通常') ? TRUST_MAP_S : TRUST_MAP_N;
 
         if (res.holdType === "red") res.name.push("赤保留");
@@ -195,12 +209,15 @@
         if (res.holdType === "blue") res.name.push("青保留");
         if (res.holdType === "vibe") res.name.push("ぷるぷる保留");
         if (res.holdType === "rainbow") { res.name.push("虹保留"); res.isSure = true; }
+        if (res.hasCountdown) { res.name.push("カウントダウン"); res.heavy = true; }
+        
         if (res.vibeColor !== "none") { 
             res.vibe = true; 
             if(res.vibeColor === "rainbow") { res.name.push("虹レバ"); res.isSure = true; }
             else { res.name.push(res.vibeColor === "red" ? "赤レバ" : "白レバ"); }
             res.heavy = true; 
         }
+
         if (job.isHit) {
             if (mode === '通常') {
                 if (Math.random() < 0.40) { res.name.push("次回予告"); res.text="次回予告"; }
@@ -212,17 +229,21 @@
             }
             res.heavy = true;
         }
+
         res.name = [...new Set(res.name)];
         if (res.isSure) res.trust = 100; 
         else if (res.name.length > 0) {
-            if (mode !== '通常' && res.holdType === "vibe") {
-                res.trust = (res.vibeColor === "red" ? map["赤レバ"] : map["白レバ"]) * 100;
-            } else {
-                let fail = 1; 
-                res.name.forEach(n => fail *= (1 - (map[n] || 0.05)));
-                res.trust = (1 - fail) * 100;
-            }
+            let fail = 1; 
+            res.name.forEach(n => {
+                let t = map[n] || 0.05;
+                if (n === "ぷるぷる保留" && mode !== "通常") {
+                    t = (res.vibeColor === "red" ? map["赤レバ"] : map["白レバ"]);
+                }
+                fail *= (1 - t);
+            });
+            res.trust = (1 - fail) * 100;
         } else { res.trust = (mode === '通常' ? 0.1 : 1.0); }
+        
         if (res.trust >= 99.9) res.isSure = true;
         res.displayName = res.name.join("+") || "弱演出";
         return res;
@@ -260,7 +281,19 @@
         }
         
         if (totalRot % 10 === 0) { slumpData.push(Math.floor(totalBall)); slumpLabels.push(totalRot.toString()); }
-        if(eff.trust >= 50 || activeJob.isHit) {
+        
+        // カウントダウン演出の実行（ログ表示）
+        if (eff.hasCountdown) {
+            addLog(`<span style="color:#ff4444; font-weight:bold;">●カウントダウン：3...</span>`);
+            await new Promise(r => setTimeout(r, 400));
+            addLog(`<span style="color:#ff4444; font-weight:bold;">●カウントダウン：2...</span>`);
+            await new Promise(r => setTimeout(r, 400));
+            addLog(`<span style="color:#ff4444; font-weight:bold;">●カウントダウン：1...</span>`);
+            await new Promise(r => setTimeout(r, 400));
+            addLog(`<span style="color:#ff4444; font-weight:bold;">●カウントダウン：0!!</span>`);
+        }
+
+        if(eff.trust >= 50 || activeJob.isHit || eff.hasCountdown) {
             addLog(`${mode} ${lcdCount}回転【${eff.displayName}】信頼度:${eff.trust.toFixed(1)}%`);
             if(eff.vibe) triggerVibeUI(activeJob.preVibe);
             if(eff.flash) document.getElementById('screen').classList.add('flash-active');
@@ -331,11 +364,8 @@
     function updateHesoUI() { 
         const isRightMode = (mode !== '通常'); 
         const hesoArea = document.getElementById('heso-area');
-        
-        // 右打ち中はクラスを切り替えて形状と位置を変更
         if (isRightMode) hesoArea.classList.add('right-mode');
         else hesoArea.classList.remove('right-mode');
-
         const h0 = document.getElementById('h0');
         h0.className = `heso-ball heso-current`;
         if(activeJob) {
@@ -343,7 +373,6 @@
             else if (activeJob.holdType !== 'none') h0.classList.add('heso-' + activeJob.holdType);
             else h0.classList.add('heso-on');
         }
-
         for(let i=1; i<=4; i++) { 
             const el = document.getElementById('h'+i); const s = reservedStock[i-1]; 
             el.className = `heso-ball`;
@@ -377,6 +406,7 @@
 </script>
 </body>
 </html>
+
 
 
 
