@@ -163,7 +163,7 @@
             if(eff.vibe) document.getElementById('machine').classList.add('vibrate');
             if(eff.flash) document.getElementById('screen').classList.add('flash-active');
             if(eff.text) { const ov = document.getElementById('effect-overlay'); ov.innerText = eff.text; ov.style.display = 'block'; }
-            if(eff.lamp && isHit) document.getElementById('lamp').classList.add('lamp-active');
+            if(eff.lamp && (isHit || eff.name.includes("虹"))) document.getElementById('lamp').classList.add('lamp-active');
         }
 
         let lastDigits = [0,0,0];
@@ -218,10 +218,17 @@
     function selectEffect(isHit, willEnterRush, isRight) {
         let res = { heavy: false, name: [], trust: 0, vibe: false, flash: false, lamp: false, text: "", isRedHold: false };
         let names = [];
+        let vibeType = null; // null, "白", "赤", "虹"
 
         if (isHit) {
-            if (Math.random() < 0.667) { res.vibe = true; names.push("白レバブル"); }
-            if (Math.random() < 0.03) { res.vibe = true; res.lamp = true; names.push("虹レバブル"); }
+            // レバブル抽選（最上位優先）
+            if (Math.random() < 0.03) vibeType = "虹";
+            else if (Math.random() < 0.15) vibeType = "赤";
+            else if (Math.random() < 0.667) vibeType = "白";
+
+            if (vibeType) { res.vibe = true; names.push(vibeType + "レバブル"); }
+            
+            // その他独立抽選
             if (Math.random() < 0.05) { res.lamp = true; names.push("インフラ"); }
             if (Math.random() < 0.01) { names.push("カヲル"); res.text = "カヲル"; }
             if (Math.random() < 0.40) { names.push("次回予告"); res.text = "次回予告"; }
@@ -229,19 +236,22 @@
             if (Math.random() < 0.03) { names.push("レイ背景(さよなら)"); res.text = "さよなら"; } 
             else if (Math.random() < 0.333) { names.push("レイ背景"); res.text = "レイ背景"; }
 
-            if (names.length > 0) {
-                res.heavy = true;
-                res.name = names.join("+");
-                res.trust = 100;
-            } else {
-                res.heavy = true; res.name = "インパクト予告"; res.text = "当"; res.trust = 100;
-            }
+            if (names.length > 0) { res.heavy = true; res.name = names.join("+"); res.trust = 100; }
+            else { res.heavy = true; res.name = "インパクト予告"; res.text = "当"; res.trust = 100; }
         } else {
+            // ハズレ時
             let r = Math.random() * 100;
-            if (r < 0.15) { res.heavy = true; res.vibe = true; res.name = "白レバブル"; res.text = "激熱"; res.trust = 90; }
-            else if (r < 0.3) { res.heavy = true; res.isRedHold = true; res.name = "赤保留"; res.text = "赤保留"; res.trust = 90; }
-            else if (r < 0.6) { res.heavy = true; res.name = "レイ背景"; res.text = "レイ背景"; res.trust = 85; }
-            else if (r < 0.8) { res.heavy = true; res.name = "次回予告"; res.text = "次回予告"; res.trust = 65; }
+            if (r < 0.15) { 
+                res.heavy = true; res.vibe = true; res.name = "白レバブル"; res.text = "激熱"; res.trust = 90; 
+            } else if (r < 0.16) { // 赤レバハズレ（超低確率）
+                res.heavy = true; res.vibe = true; res.name = "赤レバブル"; res.text = "激熱"; res.trust = 96.5; 
+            } else if (r < 0.3) { 
+                res.heavy = true; res.isRedHold = true; res.name = "赤保留"; res.text = "赤保留"; res.trust = 90; 
+            } else if (r < 0.6) { 
+                res.heavy = true; res.name = "レイ背景"; res.text = "レイ背景"; res.trust = 85; 
+            } else if (r < 0.8) { 
+                res.heavy = true; res.name = "次回予告"; res.text = "次回予告"; res.trust = 65; 
+            }
         }
         return res;
     }
@@ -262,6 +272,7 @@
 </script>
 </body>
 </html>
+
 
 
 
