@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EVANGELION Sim -Fix Animation-</title>
+    <title>EVANGELION Sim -Balance Fix-</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&display=swap');
@@ -32,7 +32,7 @@
         .main-content { flex-grow: 1; display: flex; flex-direction: column; align-items: center; padding: 10px; overflow-y: auto; }
         .machine { width: 100%; max-width: 450px; background: #111; border: 2px solid #d00000; border-radius: 15px; padding: 12px; position: relative; }
         
-        /* 液晶：1.5倍基準 (330px) */
+        /* 液晶：基準サイズ(330px) */
         .screen { background: #000; height: 330px; border-radius: 10px; border: 2px solid #444; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; margin-bottom: 10px; }
         .digit-container { display: flex; gap: 15px; }
         .digit { font-size: 9rem; font-weight: 900; font-family: 'Shippori Mincho B1', serif; width: 120px; text-align: center; }
@@ -55,7 +55,7 @@
         .btn-auto { flex: 1; background: #d00000; color: white; border: 1px solid #ff4444; padding: 12px 0; font-weight: bold; border-radius: 5px; cursor: pointer; font-size: 0.85rem; }
         .btn-stop { background: #444 !important; border-color: #666 !important; }
 
-        /* 履歴ログ：1.5倍基準 (195px) */
+        /* 履歴ログ：基準サイズ(195px) */
         .log { width: 100%; max-width: 450px; height: 195px; background: #000; margin-top: 10px; padding: 10px; font-size: 0.95rem; color: #ff4444; overflow-y: auto; border: 1px solid #333; font-family: monospace; box-sizing: border-box; }
     </style>
 </head>
@@ -111,7 +111,7 @@
             </div>
         </div>
     </div>
-    <div class="log" id="log">> 高速オート変動速度を調整しました。</div>
+    <div class="log" id="log">> 消費玉数を実機基準に修正。<br>> 通常: -13~16個/回転<br>> ST中: -0.05個/回転</div>
 </div>
 
 <script>
@@ -155,11 +155,19 @@
         let isHit = Math.random() < (1/prob);
         let eff = selectEffect(isHit);
         
-        if(mode==='通常') totalBall -= 3.125;
         currentCount++;
 
-        // 演出時間の決定
-        // 高速時: 50ms, 通常時: 500ms, 熱い演出時: 2000ms
+        // --- 消費玉計算 (変更箇所) ---
+        if(mode === '通常') {
+            // 13〜16個の間でランダムに変動（平均14.5個減る）
+            let consume = 13 + Math.random() * 3;
+            totalBall -= consume;
+        } else {
+            // ST・時短中は微減（-0.05個）
+            totalBall -= 0.05;
+        }
+        // -------------------------
+
         let spinTime = (eff.heavy && !isGyakkyo) ? 2000 : (autoSpeed === 'fast' ? 50 : 500);
 
         if(eff.heavy && !isGyakkyo) {
@@ -170,10 +178,7 @@
             if(eff.rainbow) document.getElementById('machine').classList.add('rainbow-active');
         }
 
-        // 即座に一度更新（高速オート対策）
         setRandomDigits();
-
-        // 回転アニメーション（高速時は10ms間隔で更新）
         let intervalTime = (autoSpeed === 'fast' && !eff.heavy) ? 10 : 60;
         let spin = setInterval(setRandomDigits, intervalTime);
 
@@ -214,7 +219,6 @@
         if(mode!=='通常' && !isHit) { rRem--; if(rRem<=0) { addLog(`${mode}終了 ${rushCount}連`); mode='通常'; rushCount=0; if(!isFullAuto) { isAuto=false; resetBtns(); } } }
         isAnim = false;
         updateUI();
-        // 次の回転までの待機（高速時は短く）
         if(isAuto) setTimeout(startProcess, autoSpeed==='fast'?(isAnim?800:10):500);
     }
 
