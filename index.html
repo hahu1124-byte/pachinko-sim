@@ -3,27 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EVANGELION Sim -Fix & Ultimate-</title>
+    <title>EVANGELION Sim -Dual Auto Ver-</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&display=swap');
         
         body { background: #050505; color: white; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
-        /* ヘッダーとメニュー */
-        header { width: 100%; height: 50px; background: #000; border-bottom: 2px solid #d00000; display: flex; align-items: center; padding: 0 15px; box-sizing: border-box; z-index: 100; }
+        header { width: 100%; height: 50px; background: #000; border-bottom: 2px solid #d00000; display: flex; align-items: center; padding: 0 15px; box-sizing: border-box; }
         .menu-btn { background: #d00000; color: white; border: 1px solid #ff4444; padding: 5px 10px; cursor: pointer; font-weight: bold; font-size: 0.8rem; border-radius: 3px; }
         .logo-main { flex-grow: 1; text-align: center; font-family: 'Shippori Mincho B1', serif; font-size: 1rem; color: #d00000; text-shadow: 0 0 5px #d00000; margin-right: 50px; }
 
         .main-content { flex-grow: 1; display: flex; flex-direction: column; align-items: center; padding: 10px; width: 100%; overflow-y: auto; box-sizing: border-box; }
-        
-        /* 筐体 */
         .machine { width: 100%; max-width: 400px; background: #111; border: 2px solid #d00000; border-radius: 10px; padding: 15px; box-sizing: border-box; position: relative; }
         
-        /* 隠しランプ */
         .hidden-lamp { position: absolute; top: 10px; right: 20px; width: 12px; height: 12px; background: #222; clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%); transition: 0.2s; z-index: 10; }
         .lamp-on { background: #fff; box-shadow: 0 0 15px #fff; }
 
-        /* 液晶画面 */
         .screen { background: #000; height: 160px; border-radius: 5px; border: 1px solid #444; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 10px; position: relative; overflow: hidden; transition: background 1s; }
         .stage-normal { background: #000; }
         .stage-purple { background: radial-gradient(circle, #200030 0%, #000 100%); }
@@ -31,22 +26,24 @@
         .stage-rainbow { animation: rainbow-bg-anim 3s linear infinite; }
         @keyframes rainbow-bg-anim { 0%{background:#200} 25%{background:#220} 50%{background:#020} 75%{background:#002} 100%{background:#200} }
 
-        /* 図柄（3列表示） */
         .reels { display: flex; justify-content: center; gap: 15px; z-index: 5; margin-top: 5px; width: 100%; }
         .digit { font-size: 3.5rem; font-weight: 900; font-family: 'Shippori Mincho B1', serif; width: 60px; text-align: center; }
         .odd { color: #ff4444; } .even { color: #4444ff; } .gold { color: #ffeb3b; text-shadow: 0 0 10px #ffeb3b; }
         
-        /* 保留位置（中央下） */
         .shoryu-area { display: flex; gap: 8px; margin-top: 10px; z-index: 5; height: 15px; }
         .hoju { width: 12px; height: 12px; border-radius: 50%; background: #333; border: 1px solid #555; }
         .hoju-red { background: #ff0000; box-shadow: 0 0 10px #ff0000; border-color: #ff4444; }
         
-        /* ステータス表示 */
         .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 10px; }
         .stat-item { background: #000; border: 1px solid #333; padding: 5px; text-align: center; }
         .stat-val { display: block; font-size: 0.8rem; font-weight: bold; color: #d00000; }
 
-        #btn { background: #d00000; color: white; border: 2px solid #ff4444; padding: 12px; font-size: 1.1rem; cursor: pointer; width: 100%; font-weight: bold; font-family: 'Shippori Mincho B1', serif; border-radius: 5px; }
+        /* ボタンエリア分割 */
+        .btn-container { display: flex; gap: 5px; }
+        .btn-auto { flex: 1; background: #d00000; color: white; border: 2px solid #ff4444; padding: 12px; font-size: 1rem; cursor: pointer; font-weight: bold; font-family: 'Shippori Mincho B1', serif; border-radius: 5px; }
+        .btn-auto.active { background: #444; border-color: #666; color: #888; }
+        .btn-stop { background: #333; border-color: #555; color: #fff; }
+
         .log { width: 100%; max-width: 400px; height: 180px; background: #000; margin-top: 10px; padding: 10px; border-radius: 5px; font-size: 0.75rem; color: #ff4444; overflow-y: auto; box-sizing: border-box; border: 1px solid #333; font-family: monospace; }
     </style>
 </head>
@@ -62,9 +59,7 @@
         <div class="hidden-lamp" id="lamp"></div>
         <div class="screen" id="screen">
             <div class="reels">
-                <div id="d1" class="digit">1</div>
-                <div id="d2" class="digit">2</div>
-                <div id="d3" class="digit">3</div>
+                <div id="d1" class="digit">1</div><div id="d2" class="digit">2</div><div id="d3" class="digit">3</div>
             </div>
             <div class="shoryu-area">
                 <div id="h1" class="hoju"></div><div id="h2" class="hoju"></div>
@@ -78,7 +73,11 @@
             <div class="stat-item"><span style="font-size:0.5rem">現在回転</span><span id="current-rot" class="stat-val">0</span></div>
             <div class="stat-item"><span style="font-size:0.5rem">収支</span><span id="balance" class="stat-val">0</span></div>
         </div>
-        <button id="btn" onclick="toggleAuto()">オート開始</button>
+        
+        <div class="btn-container" id="ctrl-panel">
+            <button class="btn-auto" id="btn-slow" onclick="toggleAuto('slow')">低速オート</button>
+            <button class="btn-auto" id="btn-fast" onclick="toggleAuto('fast')">高速オート</button>
+        </div>
     </div>
     <div class="log" id="log">--- 作戦行動履歴 ---<br></div>
 </div>
@@ -86,7 +85,7 @@
 <script>
     const SPEC = { normal_prob: 319.7, st_prob: 99.4, st_taps: 163, jititan_taps: 100, payout_3r: 420, payout_10r: 1400 };
     let hits = 0, rushCount = 0, currentCount = 0, totalBall = 0, sessionBall = 0;
-    let mode = 'NORMAL', stRemaining = 0, isAuto = false, isAnimating = false, autoTimer = null;
+    let mode = 'NORMAL', stRemaining = 0, isAuto = false, autoSpeed = 'slow', isAnimating = false, autoTimer = null;
 
     function setDigitStyle(el, num) {
         el.innerText = num;
@@ -96,9 +95,26 @@
         else el.classList.add('even');
     }
 
-    function toggleAuto() {
-        if (isAuto) { isAuto = false; clearTimeout(autoTimer); document.getElementById('btn').innerText = "オート開始"; } 
-        else { isAuto = true; document.getElementById('btn').innerText = "STOP"; startProcess(); }
+    function toggleAuto(speed) {
+        if (isAuto && autoSpeed === speed) {
+            stopAuto();
+        } else {
+            stopAuto(); // 一旦クリア
+            isAuto = true;
+            autoSpeed = speed;
+            document.getElementById(speed === 'slow' ? 'btn-slow' : 'btn-fast').innerText = "STOP";
+            document.getElementById(speed === 'slow' ? 'btn-slow' : 'btn-fast').classList.add('btn-stop');
+            startProcess();
+        }
+    }
+
+    function stopAuto() {
+        isAuto = false;
+        clearTimeout(autoTimer);
+        document.getElementById('btn-slow').innerText = "低速オート";
+        document.getElementById('btn-fast').innerText = "高速オート";
+        document.getElementById('btn-slow').classList.remove('btn-stop');
+        document.getElementById('btn-fast').classList.remove('btn-stop');
     }
 
     function updateStage() {
@@ -135,8 +151,9 @@
 
         await runAnimation(effect);
 
-        if (effect.win) { handleHit(effect.type === 'ZEN_KAITEN' || effect.type === '7_REACH'); } 
-        else {
+        if (effect.win) { 
+            handleHit(effect.type === 'ZEN_KAITEN' || effect.type === '7_REACH'); 
+        } else {
             if (mode !== 'NORMAL') {
                 stRemaining--;
                 if (stRemaining <= 0) {
@@ -145,7 +162,10 @@
                     updateStage(); updateUI();
                 }
             }
-            if (isAuto) autoTimer = setTimeout(startProcess, 20);
+            if (isAuto) {
+                let delay = (autoSpeed === 'fast') ? 5 : 50;
+                autoTimer = setTimeout(startProcess, delay);
+            }
         }
     }
 
@@ -153,12 +173,13 @@
         isAnimating = true;
         const d1 = document.getElementById('d1'), d2 = document.getElementById('d2'), d3 = document.getElementById('d3');
         const h1 = document.getElementById('h1');
+        const isFast = (autoSpeed === 'fast');
 
         if (eff.type === 'ZEN_KAITEN') {
             addLog("㊗ 歓喜：全回転演出発生 ㊗");
             for(let i=1; i<=7; i++) {
                 setDigitStyle(d1, i); setDigitStyle(d2, i); setDigitStyle(d3, i);
-                await new Promise(r => setTimeout(r, 400));
+                await new Promise(r => setTimeout(r, isFast ? 100 : 400));
             }
         } else {
             if (eff.type === 'RED_HOJU') h1.classList.add('hoju-red');
@@ -166,13 +187,17 @@
                 setDigitStyle(d1, Math.floor(Math.random()*9)+1);
                 setDigitStyle(d2, Math.floor(Math.random()*9)+1);
                 setDigitStyle(d3, Math.floor(Math.random()*9)+1);
-            }, 40);
-            await new Promise(r => setTimeout(r, 400));
+            }, isFast ? 10 : 40);
+            
+            await new Promise(r => setTimeout(r, isFast ? 50 : 400));
             clearInterval(shuffle);
 
             let l = (eff.type === '7_REACH') ? 7 : (eff.win ? Math.floor(Math.random()*9)+1 : Math.floor(Math.random()*9)+1);
             setDigitStyle(d1, l); setDigitStyle(d3, l);
-            if (eff.type !== 'NONE' || l == 7) await new Promise(r => setTimeout(r, 1500));
+            
+            if (eff.type !== 'NONE' || l == 7) {
+                await new Promise(r => setTimeout(r, isFast ? 200 : 1500));
+            }
             setDigitStyle(d2, eff.win ? l : (l % 9) + 1);
         }
         h1.classList.remove('hoju-red');
@@ -198,7 +223,10 @@
         currentCount = 0;
         document.getElementById('lamp').classList.remove('lamp-on');
         updateStage(); updateUI();
-        if (isAuto) autoTimer = setTimeout(startProcess, 1000);
+        if (isAuto) {
+            let delay = (autoSpeed === 'fast') ? 300 : 1200;
+            autoTimer = setTimeout(startProcess, delay);
+        }
     }
 
     function updateUI() {
