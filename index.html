@@ -95,8 +95,7 @@
     const SPECS = { n: 319.7, s: 99.4, st: 163, jt: 100 };
     let hits=0, rushCount=0, totalRot=0, totalBall=0, heso=0, currentRushHits=0;
     let mode='通常', rRem=0, isAuto=false, autoSpeed='slow', isAnim=false;
-    let lcdCount=0, lastHitRot=0;
-    let optAll=false, optKokuchi=false;
+    let lcdCount=0, lastHitRot=0, optAll=false, optKokuchi=false;
     let slumpData=[0], slumpLabels=["0"], historyData=[], historyLabels=[];
     let sChart, hChart;
 
@@ -105,7 +104,7 @@
         const roll = () => Math.random() * 100;
 
         if (isHit) {
-            // あなたの指示通りの占有率（複合あり）
+            // 大当り時の占有率抽選（複合）
             if (roll() < 66.7) { res.heavy=true; res.vibe=true; res.name.push("白レバ"); res.trust=90; }
             if (roll() < 15.0) { res.heavy=true; res.vibe=true; res.name.push("赤レバ"); res.trust=96.5; }
             if (roll() < 3.0)  { res.heavy=true; res.vibe=true; res.name.push("虹レバ"); res.lamp=true; res.trust=100; }
@@ -113,23 +112,20 @@
             if (roll() < 40.0) { res.heavy=true; res.name.push("次回予告"); res.text="次回予告"; res.trust=65; }
             if (roll() < 5.0)  { res.heavy=true; res.name.push("インフラ"); res.flash=true; res.lamp=true; res.trust=100; }
             if (roll() < 1.0)  { res.heavy=true; res.name.push("カヲル"); res.text="カヲル"; res.trust=100; }
-            
-            // レイ背景制御
-            if (roll() < 3.0) {
-                res.heavy=true; res.name.push("さよなら"); res.text="さよなら"; res.trust=100;
-            } else if (roll() < 33.3) {
-                res.heavy=true; res.name.push("レイ背景"); res.text="レイ背景"; res.trust=85;
-            }
+            if (roll() < 3.0) { res.heavy=true; res.name.push("さよなら"); res.text="さよなら"; res.trust=100; } 
+            else if (roll() < 33.3) { res.heavy=true; res.name.push("レイ背景"); res.text="レイ背景"; res.trust=85; }
             if (res.name.length === 0) { res.heavy=true; res.name.push("金系"); res.trust=50; }
         } else {
-            // 外れ時の演出出現率
-            if (roll() < 0.17) { res.heavy=true; res.vibe=true; res.name.push("赤レバ"); res.trust=96.5; }
-            else if (roll() < 2.30) { res.heavy=true; res.vibe=true; res.name.push("白レバ"); res.trust=90; }
-            else if (roll() < 0.83) { res.heavy=true; res.isRedHold=true; res.name.push("赤保留"); res.trust=90; }
-            else if (roll() < 1.83) { res.heavy=true; res.name.push("レイ背景"); res.text="レイ背景"; res.trust=85; }
-            else if (roll() < 6.70) { res.heavy=true; res.name.push("次回予告"); res.text="次回予告"; res.trust=65; }
+            // 【精査】信頼度から逆算した外れ時の出現率
+            // P(演出|外れ) = (P(当り) * P(演出|当り) * (1-信頼度)) / (信頼度 * P(外れ))
+            if (roll() < 0.0017) { res.heavy=true; res.vibe=true; res.name.push("赤レバ"); res.trust=96.5; }
+            else if (roll() < 0.023) { res.heavy=true; res.vibe=true; res.name.push("白レバ"); res.trust=90; }
+            else if (roll() < 0.0087) { res.heavy=true; res.isRedHold=true; res.name.push("赤保留"); res.trust=90; }
+            else if (roll() < 0.018) { res.heavy=true; res.name.push("レイ背景"); res.text="レイ背景"; res.trust=85; }
+            else if (roll() < 0.067) { res.heavy=true; res.name.push("次回予告"); res.text="次回予告"; res.trust=65; }
+            else if (roll() < 0.150) { res.heavy=true; res.name.push("金系"); res.trust=50; }
         }
-        res.displayName = res.name.join("+");
+        res.displayName = res.name.join("+") || "弱予告";
         return res;
     }
 
@@ -139,15 +135,14 @@
     function toggleOpt(t) { if(t==='all') { optAll=!optAll; document.getElementById('btn-all').classList.toggle('active'); } if(t==='kokuchi') { optKokuchi=!optKokuchi; document.getElementById('btn-kokuchi').classList.toggle('active'); } }
     function toggleAuto(s) { if(isAuto && autoSpeed===s) { isAuto=false; resetBtns(); } else { isAuto=true; autoSpeed=s; resetBtns(); document.getElementById('btn-'+s).classList.add('btn-stop'); startProcess(); } }
     function resetBtns() { document.querySelectorAll('.btn-auto').forEach(b => b.classList.remove('btn-stop')); }
-    function resetData() { hits=0; rushCount=0; totalRot=0; totalBall=0; heso=0; currentRushHits=0; lcdCount=0; lastHitRot=0; slumpData=[0]; slumpLabels=["0"]; historyData=[]; historyLabels=[]; updateUI(); updateHesoUI(false); addLog("リセットしました。"); }
+    function resetData() { hits=0; rushCount=0; totalRot=0; totalBall=0; heso=0; currentRushHits=0; lcdCount=0; lastHitRot=0; slumpData=[0]; slumpLabels=["0"]; historyData=[]; historyLabels=[]; updateUI(); updateHesoUI(false); addLog("データを初期化しました。"); }
 
     async function startProcess() {
         if(!isAuto || isAnim) return;
         if(mode !== '通常' && rRem <= 0) { 
             addLog(`【連チャン終了】 ${currentRushHits}回`); 
-            let prevMode = mode;
-            mode = '通常'; rushCount = 0; currentRushHits = 0; 
-            lcdCount = (prevMode==='ST') ? 0 : 100;
+            let pm = mode; mode = '通常'; rushCount = 0; currentRushHits = 0; 
+            lcdCount = (pm==='ST') ? 0 : 100;
             updateUI(); if(!optAll) { isAuto = false; resetBtns(); return; } 
         }
         let prob = (mode==='ST') ? SPECS.s : SPECS.n;
@@ -202,6 +197,7 @@
 </script>
 </body>
 </html>
+
 
 
 
