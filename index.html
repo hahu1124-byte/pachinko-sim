@@ -3,72 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EVANGELION Sim -Fixed Layout-</title>
+    <title>EVANGELION Sim -Full Restore-</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&display=swap');
         body { background: #000; color: white; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
-        /* 隠しランプ：絶対配置でレイアウトに影響させない */
-        .hidden-lamp { position: absolute; top: 12px; right: 20px; width: 10px; height: 10px; background: #222; border-radius: 50%; border: 1px solid #444; z-index: 10; }
+        /* 隠しランプ */
+        .hidden-lamp { position: absolute; top: 10px; right: 20px; width: 10px; height: 10px; background: #222; border-radius: 50%; border: 1px solid #444; z-index: 10; }
         .lamp-active { animation: rainbow-bg 0.5s infinite; box-shadow: 0 0 10px #fff; }
 
-        /* アニメーション */
         @keyframes viberation { 0% { transform: translate(0,0); } 10% { transform: translate(-3px, 3px); } 20% { transform: translate(3px, -3px); } 100% { transform: translate(0,0); } }
         .vibrate { animation: viberation 0.05s infinite; }
         @keyframes flash-white { 0%, 100% { background: #000; } 50% { background: #fff; } }
         .flash-active { animation: flash-white 0.05s 20; }
         @keyframes rainbow-bg { 0% { background: #f00; } 20% { background: #ff0; } 40% { background: #0f0; } 60% { background: #0ff; } 80% { background: #00f; } 100% { background: #f0f; } }
         
-        header { width: 100%; height: 45px; background: #111; border-bottom: 2px solid #d00000; display: flex; align-items: center; padding: 0 10px; box-sizing: border-box; }
-        .header-btn { background: #333; color: #ccc; border: 1px solid #555; padding: 4px 10px; font-size: 0.75rem; cursor: pointer; border-radius: 4px; margin-right: 8px; }
+        /* ヘッダー：機種選択・グラフボタン */
+        header { width: 100%; height: 50px; background: #111; border-bottom: 2px solid #d00000; display: flex; align-items: center; padding: 0 10px; box-sizing: border-box; gap: 8px; }
+        .header-title { font-size: 0.8rem; font-weight: bold; color: #d00000; margin-right: 5px; }
+        .header-btn { background: #333; color: #ccc; border: 1px solid #555; padding: 5px 8px; font-size: 0.7rem; cursor: pointer; border-radius: 4px; }
+        .btn-graph { background: #d00000; color: white; border-color: #ff4444; }
 
         .main-content { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 10px; overflow: hidden; }
-        .machine { width: 100%; max-width: 440px; background: #111; border: 2px solid #d00000; border-radius: 15px; padding: 10px; position: relative; box-sizing: border-box; }
+        .machine { width: 100%; max-width: 440px; background: #111; border: 2px solid #d00000; border-radius: 15px; padding: 12px; position: relative; box-sizing: border-box; }
         
         /* 液晶：300px固定 */
-        .screen { background: #000; height: 300px; border-radius: 10px; border: 2px solid #444; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; box-sizing: border-box; }
+        .screen { background: #000; height: 300px; border-radius: 10px; border: 2px solid #444; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; }
         .digit-container { display: flex; gap: 10px; z-index: 2; }
-        .digit { font-size: 8rem; font-weight: 900; font-family: 'Shippori Mincho B1', serif; width: 105px; text-align: center; line-height: 1; }
+        .digit { font-size: 8rem; font-weight: 900; font-family: 'Shippori Mincho B1', serif; width: 105px; text-align: center; }
         .gold { color: #ffeb3b; text-shadow: 0 0 30px #ffeb3b; }
         .odd { color: #ff4444; text-shadow: 0 0 20px #ff4444; }
         .even { color: #4444ff; text-shadow: 0 0 20px #4444ff; }
 
-        /* 保留：液晶の中に浮かせる */
-        .heso-overlay { position: absolute; bottom: 10px; display: flex; gap: 6px; }
+        /* 保留ランプ */
+        .heso-overlay { position: absolute; bottom: 12px; display: flex; gap: 8px; }
         .heso-ball { width: 12px; height: 12px; background: #222; border-radius: 50%; border: 1px solid #555; }
         .heso-red { background: radial-gradient(circle, #ff4444, #880000); box-shadow: 0 0 8px #ff0000; border-color: #f00; }
         .heso-on { background: #888; }
 
-        .effect-text { position: absolute; color: white; font-weight: bold; font-size: 1.8rem; z-index: 5; text-shadow: 0 0 10px #000; background: rgba(0,0,0,0.7); padding: 5px 20px; border-radius: 5px; display: none; }
+        .effect-text { position: absolute; color: white; font-weight: bold; font-size: 2rem; z-index: 5; text-shadow: 0 0 10px #000; background: rgba(0,0,0,0.7); padding: 5px 20px; border-radius: 5px; display: none; }
 
-        .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin: 8px 0; }
-        .stat-item { background: #000; border: 1px solid #333; padding: 4px 0; text-align: center; border-radius: 3px; }
-        .stat-val { font-size: 0.85rem; font-weight: bold; color: #d00000; font-family: monospace; display: block; }
-        .stat-label { font-size: 0.55rem; color: #888; display: block; }
+        /* 統計グリッド */
+        .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-top: 10px; }
+        .stat-item { background: #000; border: 1px solid #333; padding: 5px 0; text-align: center; border-radius: 3px; }
+        .stat-val { font-size: 0.9rem; font-weight: bold; color: #d00000; font-family: monospace; }
+        .stat-label { font-size: 0.6rem; color: #888; display: block; }
 
-        .btn-group { display: flex; gap: 5px; }
-        .btn-auto { flex: 1; background: #d00000; color: white; border: 1px solid #ff4444; padding: 12px 0; font-weight: bold; border-radius: 5px; cursor: pointer; font-size: 0.8rem; }
+        /* ボタンエリア：液晶とログの間 */
+        .control-panel { margin: 12px 0 5px 0; display: flex; gap: 8px; width: 100%; }
+        .btn-auto { flex: 1; background: #d00000; color: white; border: 1px solid #ff4444; padding: 14px 0; font-weight: bold; border-radius: 5px; cursor: pointer; }
         .btn-stop { background: #444 !important; border-color: #666 !important; }
 
         /* 履歴ログ：1.5倍(195px)固定 */
-        .log { width: 100%; max-width: 440px; height: 195px; background: #000; margin-top: 8px; padding: 8px; font-size: 0.9rem; color: #ff4444; overflow-y: auto; border: 1px solid #333; font-family: monospace; box-sizing: border-box; }
+        .log { width: 100%; max-width: 440px; height: 195px; background: #000; margin-top: 10px; padding: 10px; font-size: 0.95rem; color: #ff4444; overflow-y: auto; border: 1px solid #333; font-family: monospace; box-sizing: border-box; }
 
         #modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; }
-        #modal-content { background: #111; border: 2px solid #d00000; width: 90%; max-width: 450px; padding: 15px; border-radius: 10px; }
-        .graph-area { background: #000; height: 160px; margin-bottom: 10px; }
+        #modal-content { background: #111; border: 2px solid #d00000; width: 95%; max-width: 450px; padding: 15px; border-radius: 10px; position: relative; }
+        .graph-area { background: #000; height: 180px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
 <header>
-    <button class="header-btn" onclick="openModal()">データグラフ</button>
+    <div class="header-title">機種選択</div>
+    <button class="header-btn" onclick="alert('エヴァ〜未来への咆哮〜 選択中')">未来への咆哮</button>
+    <button class="header-btn btn-graph" onclick="openModal()">データグラフ</button>
     <button class="header-btn" onclick="resetData()">リセット</button>
 </header>
 
 <div id="modal-overlay">
     <div id="modal-content">
-        <span style="float:right; cursor:pointer;" onclick="closeModal()">×</span>
+        <span style="position:absolute; top:10px; right:15px; cursor:pointer; font-size:1.5rem;" onclick="closeModal()">×</span>
         <div class="graph-area"><canvas id="slumpChart"></canvas></div>
         <div class="graph-area"><canvas id="historyChart"></canvas></div>
     </div>
@@ -82,7 +88,7 @@
             <div class="digit-container">
                 <div id="d1" class="digit odd">1</div><div id="d2" class="digit even">2</div><div id="d3" class="digit odd">3</div>
             </div>
-            <div id="sub-display" style="position:absolute; top:10px; right:12px; color:#d00000; font-weight:bold; font-size:1rem;">通常</div>
+            <div id="sub-display" style="position:absolute; top:12px; right:15px; color:#d00000; font-weight:bold; font-size:1.1rem;">通常</div>
             <div class="heso-overlay">
                 <div id="h1" class="heso-ball"></div><div id="h2" class="heso-ball"></div><div id="h3" class="heso-ball"></div><div id="h4" class="heso-ball"></div>
             </div>
@@ -95,12 +101,12 @@
             <div class="stat-item"><span class="stat-label">差玉数</span><span id="balance" class="stat-val">0</span></div>
         </div>
 
-        <div class="btn-group">
+        <div class="control-panel">
             <button class="btn-auto" id="btn-slow" onclick="toggleAuto('slow')">通常オート</button>
             <button class="btn-auto" id="btn-fast" onclick="toggleAuto('fast')">高速オート</button>
         </div>
     </div>
-    <div class="log" id="log">> レイアウトを固定し、保存機能を統合しました。</div>
+    <div class="log" id="log">> レイアウトとボタン構成を復元しました。</div>
 </div>
 
 <script>
@@ -125,7 +131,7 @@
         else { isAuto=true; autoSpeed=s; resetBtns(); document.getElementById('btn-'+s).classList.add('btn-stop'); startProcess(); }
     }
     function resetBtns() { document.querySelectorAll('.btn-auto').forEach(b => b.classList.remove('btn-stop')); }
-    function resetData() { hits=0; rushCount=0; currentCount=0; totalBall=0; totalRot=0; heso=0; slumpData=[0]; slumpLabels=["0"]; historyData=[]; historyLabels=[]; updateUI(); updateHeso(); addLog("リセット完了"); }
+    function resetData() { hits=0; rushCount=0; currentCount=0; totalBall=0; totalRot=0; heso=0; slumpData=[0]; slumpLabels=["0"]; historyData=[]; historyLabels=[]; updateUI(); updateHeso(); addLog("全データリセット"); }
 
     async function startProcess() {
         if(!isAuto || isAnim) return;
@@ -171,7 +177,7 @@
                 totalBall += (mode==='通常' || mode==='時短') ? 420 : 1400;
                 mode='ST'; rRem=SPECS.st; rushCount++;
             } else {
-                mode='時短'; rRem=SPECS.jt; rushCount=0; totalBall += 420; addLog("通常当り");
+                mode='時短'; rRem=SPECS.jt; rushCount=0; totalBall += 420; addLog("通常大当り");
             }
             updateUI();
             await new Promise(r => setTimeout(r, 1800));
@@ -179,7 +185,7 @@
             document.getElementById('lamp').classList.remove('lamp-active');
         }
 
-        if(mode!=='通常' && !isHit) { rRem--; if(rRem<=0) { mode='通常'; rushCount=0; addLog(mode+"終了"); } }
+        if(mode!=='通常' && !isHit) { rRem--; if(rRem<=0) { addLog(mode + "終了"); mode='通常'; rushCount=0; } }
         isAnim=false; updateUI();
         if(isAuto) setTimeout(startProcess, autoSpeed==='fast'?5:400);
     }
@@ -196,8 +202,8 @@
             if(r < 75) return {name:"赤保留", trust:90, heavy:true, isRedHold:true, text:"赤保留"};
             return {name:"レイ背景", trust:85, heavy:true, text:"レイ背景"};
         } else {
-            if(r < 0.2) return {name:"赤保留(ガセ)", trust:90, heavy:true, isRedHold:true, text:"赤保留"};
-            if(r < 0.5) return {name:"次回予告(ガセ)", trust:65, heavy:true, text:"次回予告"};
+            if(r < 0.2) return {name:"赤保留", trust:90, heavy:true, isRedHold:true, text:"赤保留"};
+            if(r < 0.5) return {name:"次回予告", trust:65, heavy:true, text:"次回予告"};
         }
         return {heavy:false};
     }
