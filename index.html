@@ -116,11 +116,31 @@
     let slumpData=[0], slumpLabels=["0"], historyData=[], historyLabels=[];
     let sChart, hChart;
 
+    // 先読み保留管理用の配列（最大4つ）
+    let reservedStock = []; 
+
     const TRUST_MAP_N = { "白レバ": 0.90, "赤レバ": 0.965, "赤保留": 0.90, "次回予告": 0.65, "レイ背景": 0.85, "金系": 0.50 };
     const TRUST_MAP_S = { "白レバ": 0.95, "赤レバ": 0.99, "赤保留": 0.95, "次回予告": 1.0, "レイ背景": 0.92, "金系": 0.80 };
 
-    function selectEffect(isHit) {
-        let res = { heavy: false, name: [], trust: 0, vibe: false, vibeColor: "", flash: false, lamp: false, text: "", isRedHold: false, isSure: false, isFullSpin: false };
+    // 入賞時に将来の当たりと演出を先読み判定する関数
+    function preCheck() {
+        if (reservedStock.length >= 4) return;
+        let prob = (mode === 'ST') ? SPECS.s : SPECS.n;
+        let isHit = Math.random() < (1 / prob);
+        
+        // 当たりの場合、約25%で赤保留先読みを発生させる
+        let isRedHold = false;
+        if (isHit && Math.random() < 0.25) {
+            isRedHold = true;
+        }
+        
+        reservedStock.push({ isHit: isHit, isRedHold: isRedHold });
+        heso = reservedStock.length;
+        updateHesoUI();
+    }
+
+    function selectEffect(isHit, forceRed) {
+        let res = { heavy: false, name: [], trust: 0, vibe: false, vibeColor: "", flash: false, lamp: false, text: "", isRedHold: forceRed, isSure: false, isFullSpin: false };
         const roll = () => Math.random() * 100;
         const isST = (mode === 'ST');
 
@@ -141,38 +161,36 @@
                 if (!isST || res.name.length === 0) {
                     if (roll() < 3.0) { res.name.push("さよなら"); res.text="さよなら"; }
                     else if (!res.text && roll() < 33.3) { res.name.push("レイ背景"); res.text="レイ背景"; }
-                    if (roll() < 25.0) { res.isRedHold=true; res.name.push("赤保留"); }
-                    if (!isST && !res.text && roll() < 40.0) { res.name.push("次回予告"); res.text="次回予告"; }
+                    // すでに赤保留確定でなければ、ここで通常抽選（当該変化）
+                    if (!res.isRedHold && roll() < 25.0) { res.isRedHold=true; }
                 }
 
+                if (res.isRedHold) res.name.push("赤保留");
                 if (res.name.length === 0) { res.name.push("金系"); }
                 if (hasVibe) res.vibe = true;
             }
             res.heavy = true;
         } else {
-            if (roll() < 0.0017) { res.name.push("赤レバ"); res.vibe=true; res.vibeColor="red"; }
-            else if (roll() < 0.023) { res.name.push("白レバ"); res.vibe=true; res.vibeColor="white"; }
-            else if (roll() < 0.0087) { res.isRedHold=true; res.name.push("赤保留"); }
-            else if (roll() < 0.150) { res.name.push("金系"); }
-            if (res.name.length > 0) res.heavy = true;
+            // ハズレでも稀に赤保留になる（ガセ）
+            if (roll() < 0.1) { res.isRedHold = true; res.name.push("赤保留"); res.heavy = true; }
+            if (roll() < 0.0017) { res.name.push("赤レバ"); res.vibe=true; res.vibeColor="red"; res.heavy = true; }
+            else if (roll() < 0.023) { res.name.push("白レバ"); res.vibe=true; res.vibeColor="white"; res.heavy = true; }
+            else if (roll() < 0.150) { res.name.push("金系"); res.heavy = true; }
         }
 
-        let names = res.name;
         const currentMap = isST ? TRUST_MAP_S : TRUST_MAP_N;
         const pNames = ["虹レバ", "インフラ", "カヲル", "さよなら", "全回転"];
         if (isST) pNames.push("次回予告");
 
-        const hasSureSingle = names.some(n => pNames.includes(n));
-        
-        if (hasSureSingle || names.length >= 3) { res.trust = 100; res.isSure = true; } 
-        else if (names.length === 2) { 
-            let combined = 1 - ((1 - (currentMap[names[0]]||0)) * (1 - (currentMap[names[1]]||0))); 
+        if (res.name.some(n => pNames.includes(n)) || res.name.length >= 3) { res.trust = 100; res.isSure = true; } 
+        else if (res.name.length === 2) { 
+            let combined = 1 - ((1 - (currentMap[res.name[0]]||0)) * (1 - (currentMap[res.name[1]]||0))); 
             res.trust = Math.max(96.0, combined * 100); 
         } 
-        else if (names.length === 1) { res.trust = (currentMap[names[0]] || 0) * 100; }
+        else if (res.name.length === 1) { res.trust = (currentMap[res.name[0]] || 0) * 100; }
         
         if (res.trust >= 100) res.isSure = true;
-        res.displayName = names.join("+") || "弱予告";
+        res.displayName = res.name.join("+") || "弱予告";
         return res;
     }
 
@@ -185,27 +203,31 @@
                 if (currentRushHits <= 1) addLog(`【ST終了】 スルー単発`);
                 else addLog(`【ST終了】 連チャン${currentRushHits}回`);
             } else { addLog(`【時短終了】`); }
-
             mode = '通常'; rushCount = 0; currentRushHits = 0; 
             lcdCount = (prevMode==='ST') ? 0 : 100;
             updateUI(); 
-
             if(!(prevMode === '時短' && autoSpeed === 'fast')) {
                 if(!optAll) { isAuto = false; resetBtns(); return; }
             }
         }
 
-        let prob = (mode==='ST') ? SPECS.s : SPECS.n;
-        let isHit = Math.random() < (1 / prob);
-        let eff = selectEffect(isHit);
+        // --- 先読み入賞処理 ---
+        while(reservedStock.length < 4) { preCheck(); }
+
+        // 保留から1つ取り出して消化
+        let currentJob = reservedStock.shift();
+        heso = reservedStock.length;
+        
+        let isHit = currentJob.isHit;
+        let eff = selectEffect(isHit, currentJob.isRedHold);
+        
         if(optKokuchi && isHit) { eff.heavy=true; eff.flash=true; eff.lamp=true; eff.displayName="インフラ告知"; eff.trust=100; eff.isSure=true; }
         
         let originalSpeed = autoSpeed;
         if(autoSpeed==='fast' && eff.heavy && !optAll) { autoSpeed = 'slow'; resetBtns(); document.getElementById('btn-slow').classList.add('btn-stop'); }
         
-        // --- 保留更新ロジック ---
-        if(heso < 4) heso++; totalRot++; currentRot++; lcdCount++; heso--; 
-        updateHesoUI(eff.isRedHold); // 消化中の保留（h0）に色をつける
+        totalRot++; currentRot++; lcdCount++; 
+        updateHesoUI(eff.isRedHold); 
         
         if(mode !== '通常') rRem--;
         totalBall -= (mode==='通常' ? 14 : 0.05); slumpData.push(Math.floor(totalBall)); slumpLabels.push(totalRot.toString());
@@ -242,7 +264,6 @@
         if(isHit) { 
             isAnim=true; hits++; historyData.push(currentRot); historyLabels.push(hits); currentRot = 0;
             let rand = Math.random() * 100; 
-            
             if(mode === '通常' && rand < 13 && !eff.isSure) { 
                 [1,3,5].forEach((n, idx) => { const el=document.getElementById('d'+(idx+1)); el.innerText=n; el.className='digit beast'; }); 
                 currentRushHits++; addLog(`>> ${lcdCount}回転 【135】 暴走! → ST突入`);
@@ -262,11 +283,8 @@
                         else { d = [2,4,6,8][Math.floor(Math.random()*4)]; nextM = '時短'; logDigit = d; }
                     }
                 }
-                let logMsg = `>> ${mode} ${lcdCount}回転 【${logDigit}】 ${is10R?'10R':'3R'}当り!`;
-                if(isShokaku && mode === '通常') logMsg += " (昇格)";
-                addLog(logMsg);
+                addLog(`>> ${mode} ${lcdCount}回転 【${logDigit}】 ${is10R?'10R':'3R'}当り!${isShokaku && mode === '通常' ? ' (昇格)' : ''}`);
                 [1,2,3].forEach(i => { const el=document.getElementById('d'+i); el.innerText=logDigit; el.className='digit '+(logDigit==7?'gold':(logDigit%2!==0?'odd':'even')); }); 
-                
                 if (isShokaku) {
                     await new Promise(r => setTimeout(r, 1200));
                     machineEl.classList.add('vibrate'); machineEl.style.animation = "vibration 0.05s infinite, rainbow-border 0.3s infinite";
@@ -286,6 +304,7 @@
                 totalBall += (is10R ? 1400 : 420); 
             } 
             updateUI(); await new Promise(r => setTimeout(r, 1800)); lcdCount=0; document.getElementById('lamp').classList.remove('lamp-active'); 
+            reservedStock = []; // 当たり後は保留クリア（実機仕様）
         } else if(eff.heavy) { addLog(`>> ${lcdCount}回転 【${lastDigits[0]}】 ${eff.displayName} ﾊｽﾞﾚ`); }
         isAnim=false; updateUI();
         if(isAuto && originalSpeed==='fast' && !optAll) { autoSpeed='fast'; resetBtns(); document.getElementById('btn-fast').classList.add('btn-stop'); }
@@ -298,18 +317,21 @@
     function toggleOpt(t) { if(t==='all') { optAll=!optAll; document.getElementById('btn-all').classList.toggle('active'); } if(t==='kokuchi') { optKokuchi=!optKokuchi; document.getElementById('btn-kokuchi').classList.toggle('active'); } }
     function toggleAuto(s) { if(isAuto && autoSpeed===s) { isAuto=false; resetBtns(); } else { isAuto=true; autoSpeed=s; resetBtns(); document.getElementById('btn-'+s).classList.add('btn-stop'); startProcess(); } }
     function resetBtns() { document.querySelectorAll('.btn-auto').forEach(b => b.classList.remove('btn-stop')); }
-    function resetData() { hits=0; rushCount=0; currentRot=0; totalRot=0; totalBall=0; heso=0; currentRushHits=0; lcdCount=0; slumpData=[0]; slumpLabels=["0"]; historyData=[]; historyLabels=[]; updateUI(); updateHesoUI(false); addLog("データを初期化しました。"); }
+    function resetData() { hits=0; rushCount=0; currentRot=0; totalRot=0; totalBall=0; heso=0; currentRushHits=0; lcdCount=0; slumpData=[0]; slumpLabels=["0"]; historyData=[]; historyLabels=[]; reservedStock=[]; updateUI(); updateHesoUI(false); addLog("データを初期化しました。"); }
     
-    // 保留UI更新（当該保留 h0 を追加）
-    function updateHesoUI(isRed) { 
-        // 当該保留（h0）の更新：常にONかつ、強演出なら赤くなる
+    // 保留UI更新（先読み赤保留を反映）
+    function updateHesoUI(isCurrentRed) { 
         const h0 = document.getElementById('h0');
-        h0.className = isRed ? 'heso-ball heso-current heso-red' : 'heso-ball heso-current heso-on';
+        h0.className = isCurrentRed ? 'heso-ball heso-current heso-red' : 'heso-ball heso-current heso-on';
         
-        // 残保留（h1-h4）の更新
         for(let i=1; i<=4; i++) { 
             const el = document.getElementById('h' + i); 
-            el.className = (i <= heso) ? 'heso-ball heso-on' : 'heso-ball'; 
+            const stock = reservedStock[i-1];
+            if (stock) {
+                el.className = stock.isRedHold ? 'heso-ball heso-on heso-red' : 'heso-ball heso-on';
+            } else {
+                el.className = 'heso-ball';
+            }
         } 
     }
     
@@ -318,6 +340,7 @@
 </script>
 </body>
 </html>
+
 
 
 
