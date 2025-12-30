@@ -117,7 +117,6 @@
     let originalSpeedSetting = 'slow';
 
     const TRUST_MAP_N = { "白レバ": 0.90, "赤レバ": 0.965, "赤保留": 0.90, "緑保留": 0.11, "青保留": 0.05, "点滅保留": 0.005, "次回予告": 0.65, "レイ背景": 0.85, "金系": 0.50 };
-    // ST中：弱予告(none)の信頼度を1%に変更
     const TRUST_MAP_S = { "白レバ": 0.95, "赤レバ": 0.99, "赤保留": 0.95, "緑保留": 0.11, "青保留": 0.05, "点滅保留": 0.005, "次回予告": 1.0, "レイ背景": 0.92, "金系": 0.80, "虹保留": 1.0, "none": 0.01 };
 
     function triggerVibeUI(color) {
@@ -137,17 +136,16 @@
 
         if (isHit) {
             if (mode === 'ST' || mode === '時短') {
-                // ST中占有率：虹10%, 赤33%, 緑5%, 青5%, 点滅5%, 弱予告1% -> 残り41%をレバブル等へ
                 if (roll < 10) holdType = "rainbow";
                 else if (roll < 43) holdType = "red";
                 else if (roll < 48) holdType = "green";
                 else if (roll < 53) holdType = "blue";
                 else if (roll < 58) holdType = "blink";
-                else if (roll < 59) holdType = "none"; // 弱予告当たり1%
+                else if (roll < 59) holdType = "none";
                 else {
                     holdType = "none";
                     let vRoll = Math.random() * 100;
-                    if (vRoll < 15) preVibe = "rainbow"; // レバブル占有率アップ
+                    if (vRoll < 15) preVibe = "rainbow";
                     else if (vRoll < 55) preVibe = "red";
                     else preVibe = "white";
                 }
@@ -187,7 +185,6 @@
 
         if (isHit) {
             if (isMigi) {
-                // 弱予告枠(1%)の演出
                 if (res.holdType === "none" && !res.vibe) {
                     let eRoll = roll();
                     if (eRoll < 50) { res.name.push("インフラ"); res.flash=true; res.lamp=true; res.isSure=true; }
@@ -287,14 +284,19 @@
                 currentRushHits++; addLog(`>> ${lcdCount}回転 【135】 暴走! → ST突入`);
                 totalBall += 420; mode='ST'; rRem=SPECS.st; rushCount=currentRushHits; 
             } else { 
-                let d, is10R = false, nextM = '時短', isShokaku = false, logDigit = "";
+                let d, is10R = false, nextM = '時短', isShokaku = false, logDigit = "", isKisuu = false;
                 if (mode !== '通常') { logDigit = [2,4,6,8][Math.floor(Math.random()*4)]; d = 7; is10R = true; nextM = 'ST'; isShokaku = true; } 
                 else { 
-                    if (eff.isFullSpin || eff.isFukkatsu) { d = 7; is10R = true; nextM = 'ST'; logDigit = "7"; }
-                    else if (eff.isSure) { if (rand < 15) { d = 7; is10R = true; nextM = 'ST'; logDigit = "7"; } else { d = [1,3,5,9][Math.floor(Math.random()*4)]; nextM = 'ST'; logDigit = d; } }
-                    else { if (rand < 2) { d = 7; is10R = true; nextM = 'ST'; logDigit = "7"; } else if (isSTFromStart) { d = [1,3,5,9][Math.floor(Math.random()*4)]; nextM = 'ST'; logDigit = d; } else if (rand < 75) { logDigit = [2,4,6,8][Math.floor(Math.random()*4)]; d = logDigit; nextM = 'ST'; isShokaku = true; } else { d = [2,4,6,8][Math.floor(Math.random()*4)]; nextM = '時短'; logDigit = d; } }
+                    if (eff.isFullSpin || eff.isFukkatsu) { d = 7; is10R = true; nextM = 'ST'; logDigit = "7"; isKisuu = true; }
+                    else if (eff.isSure) { if (rand < 15) { d = 7; is10R = true; nextM = 'ST'; logDigit = "7"; isKisuu = true; } else { d = [1,3,5,9][Math.floor(Math.random()*4)]; nextM = 'ST'; logDigit = d; isKisuu = true; } }
+                    else { if (rand < 2) { d = 7; is10R = true; nextM = 'ST'; logDigit = "7"; isKisuu = true; } else if (isSTFromStart) { d = [1,3,5,9][Math.floor(Math.random()*4)]; nextM = 'ST'; logDigit = d; isKisuu = true; } else if (rand < 75) { logDigit = [2,4,6,8][Math.floor(Math.random()*4)]; d = logDigit; nextM = 'ST'; isShokaku = true; isKisuu = false; } else { d = [2,4,6,8][Math.floor(Math.random()*4)]; nextM = '時短'; logDigit = d; isKisuu = false; } }
                 }
-                addLog(`>> ${mode} ${lcdCount}回転 【${logDigit}】 ${is10R?'10R':'3R'}当り!`);
+                
+                // 履歴への書き出し
+                let finalLogMsg = `>> ${mode} ${lcdCount}回転 【${logDigit}】 ${is10R?'10R':'3R'}当り!`;
+                if(isShokaku && nextM === 'ST' && mode === '通常') finalLogMsg += " 【昇格】";
+                addLog(finalLogMsg);
+
                 [1,2,3].forEach(i => { const el=document.getElementById('d'+i); el.innerText=logDigit; el.className='digit '+(logDigit==7?'gold':(logDigit%2!==0?'odd':'even')); }); 
                 if (isShokaku) {
                     await new Promise(r => setTimeout(r, 1200));
@@ -341,6 +343,7 @@
 </script>
 </body>
 </html>
+
 
 
 
