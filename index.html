@@ -129,42 +129,69 @@
     let slumpData=[0], slumpLabels=["0"], historyData=[], historyLabels=[];
     let sChart, hChart;
 
-    const TRUST_MAP = { "白レバ": 0.90, "赤レバ": 0.965, "赤保留": 0.90, "次回予告": 0.65, "レイ背景": 0.85, "金系": 0.50 };
+    // 通常時の信頼度マップ
+    const TRUST_MAP_N = { "白レバ": 0.90, "赤レバ": 0.965, "赤保留": 0.90, "次回予告": 0.65, "レイ背景": 0.85, "金系": 0.50 };
+    // ST中の信頼度マップ（ご要望を反映）
+    const TRUST_MAP_S = { "白レバ": 0.95, "赤レバ": 0.99, "赤保留": 0.95, "次回予告": 1.0, "レイ背景": 0.92, "金系": 0.80 };
 
     function selectEffect(isHit) {
         let res = { heavy: false, name: [], trust: 0, vibe: false, vibeColor: "", flash: false, lamp: false, text: "", isRedHold: false, isSure: false, isFullSpin: false };
         const roll = () => Math.random() * 100;
+        const isST = (mode === 'ST');
 
         if (isHit) {
             if (roll() < 1.0) { res.name.push("全回転"); res.text="全回転"; res.isSure=true; res.isFullSpin=true; res.lamp=true; }
             else {
                 let hasVibe = false;
+                // --- ST中限定：次回予告 10% 占有率 ---
+                if (isST && roll() < 10.0) { res.name.push("次回予告"); res.text="次回予告"; res.isSure = true; }
+                // --- ST中限定：金系 33% 占有率 ---
+                else if (isST && roll() < 33.0) { res.name.push("金系"); }
+                
+                // 共通演出の抽選（ST中の複合制限：レバブル、インフラ、カヲルのみ）
                 if (roll() < 3.0) { res.name.push("虹レバ"); res.lamp=true; hasVibe=true; res.vibeColor="rainbow"; }
                 else if (roll() < 15.0) { res.name.push("赤レバ"); hasVibe=true; res.vibeColor="red"; }
                 else if (roll() < 66.7) { res.name.push("白レバ"); hasVibe=true; res.vibeColor="white"; }
-                if (roll() < 3.0) { res.name.push("さよなら"); res.text="さよなら"; }
-                else if (roll() < 33.3) { res.name.push("レイ背景"); res.text="レイ背景"; }
-                if (roll() < 25.0) { res.isRedHold=true; res.name.push("赤保留"); }
-                if (roll() < 40.0) { res.name.push("次回予告"); res.text = res.text || "次回予告"; }
-                if (roll() < 5.0)  { res.name.push("インフラ"); res.flash=true; res.lamp=true; }
-                if (roll() < 1.0)  { res.name.push("カヲル"); res.text="カヲル"; }
+                
+                if (roll() < 5.0) { res.name.push("インフラ"); res.flash=true; res.lamp=true; }
+                if (roll() < 1.0) { res.name.push("カヲル"); res.text="カヲル"; }
+
+                // ST中以外、または複合制限に抵触しない場合の追加演出
+                if (!isST || res.name.length === 0) {
+                    if (roll() < 3.0) { res.name.push("さよなら"); res.text="さよなら"; }
+                    else if (!res.text && roll() < 33.3) { res.name.push("レイ背景"); res.text="レイ背景"; }
+                    if (roll() < 25.0) { res.isRedHold=true; res.name.push("赤保留"); }
+                    if (!isST && !res.text && roll() < 40.0) { res.name.push("次回予告"); res.text="次回予告"; }
+                }
+
                 if (res.name.length === 0) { res.name.push("金系"); }
                 if (hasVibe) res.vibe = true;
             }
             res.heavy = true;
         } else {
+            // ハズレ時の演出抽選
             if (roll() < 0.0017) { res.name.push("赤レバ"); res.vibe=true; res.vibeColor="red"; }
             else if (roll() < 0.023) { res.name.push("白レバ"); res.vibe=true; res.vibeColor="white"; }
             else if (roll() < 0.0087) { res.isRedHold=true; res.name.push("赤保留"); }
             else if (roll() < 0.150) { res.name.push("金系"); }
             if (res.name.length > 0) res.heavy = true;
         }
+
         let names = res.name;
-        const hasSureSingle = names.some(n => ["虹レバ", "インフラ", "カヲル", "さよなら", "全回転"].includes(n));
+        const currentMap = isST ? TRUST_MAP_S : TRUST_MAP_N;
+        const pNames = ["虹レバ", "インフラ", "カヲル", "さよなら", "全回転"];
+        if (isST) pNames.push("次回予告"); // ST中は次回予告も確定枠へ
+
+        const hasSureSingle = names.some(n => pNames.includes(n));
         
         if (hasSureSingle || names.length >= 3) { res.trust = 100; res.isSure = true; } 
-        else if (names.length === 2) { let combined = 1 - ((1 - (TRUST_MAP[names[0]]||0)) * (1 - (TRUST_MAP[names[1]]||0))); res.trust = Math.max(96.0, combined * 100); } 
-        else if (names.length === 1) { res.trust = (TRUST_MAP[names[0]] || 0) * 100; }
+        else if (names.length === 2) { 
+            let combined = 1 - ((1 - (currentMap[names[0]]||0)) * (1 - (currentMap[names[1]]||0))); 
+            res.trust = Math.max(96.0, combined * 100); 
+        } 
+        else if (names.length === 1) { res.trust = (currentMap[names[0]] || 0) * 100; }
+        
+        if (res.trust >= 100) res.isSure = true;
         res.displayName = names.join("+") || "弱予告";
         return res;
     }
@@ -172,29 +199,19 @@
     async function startProcess() {
         if(!isAuto || isAnim) return;
         
-        // --- 終了判定ロジックの修正 ---
         if(mode !== '通常' && rRem <= 0) { 
             let prevMode = mode;
             if (prevMode === 'ST') {
                 if (currentRushHits <= 1) addLog(`【ST終了】 スルー単発`);
                 else addLog(`【ST終了】 連チャン${currentRushHits}回`);
-            } else {
-                addLog(`【時短終了】`);
-            }
+            } else { addLog(`【時短終了】`); }
 
-            mode = '通常'; 
-            rushCount = 0; 
-            currentRushHits = 0; 
+            mode = '通常'; rushCount = 0; currentRushHits = 0; 
             lcdCount = (prevMode==='ST') ? 0 : 100;
             updateUI(); 
 
-            // 高速オート継続判定：時短終了かつオートが高速なら止めない。それ以外かつ全ボタンOFFなら止める。
             if(!(prevMode === '時短' && autoSpeed === 'fast')) {
-                if(!optAll) { 
-                    isAuto = false; 
-                    resetBtns(); 
-                    return; 
-                }
+                if(!optAll) { isAuto = false; resetBtns(); return; }
             }
         }
 
@@ -215,6 +232,7 @@
         if(eff.heavy) { 
             let logText = `${mode} ${lcdCount}回【${eff.displayName}】信頼度:${eff.trust.toFixed(1)}%`;
             const pNames = ["虹レバ", "インフラ", "カヲル", "さよなら", "全回転"];
+            if (mode === 'ST') pNames.push("次回予告");
             if (eff.isSure && eff.name.some(n => pNames.includes(n))) logText += " プレミア出現！";
             addLog(logText); 
 
@@ -247,10 +265,8 @@
                 totalBall += 420; mode='ST'; rRem=SPECS.st; rushCount=currentRushHits; 
             } else { 
                 let d, is10R = false, nextM = '時短', isShokaku = false, logDigit = "";
-                if (mode !== '通常') { 
-                    logDigit = [2,4,6,8][Math.floor(Math.random()*4)]; 
-                    d = 7; is10R = true; nextM = 'ST'; isShokaku = true;
-                } else { 
+                if (mode !== '通常') { logDigit = [2,4,6,8][Math.floor(Math.random()*4)]; d = 7; is10R = true; nextM = 'ST'; isShokaku = true; } 
+                else { 
                     if (eff.isFullSpin) { d = 7; is10R = true; nextM = 'ST'; logDigit = "7"; }
                     else if (eff.isSure) {
                         if (rand < 15) { d = 7; is10R = true; nextM = 'ST'; logDigit = "7"; }
@@ -266,23 +282,18 @@
                 let logMsg = `>> ${mode} ${lcdCount}回転 【${logDigit}】 ${is10R?'10R':'3R'}当り!`;
                 if(isShokaku && mode === '通常') logMsg += " (昇格)";
                 addLog(logMsg);
-
                 [1,2,3].forEach(i => { const el=document.getElementById('d'+i); el.innerText=logDigit; el.className='digit '+(logDigit==7?'gold':(logDigit%2!==0?'odd':'even')); }); 
                 
                 if (isShokaku) {
                     await new Promise(r => setTimeout(r, 1200));
-                    machineEl.classList.add('vibrate'); 
-                    machineEl.style.animation = "vibration 0.05s infinite, rainbow-border 0.3s infinite";
+                    machineEl.classList.add('vibrate'); machineEl.style.animation = "vibration 0.05s infinite, rainbow-border 0.3s infinite";
                     await new Promise(r => setTimeout(r, 1000));
                     machineEl.classList.remove('vibrate'); machineEl.style.animation = ""; machineEl.style.borderColor = ""; machineEl.style.boxShadow = "";
-                    
                     if (mode === '通常') {
                         let candidates = [logDigit-1, logDigit+1].filter(n => n > 0 && n < 10 && n !== 7 && n % 2 !== 0);
                         d = candidates.length ? candidates[Math.floor(Math.random() * candidates.length)] : 1;
                         [1,2,3].forEach(i => { const el=document.getElementById('d'+i); el.innerText=d; el.className='digit odd'; });
-                    } else { 
-                        d = 7; [1,2,3].forEach(i => { const el=document.getElementById('d'+i); el.innerText=d; el.className='digit gold'; });
-                    }
+                    } else { d = 7; [1,2,3].forEach(i => { const el=document.getElementById('d'+i); el.innerText=d; el.className='digit gold'; }); }
                 }
                 currentRushHits++; 
                 if(mode==='通常' || mode==='時短') { 
@@ -292,9 +303,7 @@
                 totalBall += (is10R ? 1400 : 420); 
             } 
             updateUI(); await new Promise(r => setTimeout(r, 1800)); lcdCount=0; document.getElementById('lamp').classList.remove('lamp-active'); 
-        } else if(eff.heavy) { 
-            addLog(`>> ${lcdCount}回転 【${lastDigits[0]}】 ${eff.displayName} ﾊｽﾞﾚ`); 
-        }
+        } else if(eff.heavy) { addLog(`>> ${lcdCount}回転 【${lastDigits[0]}】 ${eff.displayName} ﾊｽﾞﾚ`); }
         isAnim=false; updateUI();
         if(isAuto && originalSpeed==='fast' && !optAll) { autoSpeed='fast'; resetBtns(); document.getElementById('btn-fast').classList.add('btn-stop'); }
         if(isAuto) setTimeout(startProcess, (autoSpeed==='fast') ? 5 : 300);
@@ -313,6 +322,7 @@
 </script>
 </body>
 </html>
+
 
 
 
