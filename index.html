@@ -3,93 +3,179 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Webパチンコシミュレーター</title>
+    <title>パチンコシミュレーター Web版</title>
     <style>
-        body { background: #1a1a1a; color: white; font-family: sans-serif; text-align: center; margin: 0; padding: 20px; }
-        .machine { max-width: 400px; margin: 0 auto; border: 4px solid #444; border-radius: 20px; padding: 20px; background: #333; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
-        .screen { background: #000; height: 200px; border-radius: 10px; border: 2px solid #555; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: bold; margin-bottom: 20px; overflow: hidden; position: relative; }
-        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; font-size: 0.9rem; }
-        .stat-item { background: #444; padding: 10px; border-radius: 5px; }
-        button { background: linear-gradient(to bottom, #ff4444, #990000); color: white; border: none; padding: 15px 30px; font-size: 1.2rem; border-radius: 50px; cursor: pointer; box-shadow: 0 4px #660000; width: 100%; touch-action: manipulation; }
-        button:active { transform: translateY(4px); box-shadow: none; }
-        .log { margin-top: 20px; text-align: left; height: 100px; overflow-y: auto; background: #222; padding: 10px; font-size: 0.8rem; border-radius: 5px; }
-        .hit { color: #ffeb3b; text-shadow: 0 0 10px #ffeb3b; animation: blink 0.2s infinite; }
-        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        body { background: #121212; color: white; font-family: 'Helvetica Neue', Arial, sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        
+        /* 左側サイドバー */
+        .sidebar { width: 200px; background: #1e1e1e; border-right: 2px solid #333; padding: 20px; flex-shrink: 0; }
+        .sidebar h3 { font-size: 1rem; color: #aaa; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .machine-list { list-style: none; padding: 0; }
+        .machine-item { padding: 10px; background: #333; border-radius: 5px; margin-bottom: 10px; cursor: pointer; border-left: 4px solid #7b2cbf; font-size: 0.9rem; }
+        .machine-item:hover { background: #444; }
+
+        /* 右側メイン画面 */
+        .main-content { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; overflow-y: auto; }
+        .machine { width: 100%; max-width: 450px; background: #2a2a2a; border: 4px solid #444; border-radius: 30px; padding: 25px; box-shadow: 0 0 30px rgba(0,0,0,0.7); position: relative; }
+        
+        /* 液晶画面 */
+        .screen { background: #000; height: 220px; border-radius: 15px; border: 3px solid #555; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 20px; position: relative; }
+        .mode-badge { position: absolute; top: 10px; left: 10px; padding: 5px 10px; border-radius: 3px; font-size: 0.7rem; font-weight: bold; background: #555; }
+        .mode-normal { background: #555; }
+        .mode-st { background: #d00000; animation: pulse 1s infinite; }
+        .mode-jititan { background: #0077b6; }
+        
+        #display { font-size: 3rem; font-weight: bold; color: #fff; }
+        .sub-display { font-size: 1rem; color: #aaa; margin-top: 10px; }
+
+        /* ステータス */
+        .stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
+        .stat-item { background: #1e1e1e; padding: 10px; border-radius: 8px; text-align: center; }
+        .stat-val { display: block; font-size: 1.2rem; font-weight: bold; color: #7b2cbf; }
+        .stat-label { font-size: 0.7rem; color: #888; }
+
+        /* ボタン */
+        button { background: linear-gradient(135deg, #9d4edd, #7b2cbf); color: white; border: none; padding: 18px; font-size: 1.4rem; border-radius: 50px; cursor: pointer; width: 100%; box-shadow: 0 5px #5a189a; transition: 0.1s; }
+        button:active { transform: translateY(3px); box-shadow: 0 2px #5a189a; }
+        button:disabled { background: #444; box-shadow: none; cursor: not-allowed; }
+
+        .log { width: 100%; max-width: 450px; height: 120px; background: #000; margin-top: 20px; padding: 10px; border-radius: 10px; font-size: 0.8rem; color: #0f0; overflow-y: auto; font-family: monospace; border: 1px solid #333; }
+
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
 
-<div class="machine">
-    <div id="screen" class="screen">
-        <div id="display">READY</div>
+<div class="sidebar">
+    <h3>機種選択</h3>
+    <ul class="machine-list">
+        <li class="machine-item">Pエヴァ15 未来への咆哮</li>
+        <li class="machine-item" style="opacity: 0.5; border-left-color: #555;">(次機種 追加予定)</li>
+    </ul>
+</div>
+
+<div class="main-content">
+    <div class="machine">
+        <div class="screen">
+            <div id="mode-badge" class="mode-badge mode-normal">通常モード</div>
+            <div id="display">---</div>
+            <div id="sub-display" class="sub-display">回転数: 0</div>
+        </div>
+
+        <div class="stat-grid">
+            <div class="stat-item"><span class="stat-label">大当り</span><span id="hits" class="stat-val">0</span></div>
+            <div class="stat-item"><span class="stat-label">連チャン</span><span id="rush-count" class="stat-val">0</span></div>
+            <div class="stat-item"><span class="stat-label">投資</span><span id="investment" class="stat-val">0</span></div>
+            <div class="stat-item"><span class="stat-label">収支</span><span id="balance" class="stat-val">0</span></div>
+        </div>
+
+        <button id="btn" onclick="play()">打ち出し開始</button>
     </div>
 
-    <div class="stat-grid">
-        <div class="stat-item">回転数<br><span id="count">0</span></div>
-        <div class="stat-item">投資<br><span id="investment">0</span>円</div>
-        <div class="stat-item">大当り回数<br><span id="hits">0</span></div>
-        <div class="stat-item">収支<br><span id="balance">0</span>円</div>
-    </div>
-
-    <button onclick="play()">Start!</button>
-
-    <div class="log" id="log">履歴:<br></div>
+    <div class="log" id="log">--- 履歴 ---<br></div>
 </div>
 
 <script>
-    let count = 0;
+    // エヴァ15スペック設定
+    const SPEC = {
+        normal_prob: 319.7,
+        st_prob: 99.4,
+        st_taps: 163,
+        jititan_taps: 100,
+        st_rush_rate: 0.59, // ヘソ突入率（直行59%）
+        payout: 1500
+    };
+
+    let totalCount = 0;
+    let currentCount = 0;
     let hits = 0;
+    let rushCount = 0;
     let investment = 0;
     let totalReturn = 0;
-    const probability = 319.7;
-    const payout = 1500; // 1回あたりの出玉イメージ
+    let mode = 'NORMAL'; // NORMAL, ST, JITITAN
+    let stRemaining = 0;
     let isRolling = false;
 
     function play() {
         if (isRolling) return;
-        
         isRolling = true;
-        count++;
-        investment += 20; // 1回転20円（千円50回転計算）
-        document.getElementById('count').innerText = count;
-        document.getElementById('investment').innerText = investment;
         
+        investment += 20; // 1回転20円計算
+        totalCount++;
+        currentCount++;
+        
+        updateUI();
         const display = document.getElementById('display');
-        display.classList.remove('hit');
-        display.innerText = "抽選中...";
+        display.innerText = "抽選中";
 
-        // 演出時間を少し作る（0.3秒）
         setTimeout(() => {
-            if (Math.random() < 1 / probability) {
+            let prob = (mode === 'ST') ? SPEC.st_prob : SPEC.normal_prob;
+            
+            if (Math.random() < 1 / prob) {
                 handleHit();
             } else {
                 display.innerText = Math.floor(Math.random() * 10);
-                updateBalance();
+                
+                // ST/時短のスルー判定
+                if (mode === 'ST' || mode === 'JITITAN') {
+                    stRemaining--;
+                    if (stRemaining <= 0) {
+                        addLog(`${mode}スルー... 通常へ`);
+                        mode = 'NORMAL';
+                        currentCount = 0;
+                        rushCount = 0;
+                    }
+                }
             }
+            updateUI();
             isRolling = false;
-        }, 300);
+        }, 100);
     }
 
     function handleHit() {
         hits++;
-        totalReturn += payout;
+        totalReturn += SPEC.payout;
         const display = document.getElementById('display');
         display.innerText = "大当り!";
-        display.classList.add('hit');
-        document.getElementById('hits').innerText = hits;
         
-        const log = document.getElementById('log');
-        log.innerHTML += `> ${count}回目 大当り!<br>`;
-        log.scrollTop = log.scrollHeight;
+        if (mode === 'NORMAL') {
+            // ヘソ当たり時の判定
+            if (Math.random() < SPEC.st_rush_rate) {
+                mode = 'ST';
+                stRemaining = SPEC.st_taps;
+                rushCount = 1;
+                addLog(`${currentCount}回転: 大当り(ST突入!)`);
+            } else {
+                mode = 'JITITAN';
+                stRemaining = SPEC.jititan_taps;
+                addLog(`${currentCount}回転: 大当り(時短100)`);
+            }
+        } else {
+            // 右打ち中の当たり
+            mode = 'ST';
+            stRemaining = SPEC.st_taps;
+            rushCount++;
+            addLog(`${currentCount}回転: ${rushCount}連目!`);
+        }
         
-        updateBalance();
+        currentCount = 0;
     }
 
-    function updateBalance() {
-        const balance = totalReturn - investment;
-        const balanceEl = document.getElementById('balance');
-        balanceEl.innerText = balance;
-        balanceEl.style.color = balance >= 0 ? "#4caf50" : "#ff4444";
+    function updateUI() {
+        document.getElementById('hits').innerText = hits;
+        document.getElementById('rush-count').innerText = rushCount;
+        document.getElementById('investment').innerText = investment + "円";
+        document.getElementById('balance').innerText = (totalReturn - investment) + "円";
+        document.getElementById('sub-display').innerText = (mode === 'NORMAL') ? `通常時: ${currentCount}` : `残り回数: ${stRemaining}`;
+        
+        const badge = document.getElementById('mode-badge');
+        badge.innerText = (mode === 'ST') ? "IMPACT RUSH" : (mode === 'JITITAN') ? "チャンスタイム" : "通常モード";
+        badge.className = `mode-badge mode-${mode.toLowerCase()}`;
+    }
+
+    function addLog(msg) {
+        const log = document.getElementById('log');
+        log.innerHTML = `> ${msg}<br>` + log.innerHTML;
     }
 </script>
 
