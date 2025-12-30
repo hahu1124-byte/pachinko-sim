@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EVANGELION Sim -Large Scale-</title>
+    <title>EVANGELION Sim -Fix Animation-</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&display=swap');
@@ -17,23 +17,22 @@
         @keyframes rainbow { 0% { border-color: #f00; } 20% { border-color: #ff0; } 40% { border-color: #0f0; } 60% { border-color: #0ff; } 80% { border-color: #00f; } 100% { border-color: #f0f; } }
         .rainbow-active { animation: rainbow 0.5s infinite; border-width: 5px !important; }
 
-        /* ヘッダー操作系 */
+        /* ヘッダー */
         header { width: 100%; height: 50px; background: #111; border-bottom: 2px solid #d00000; display: flex; align-items: center; padding: 0 10px; box-sizing: border-box; gap: 8px; }
         .select-box { background: #222; color: #fff; border: 1px solid #444; padding: 5px; font-size: 0.8rem; border-radius: 4px; }
         .header-btn { background: #333; color: #ccc; border: 1px solid #555; padding: 5px 8px; font-size: 0.7rem; cursor: pointer; border-radius: 4px; }
         .btn-graph { background: #d00000; color: white; border-color: #ff4444; }
 
-        /* グラフポップアップ */
+        /* ポップアップ */
         #modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; }
         #modal-content { background: #111; border: 2px solid #d00000; width: 95%; max-width: 500px; padding: 15px; border-radius: 10px; position: relative; }
         .close-btn { position: absolute; top: 10px; right: 15px; color: white; cursor: pointer; font-size: 1.5rem; }
         .graph-area { background: #000; margin-bottom: 15px; height: 180px; width: 100%; }
 
         .main-content { flex-grow: 1; display: flex; flex-direction: column; align-items: center; padding: 10px; overflow-y: auto; }
-        /* 筐体サイズも画面に合わせて少し余裕を持たせる */
         .machine { width: 100%; max-width: 450px; background: #111; border: 2px solid #d00000; border-radius: 15px; padding: 12px; position: relative; }
         
-        /* 液晶周り：サイズ1.5倍 */
+        /* 液晶：1.5倍基準 (330px) */
         .screen { background: #000; height: 330px; border-radius: 10px; border: 2px solid #444; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; margin-bottom: 10px; }
         .digit-container { display: flex; gap: 15px; }
         .digit { font-size: 9rem; font-weight: 900; font-family: 'Shippori Mincho B1', serif; width: 120px; text-align: center; }
@@ -42,7 +41,7 @@
         .odd { color: #ff4444; text-shadow: 0 0 20px #ff4444; }
         .even { color: #4444ff; text-shadow: 0 0 20px #4444ff; }
 
-        /* 統計表示 */
+        /* 統計 */
         .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-bottom: 4px; }
         .stat-item { background: #000; border: 1px solid #333; padding: 4px 1px; text-align: center; border-radius: 3px; }
         .stat-label { font-size: 0.55rem; color: #888; display: block; }
@@ -56,7 +55,7 @@
         .btn-auto { flex: 1; background: #d00000; color: white; border: 1px solid #ff4444; padding: 12px 0; font-weight: bold; border-radius: 5px; cursor: pointer; font-size: 0.85rem; }
         .btn-stop { background: #444 !important; border-color: #666 !important; }
 
-        /* 履歴ログ：サイズ1.5倍 */
+        /* 履歴ログ：1.5倍基準 (195px) */
         .log { width: 100%; max-width: 450px; height: 195px; background: #000; margin-top: 10px; padding: 10px; font-size: 0.95rem; color: #ff4444; overflow-y: auto; border: 1px solid #333; font-family: monospace; box-sizing: border-box; }
     </style>
 </head>
@@ -112,7 +111,7 @@
             </div>
         </div>
     </div>
-    <div class="log" id="log">> スタンダードサイズ変更完了。<br>> 液晶・履歴エリア1.5倍。</div>
+    <div class="log" id="log">> 高速オート変動速度を調整しました。</div>
 </div>
 
 <script>
@@ -141,6 +140,15 @@
     function clearLog() { document.getElementById('log').innerHTML = "> 履歴を削除しました。"; }
     function resetData() { hits=0; rushCount=0; currentCount=0; totalBall=0; firstHits=0; rushIn=0; maxRush=0; maxHamari=0; slumpData=[0]; slumpLabels=["0"]; historyData=[]; historyLabels=[]; updateUI(); addLog("データリセット完了"); }
 
+    function setRandomDigits() {
+        [1,2,3].forEach(i => {
+            const n = Math.floor(Math.random()*9)+1;
+            const el = document.getElementById('d'+i);
+            el.innerText = n;
+            el.className = 'digit ' + (n%2===0?'even':'odd');
+        });
+    }
+
     async function startProcess() {
         if(!isAuto || isAnim) return;
         let prob = (mode==='ST' ? SPECS.s : SPECS.n);
@@ -150,7 +158,10 @@
         if(mode==='通常') totalBall -= 3.125;
         currentCount++;
 
+        // 演出時間の決定
+        // 高速時: 50ms, 通常時: 500ms, 熱い演出時: 2000ms
         let spinTime = (eff.heavy && !isGyakkyo) ? 2000 : (autoSpeed === 'fast' ? 50 : 500);
+
         if(eff.heavy && !isGyakkyo) {
             isAnim = true;
             addLog(`${currentCount}回転 ${eff.name} (信頼度${eff.trust}% / 出現率1/${eff.rate})`);
@@ -159,14 +170,12 @@
             if(eff.rainbow) document.getElementById('machine').classList.add('rainbow-active');
         }
 
-        let spin = setInterval(() => { 
-            [1,2,3].forEach(i => {
-                const n = Math.floor(Math.random()*9)+1;
-                const el = document.getElementById('d'+i);
-                el.innerText = n;
-                el.className = 'digit ' + (n%2===0?'even':'odd');
-            });
-        }, 60);
+        // 即座に一度更新（高速オート対策）
+        setRandomDigits();
+
+        // 回転アニメーション（高速時は10ms間隔で更新）
+        let intervalTime = (autoSpeed === 'fast' && !eff.heavy) ? 10 : 60;
+        let spin = setInterval(setRandomDigits, intervalTime);
 
         await new Promise(r => setTimeout(r, spinTime));
         clearInterval(spin);
@@ -205,6 +214,7 @@
         if(mode!=='通常' && !isHit) { rRem--; if(rRem<=0) { addLog(`${mode}終了 ${rushCount}連`); mode='通常'; rushCount=0; if(!isFullAuto) { isAuto=false; resetBtns(); } } }
         isAnim = false;
         updateUI();
+        // 次の回転までの待機（高速時は短く）
         if(isAuto) setTimeout(startProcess, autoSpeed==='fast'?(isAnim?800:10):500);
     }
 
