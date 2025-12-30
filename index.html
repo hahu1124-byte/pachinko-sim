@@ -110,7 +110,7 @@
     let slumpData=[0], slumpLabels=["0"], historyData=[], historyLabels=[];
     let sChart, hChart;
 
-    // --- 各種関数（チャート、オート、リセット等） ---
+    // --- 各種関数（グラフ、オート、リセット） ---
     function openModal() { document.getElementById('modal-overlay').style.display='flex'; updateCharts(); }
     function closeModal() { document.getElementById('modal-overlay').style.display='none'; }
     function updateCharts() {
@@ -195,8 +195,6 @@
             } else {
                 let d = is10R ? 7 : 2;
                 [1,2,3].forEach(i => { const el=document.getElementById('d'+i); el.innerText=d; el.className='digit '+(d===7?'gold':'even'); });
-                
-                // 履歴への追記ロジック
                 if(mode==='通常') {
                     let typeTxt = willEnterRush ? "ST突入" : "時短";
                     addLog(`>> ${currentCount}回転 【${d}】 大当り! ${is10R ? '10R' : '3R'}(${typeTxt})`);
@@ -221,13 +219,15 @@
         if(isAuto) setTimeout(startProcess, (autoSpeed==='fast') ? 5 : 300);
     }
 
-    // --- 演出抽選 ---
+    // --- 演出抽選（信頼度から逆算した確率へ見直し） ---
     function selectEffect(isHit, willEnterRush, isRight) {
         let res = { heavy: false, name: [], trust: 0, vibe: false, flash: false, lamp: false, text: "", isRedHold: false };
         let names = [];
-        let vibeType = null;
+        let prob = Math.random() * 100;
 
         if (isHit) {
+            // 当たり時の各演出の占有率
+            let vibeType = null;
             if (Math.random() < 0.03) vibeType = "虹";
             else if (Math.random() < 0.15) vibeType = "赤";
             else if (Math.random() < 0.667) vibeType = "白";
@@ -243,11 +243,22 @@
             if (names.length > 0) { res.heavy = true; res.name = names.join("+"); res.trust = 100; }
             else { res.heavy = true; res.name = "インパクト予告"; res.text = "当"; res.trust = 100; }
         } else {
-            let r = Math.random() * 100;
-            if (r < 0.15) { res.heavy = true; res.vibe = true; res.name = "白レバブル"; res.text = "激熱"; res.trust = 90; }
-            else if (r < 0.3) { res.heavy = true; res.isRedHold = true; res.name = "赤保留"; res.text = "赤保留"; res.trust = 90; }
-            else if (r < 0.6) { res.heavy = true; res.name = "レイ背景"; res.text = "レイ背景"; res.trust = 85; }
-            else if (r < 0.8) { res.heavy = true; res.name = "次回予告"; res.text = "次回予告"; res.trust = 65; }
+            // ハズレ時に各演出を出す確率は、「占有率 × (1-信頼度) / 信頼度」の比率で計算
+            // これにより設定した信頼度通りの体感になります。
+            let r = Math.random() * 1000; 
+            // 白レバブル（信頼度90%）のハズレ発生確率は 0.667 * 0.1 / 0.9 = 約0.074%
+            // 319変動につき約1/4300程度しかハズレ白レバは出ないのが正解。
+            if (r < 0.74) { 
+                res.heavy = true; res.vibe = true; res.name = "白レバブル"; res.text = "激熱"; res.trust = 90; 
+            } else if (r < 0.85) { // 赤レバハズレ（信頼度96.5%）
+                res.heavy = true; res.vibe = true; res.name = "赤レバブル"; res.text = "激熱"; res.trust = 96.5; 
+            } else if (r < 3.6) { // 赤保留ハズレ（信頼度90%）
+                res.heavy = true; res.isRedHold = true; res.name = "赤保留"; res.text = "赤保留"; res.trust = 90; 
+            } else if (r < 9.5) { // レイ背景ハズレ（信頼度85%）
+                res.heavy = true; res.name = "レイ背景"; res.text = "レイ背景"; res.trust = 85; 
+            } else if (r < 31.0) { // 次回予告ハズレ（信頼度65%）
+                res.heavy = true; res.name = "次回予告"; res.text = "次回予告"; res.trust = 65; 
+            }
         }
         return res;
     }
@@ -268,6 +279,7 @@
 </script>
 </body>
 </html>
+
 
 
 
