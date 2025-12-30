@@ -29,7 +29,6 @@
         .flash-active { animation: flash-white 0.05s 20; }
         @keyframes flash-white { 0%, 100% { background: #000; } 50% { background: #fff; } }
         
-        /* 保留デザインの拡張 */
         .heso-overlay { position: absolute; bottom: 10px; display: flex; align-items: flex-end; gap: 10px; }
         .heso-ball { width: 10px; height: 10px; background: #222; border-radius: 50%; border: 1px solid #555; transition: all 0.2s; }
         .heso-current { width: 13px; height: 13px; margin-right: 5px; border-width: 2px; } 
@@ -101,7 +100,7 @@
                 <button class="btn-auto" id="btn-fast" onclick="toggleAuto('fast')">高速オート</button>
             </div>
         </div>
-        <div class="log" id="log">> 各色保留（点滅/青/緑/赤）を実装しました。</div>
+        <div class="log" id="log">> 当該昇格演出・赤保留検知オートを実装しました。</div>
     </div>
 
     
@@ -116,7 +115,6 @@
 
     let reservedStock = []; 
 
-    // 信頼度マップ
     const TRUST_MAP_N = { "白レバ": 0.90, "赤レバ": 0.965, "赤保留": 0.90, "緑保留": 0.11, "青保留": 0.05, "点滅保留": 0.005, "次回予告": 0.65, "レイ背景": 0.85, "金系": 0.50 };
     const TRUST_MAP_S = { "白レバ": 0.95, "赤レバ": 0.99, "赤保留": 0.95, "緑保留": 0.11, "青保留": 0.05, "点滅保留": 0.005, "次回予告": 1.0, "レイ背景": 0.92, "金系": 0.80 };
 
@@ -129,13 +127,11 @@
         let roll = Math.random() * 100;
 
         if (isHit) {
-            // 当たり時の保留色振り分け
             if (roll < 25) holdType = "red";
             else if (roll < 55) holdType = "green";
             else if (roll < 80) holdType = "blue";
             else holdType = "blink";
         } else {
-            // ハズレ時の保留色振り分け（ガセ）
             if (roll < 0.1) holdType = "red";
             else if (roll < 2.0) holdType = "green";
             else if (roll < 8.0) holdType = "blue";
@@ -143,6 +139,13 @@
         }
         
         reservedStock.push({ isHit: isHit, holdType: holdType });
+
+        // 赤保留が入賞したら高速オートを解除して低速にする
+        if (holdType === "red" && isAuto && autoSpeed === "fast") {
+            addLog("!! 赤保留を検知。低速オートに切り替えます !!");
+            toggleAuto("slow"); 
+        }
+
         heso = reservedStock.length;
         updateHesoUI();
     }
@@ -152,7 +155,27 @@
         const roll = () => Math.random() * 100;
         const isST = (mode === 'ST');
 
-        // 保留名をリストに追加
+        // 昇格抽選（当該移動時）
+        if (res.holdType !== "red") {
+            let upgradeRoll = Math.random() * 100;
+            if (isHit) {
+                // 当たり時は昇格しやすい
+                if (upgradeRoll < 30) {
+                    const steps = ["none", "blink", "blue", "green", "red"];
+                    let idx = steps.indexOf(res.holdType);
+                    res.holdType = steps[idx + 1] || "red";
+                    // ログには出さないが内部で確定
+                }
+            } else {
+                // ハズレでも稀に昇格ガセ
+                if (upgradeRoll < 5) {
+                    const steps = ["none", "blink", "blue", "green"];
+                    let idx = steps.indexOf(res.holdType);
+                    if (idx < 3) res.holdType = steps[idx + 1];
+                }
+            }
+        }
+
         if (res.holdType !== "none") {
             let hName = res.holdType === "red" ? "赤保留" : res.holdType === "green" ? "緑保留" : res.holdType === "blue" ? "青保留" : "点滅保留";
             res.name.push(hName);
@@ -164,20 +187,16 @@
                 let hasVibe = false;
                 if (isST && roll() < 10.0) { res.name.push("次回予告"); res.text="次回予告"; res.isSure = true; }
                 else if (isST && roll() < 33.0) { res.name.push("金系"); }
-                
                 if (roll() < 3.0) { res.name.push("虹レバ"); res.lamp=true; hasVibe=true; res.vibeColor="rainbow"; }
                 else if (roll() < 15.0) { res.name.push("赤レバ"); hasVibe=true; res.vibeColor="red"; }
                 else if (roll() < 66.7) { res.name.push("白レバ"); hasVibe=true; res.vibeColor="white"; }
-                
                 if (roll() < 5.0) { res.name.push("インフラ"); res.flash=true; res.lamp=true; }
                 if (roll() < 1.0) { res.name.push("カヲル"); res.text="カヲル"; }
-
-                if (!isST || res.name.length <= 1) { // 保留分があるのでlength条件微調整
+                if (!isST || res.name.length <= 1) {
                     if (roll() < 3.0) { res.name.push("さよなら"); res.text="さよなら"; }
                     else if (!res.text && roll() < 33.3) { res.name.push("レイ背景"); res.text="レイ背景"; }
                     if (!isST && !res.text && roll() < 40.0) { res.name.push("次回予告"); res.text="次回予告"; }
                 }
-
                 if (res.name.length <= 1 && !res.text) { res.name.push("金系"); }
                 if (hasVibe) res.vibe = true;
             }
@@ -200,7 +219,6 @@
             res.trust = Math.max(96.0, (1 - combined) * 100); 
         } 
         else if (res.name.length === 1) { res.trust = (currentMap[res.name[0]] || 0) * 100; }
-        
         if (res.trust >= 100) res.isSure = true;
         res.displayName = res.name.join("+") || "弱予告";
         return res;
@@ -208,7 +226,6 @@
 
     async function startProcess() {
         if(!isAuto || isAnim) return;
-        
         if(mode !== '通常' && rRem <= 0) { 
             let prevMode = mode;
             if (prevMode === 'ST') {
@@ -324,15 +341,23 @@
     function closeModal() { document.getElementById('modal-overlay').style.display='none'; }
     function updateCharts() { const cfg = { responsive:true, maintainAspectRatio:false, scales:{ x:{display:false}, y:{grid:{color:'#222'}, ticks:{color:'#888'}} }, plugins:{legend:{display:false}} }; if(sChart) sChart.destroy(); sChart = new Chart(document.getElementById('slumpChart'), { type:'line', data:{ labels:slumpLabels, datasets:[{data:slumpData, borderColor:'#8a2be2', borderWidth:2, pointRadius:0, fill:false}] }, options:cfg }); if(hChart) hChart.destroy(); hChart = new Chart(document.getElementById('historyChart'), { type:'bar', data:{ labels:historyLabels, datasets:[{data:historyData, backgroundColor:'#8a2be2'}] }, options:cfg }); }
     function toggleOpt(t) { if(t==='all') { optAll=!optAll; document.getElementById('btn-all').classList.toggle('active'); } if(t==='kokuchi') { optKokuchi=!optKokuchi; document.getElementById('btn-kokuchi').classList.toggle('active'); } }
-    function toggleAuto(s) { if(isAuto && autoSpeed===s) { isAuto=false; resetBtns(); } else { isAuto=true; autoSpeed=s; resetBtns(); document.getElementById('btn-'+s).classList.add('btn-stop'); startProcess(); } }
+    
+    function toggleAuto(s) { 
+        if(isAuto && autoSpeed===s) { 
+            isAuto=false; resetBtns(); 
+        } else { 
+            isAuto=true; autoSpeed=s; resetBtns(); 
+            document.getElementById('btn-'+s).classList.add('btn-stop'); 
+            if (!isAnim) startProcess(); 
+        } 
+    }
+    
     function resetBtns() { document.querySelectorAll('.btn-auto').forEach(b => b.classList.remove('btn-stop')); }
     function resetData() { hits=0; rushCount=0; currentRot=0; totalRot=0; totalBall=0; heso=0; currentRushHits=0; lcdCount=0; slumpData=[0]; slumpLabels=["0"]; historyData=[]; historyLabels=[]; reservedStock=[]; updateUI(); updateHesoUI("none"); addLog("データを初期化しました。"); }
     
-    // 保留UI更新（全色対応）
     function updateHesoUI(currentHoldType) { 
         const h0 = document.getElementById('h0');
         h0.className = 'heso-ball heso-current ' + (currentHoldType === "none" ? "heso-on" : "heso-" + currentHoldType);
-        
         for(let i=1; i<=4; i++) { 
             const el = document.getElementById('h' + i); 
             const stock = reservedStock[i-1];
@@ -349,6 +374,7 @@
 </script>
 </body>
 </html>
+
 
 
 
