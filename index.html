@@ -13,17 +13,7 @@
         .btn-graph { background: #8a2be2; color: white; border-color: #a450ff; }
         .main-content { width: 100%; max-width: 440px; display: flex; flex-direction: column; align-items: center; padding: 10px; box-sizing: border-box; }
         
-        .machine { 
-            width: 100%; 
-            background: #111; 
-            border: 3px solid #8a2be2; 
-            border-radius: 15px; 
-            padding: 12px; 
-            position: relative; 
-            box-sizing: border-box; 
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-        
+        .machine { width: 100%; background: #111; border: 3px solid #8a2be2; border-radius: 15px; padding: 12px; position: relative; box-sizing: border-box; transition: border-color 0.2s, box-shadow 0.2s; }
         .screen { background: #000; height: 300px; border-radius: 10px; border: 2px solid #444; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; width: 100%; }
         .digit-container { display: flex; gap: 5px; }
         .digit { font-size: 8.5rem; font-weight: 900; font-family: 'Shippori Mincho B1', serif; width: 110px; text-align: center; } 
@@ -40,12 +30,13 @@
         
         .vibrate { animation: vibration 0.05s infinite; }
         @keyframes vibration { 0% { transform: translate(0,0); } 25% { transform: translate(-4px, 4px); } 50% { transform: translate(4px, -4px); } 75% { transform: translate(-4px, -4px); } 100% { transform: translate(0,0); } }
-        
         .flash-active { animation: flash-white 0.05s 20; }
         @keyframes flash-white { 0%, 100% { background: #000; } 50% { background: #fff; } }
         
-        .heso-overlay { position: absolute; bottom: 10px; display: flex; gap: 8px; }
-        .heso-ball { width: 10px; height: 10px; background: #222; border-radius: 50%; border: 1px solid #555; }
+        /* 保留レイアウトの修正 */
+        .heso-overlay { position: absolute; bottom: 10px; display: flex; align-items: flex-end; gap: 10px; }
+        .heso-ball { width: 10px; height: 10px; background: #222; border-radius: 50%; border: 1px solid #555; transition: all 0.2s; }
+        .heso-current { width: 13px; height: 13px; margin-right: 5px; border-width: 2px; } /* 当該保留 1.3倍 */
         .heso-red { background: radial-gradient(circle, #ff4444, #880000); box-shadow: 0 0 8px #ff0000; border-color: #f00; }
         .heso-on { background: #888; }
         
@@ -71,15 +62,7 @@
         #modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; justify-content: center; align-items: center; }
         #modal-content { background: #111; border: 2px solid #8a2be2; width: 92%; max-width: 400px; padding: 15px; border-radius: 12px; }
         .graph-area { background: #000; height: 160px; margin-bottom: 15px; }
-
-        @keyframes rainbow-border {
-            0% { border-color: #f00; box-shadow: 0 0 15px #f00; }
-            20% { border-color: #ff0; box-shadow: 0 0 15px #ff0; }
-            40% { border-color: #0f0; box-shadow: 0 0 15px #0f0; }
-            60% { border-color: #0ff; box-shadow: 0 0 15px #0ff; }
-            80% { border-color: #00f; box-shadow: 0 0 15px #00f; }
-            100% { border-color: #f0f; box-shadow: 0 0 15px #f0f; }
-        }
+        @keyframes rainbow-border { 0% { border-color: #f00; box-shadow: 0 0 15px #f00; } 20% { border-color: #ff0; box-shadow: 0 0 15px #ff0; } 40% { border-color: #0f0; box-shadow: 0 0 15px #0f0; } 60% { border-color: #0ff; box-shadow: 0 0 15px #0ff; } 80% { border-color: #00f; box-shadow: 0 0 15px #00f; } 100% { border-color: #f0f; box-shadow: 0 0 15px #f0f; } }
     </style>
 </head>
 <body>
@@ -98,7 +81,12 @@
                     <div id="d1" class="digit odd">3</div><div id="d2" class="digit odd">5</div><div id="d3" class="digit gold">7</div>
                 </div>
                 <div id="sub-display" class="mode-display">通常:0</div>
-                <div class="heso-overlay"><div id="h1" class="heso-ball"></div><div id="h2" class="heso-ball"></div><div id="h3" class="heso-ball"></div><div id="h4" class="heso-ball"></div></div>
+                <div class="heso-overlay">
+                    <div id="h0" class="heso-ball heso-current"></div> <div id="h1" class="heso-ball"></div>
+                    <div id="h2" class="heso-ball"></div>
+                    <div id="h3" class="heso-ball"></div>
+                    <div id="h4" class="heso-ball"></div>
+                </div>
             </div>
             <div class="stat-grid">
                 <div class="stat-item"><span class="stat-label">大当り</span><span id="hits" class="stat-val val-white">0</span></div>
@@ -116,9 +104,8 @@
                 <button class="btn-auto" id="btn-fast" onclick="toggleAuto('fast')">高速オート</button>
             </div>
         </div>
-        <div class="log" id="log">> プレミア告知機能を搭載しました。</div>
+        <div class="log" id="log">> 当該保留（1.3倍サイズ）を実装しました。</div>
     </div>
-
 
 <script>
     const SPECS = { n: 319.7, s: 99.4, st: 163, jt: 100 };
@@ -129,9 +116,7 @@
     let slumpData=[0], slumpLabels=["0"], historyData=[], historyLabels=[];
     let sChart, hChart;
 
-    // 通常時の信頼度マップ
     const TRUST_MAP_N = { "白レバ": 0.90, "赤レバ": 0.965, "赤保留": 0.90, "次回予告": 0.65, "レイ背景": 0.85, "金系": 0.50 };
-    // ST中の信頼度マップ（ご要望を反映）
     const TRUST_MAP_S = { "白レバ": 0.95, "赤レバ": 0.99, "赤保留": 0.95, "次回予告": 1.0, "レイ背景": 0.92, "金系": 0.80 };
 
     function selectEffect(isHit) {
@@ -143,12 +128,9 @@
             if (roll() < 1.0) { res.name.push("全回転"); res.text="全回転"; res.isSure=true; res.isFullSpin=true; res.lamp=true; }
             else {
                 let hasVibe = false;
-                // --- ST中限定：次回予告 10% 占有率 ---
                 if (isST && roll() < 10.0) { res.name.push("次回予告"); res.text="次回予告"; res.isSure = true; }
-                // --- ST中限定：金系 33% 占有率 ---
                 else if (isST && roll() < 33.0) { res.name.push("金系"); }
                 
-                // 共通演出の抽選（ST中の複合制限：レバブル、インフラ、カヲルのみ）
                 if (roll() < 3.0) { res.name.push("虹レバ"); res.lamp=true; hasVibe=true; res.vibeColor="rainbow"; }
                 else if (roll() < 15.0) { res.name.push("赤レバ"); hasVibe=true; res.vibeColor="red"; }
                 else if (roll() < 66.7) { res.name.push("白レバ"); hasVibe=true; res.vibeColor="white"; }
@@ -156,7 +138,6 @@
                 if (roll() < 5.0) { res.name.push("インフラ"); res.flash=true; res.lamp=true; }
                 if (roll() < 1.0) { res.name.push("カヲル"); res.text="カヲル"; }
 
-                // ST中以外、または複合制限に抵触しない場合の追加演出
                 if (!isST || res.name.length === 0) {
                     if (roll() < 3.0) { res.name.push("さよなら"); res.text="さよなら"; }
                     else if (!res.text && roll() < 33.3) { res.name.push("レイ背景"); res.text="レイ背景"; }
@@ -169,7 +150,6 @@
             }
             res.heavy = true;
         } else {
-            // ハズレ時の演出抽選
             if (roll() < 0.0017) { res.name.push("赤レバ"); res.vibe=true; res.vibeColor="red"; }
             else if (roll() < 0.023) { res.name.push("白レバ"); res.vibe=true; res.vibeColor="white"; }
             else if (roll() < 0.0087) { res.isRedHold=true; res.name.push("赤保留"); }
@@ -180,7 +160,7 @@
         let names = res.name;
         const currentMap = isST ? TRUST_MAP_S : TRUST_MAP_N;
         const pNames = ["虹レバ", "インフラ", "カヲル", "さよなら", "全回転"];
-        if (isST) pNames.push("次回予告"); // ST中は次回予告も確定枠へ
+        if (isST) pNames.push("次回予告");
 
         const hasSureSingle = names.some(n => pNames.includes(n));
         
@@ -223,7 +203,11 @@
         let originalSpeed = autoSpeed;
         if(autoSpeed==='fast' && eff.heavy && !optAll) { autoSpeed = 'slow'; resetBtns(); document.getElementById('btn-slow').classList.add('btn-stop'); }
         
-        if(heso < 4) heso++; totalRot++; currentRot++; lcdCount++; heso--; updateHesoUI(eff.isRedHold); if(mode !== '通常') rRem--;
+        // --- 保留更新ロジック ---
+        if(heso < 4) heso++; totalRot++; currentRot++; lcdCount++; heso--; 
+        updateHesoUI(eff.isRedHold); // 消化中の保留（h0）に色をつける
+        
+        if(mode !== '通常') rRem--;
         totalBall -= (mode==='通常' ? 14 : 0.05); slumpData.push(Math.floor(totalBall)); slumpLabels.push(totalRot.toString());
         
         let spinTime = (eff.heavy) ? (eff.isFullSpin ? 4000 : 2500) : (autoSpeed==='fast'?60:600);
@@ -278,7 +262,6 @@
                         else { d = [2,4,6,8][Math.floor(Math.random()*4)]; nextM = '時短'; logDigit = d; }
                     }
                 }
-                
                 let logMsg = `>> ${mode} ${lcdCount}回転 【${logDigit}】 ${is10R?'10R':'3R'}当り!`;
                 if(isShokaku && mode === '通常') logMsg += " (昇格)";
                 addLog(logMsg);
@@ -316,12 +299,26 @@
     function toggleAuto(s) { if(isAuto && autoSpeed===s) { isAuto=false; resetBtns(); } else { isAuto=true; autoSpeed=s; resetBtns(); document.getElementById('btn-'+s).classList.add('btn-stop'); startProcess(); } }
     function resetBtns() { document.querySelectorAll('.btn-auto').forEach(b => b.classList.remove('btn-stop')); }
     function resetData() { hits=0; rushCount=0; currentRot=0; totalRot=0; totalBall=0; heso=0; currentRushHits=0; lcdCount=0; slumpData=[0]; slumpLabels=["0"]; historyData=[]; historyLabels=[]; updateUI(); updateHesoUI(false); addLog("データを初期化しました。"); }
-    function updateHesoUI(isRed) { for(let i=1; i<=4; i++) { const el = document.getElementById('h' + i); if (i === 1) el.className = isRed ? 'heso-ball heso-red' : (isAnim || isAuto ? 'heso-ball heso-on' : 'heso-ball'); else el.className = (i - 1 <= heso) ? 'heso-ball heso-on' : 'heso-ball'; } }
+    
+    // 保留UI更新（当該保留 h0 を追加）
+    function updateHesoUI(isRed) { 
+        // 当該保留（h0）の更新：常にONかつ、強演出なら赤くなる
+        const h0 = document.getElementById('h0');
+        h0.className = isRed ? 'heso-ball heso-current heso-red' : 'heso-ball heso-current heso-on';
+        
+        // 残保留（h1-h4）の更新
+        for(let i=1; i<=4; i++) { 
+            const el = document.getElementById('h' + i); 
+            el.className = (i <= heso) ? 'heso-ball heso-on' : 'heso-ball'; 
+        } 
+    }
+    
     function updateUI() { document.getElementById('hits').innerText = hits; document.getElementById('rush-count').innerText = rushCount; document.getElementById('current-rot').innerText = currentRot; document.getElementById('total-rot').innerText = totalRot; const balEl = document.getElementById('balance'); const balVal = Math.floor(totalBall); balEl.innerText = balVal.toLocaleString(); balEl.className = 'stat-val ' + (balVal > 0 ? 'val-blue' : (balVal < 0 ? 'val-red' : 'val-white')); document.getElementById('sub-display').innerText = mode === '通常' ? `通常:${lcdCount}` : `${mode}:${rRem}`; }
     function addLog(m) { const l=document.getElementById('log'); l.innerHTML=`> ${m}<br>${l.innerHTML}`; }
 </script>
 </body>
 </html>
+
 
 
 
