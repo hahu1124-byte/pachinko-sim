@@ -211,7 +211,7 @@
         if(mode !== '通常' && rRem <= 0) {
             let prev = mode;
             addLog(`【${prev}終了】 ${currentRushHits <= 1 ? '1回(' + prev + ')' : currentRushHits + '連'}`);
-            mode = '通常'; rushCount = 0; currentRushHits = 0; lcdCount = 0; // rushCountを0にリセット
+            mode = '通常'; rushCount = 0; currentRushHits = 0; lcdCount = 0;
             updateUI();
             if (prev === '時短' && originalSpeedSetting === 'fast') { autoSpeed = 'fast'; resetBtns(); }
             else { isAuto = false; resetBtns(); return; }
@@ -221,8 +221,10 @@
         updateHesoUI();
         while(reservedStock.length < 4) preCheck();
         let eff = selectEffect(activeJob);
+        
         if(optKokuchi && activeJob.isHit) { eff.flash=true; eff.isSure=true; eff.trust=100; eff.displayName="インフラ告知"; }
         if (mode !== '通常' && eff.trust >= 50 && autoSpeed === 'fast') { autoSpeed = 'slow'; resetBtns(); }
+        
         totalRot++; currentRot++; lcdCount++; 
         if(mode !== '通常') { rRem--; totalBall -= 0.05; }
         else {
@@ -234,6 +236,7 @@
                 document.getElementById('max-hamari-box').innerText = `最大ハマリ: ${maxHamari}`;
             }
         }
+        
         if (totalRot % 10 === 0) { slumpData.push(Math.floor(totalBall)); slumpLabels.push(totalRot.toString()); }
         if(eff.trust >= 50 || activeJob.isHit) {
             addLog(`${mode} ${lcdCount}回【${eff.displayName}】信頼度:${eff.trust.toFixed(1)}%`);
@@ -241,6 +244,7 @@
             if(eff.flash) document.getElementById('screen').classList.add('flash-active');
             if(eff.text) { const ov = document.getElementById('effect-overlay'); ov.innerText = eff.text; ov.style.display = 'block'; }
         }
+        
         let spinTime = (eff.heavy) ? 2500 : (autoSpeed === 'fast' ? 60 : 600);
         let spin = setInterval(() => { 
             let n1 = Math.floor(Math.random()*9)+1, n2 = Math.floor(Math.random()*9)+1, n3 = Math.floor(Math.random()*9)+1;
@@ -252,10 +256,12 @@
             d3.innerText=n3; d3.className='digit '+(n3%2===0?'even':'odd');
             if(n1===7) d1.classList.add('gold'); if(n2===7) d2.classList.add('gold'); if(n3===7) d3.classList.add('gold');
         }, 40);
+        
         await new Promise(r => setTimeout(r, spinTime));
         clearInterval(spin);
         document.getElementById('screen').classList.remove('flash-active');
         document.getElementById('effect-overlay').style.display = 'none';
+        
         if(activeJob.isHit) {
             isAnim = true; hits++;
             if(mode === '通常') { 
@@ -264,19 +270,32 @@
             }
             currentRot = 0;
             let rand = Math.random()*100, logDigit, isST = false, bonusText = "";
+
+            // --- 種別判定ロジックの修正 ---
+            // 虹系（虹レバ、虹保留、インフラ）が出ている場合は強制的にST突入
+            let isRainbowEffect = (activeJob.preVibe === "rainbow" || activeJob.holdType === "rainbow" || (optKokuchi && activeJob.isHit));
+
             if (mode !== '通常') {
                 logDigit = (rand < 50) ? 7 : [1,3,5,9][Math.floor(Math.random()*4)];
                 isST = true; totalBall += 1500;
             } else {
-                if (rand < 2) { logDigit = 7; isST = true; totalBall += 1500; bonusText = "[全回転] "; }
-                else if (rand < 5) { logDigit = 7; isST = true; totalBall += 1500; }
-                else if (rand < 39) { logDigit = [1,3,5,9][Math.floor(Math.random()*4)]; isST = true; totalBall += 450; }
-                else if (rand < 59) { logDigit = [2,4,6,8][Math.floor(Math.random()*4)]; isST = true; totalBall += 450; bonusText = "[昇格] "; }
-                else { logDigit = [2,4,6,8][Math.floor(Math.random()*4)]; isST = false; totalBall += 450; }
+                if (isRainbowEffect) {
+                    // 虹系は必ず7図柄または昇格ST
+                    if (rand < 50) { logDigit = 7; isST = true; totalBall += 1500; }
+                    else { logDigit = [1,3,5,9][Math.floor(Math.random()*4)]; isST = true; totalBall += 450; bonusText = "[昇格] "; }
+                } else {
+                    if (rand < 2) { logDigit = 7; isST = true; totalBall += 1500; bonusText = "[全回転] "; }
+                    else if (rand < 5) { logDigit = 7; isST = true; totalBall += 1500; }
+                    else if (rand < 39) { logDigit = [1,3,5,9][Math.floor(Math.random()*4)]; isST = true; totalBall += 450; }
+                    else if (rand < 59) { logDigit = [2,4,6,8][Math.floor(Math.random()*4)]; isST = true; totalBall += 450; bonusText = "[昇格] "; }
+                    else { logDigit = [2,4,6,8][Math.floor(Math.random()*4)]; isST = false; totalBall += 450; }
+                }
             }
+            // ----------------------------
+
             [1,2,3].forEach(i => { const el = document.getElementById('d'+i); el.innerText = logDigit; el.className = 'digit '+(logDigit==7?'gold':(logDigit%2!==0?'odd':'even')); });
             await new Promise(r => setTimeout(r, 1500));
-            if(isST) { mode = 'ST'; rRem = SPECS.st; rushCount++; } else { mode = '時短'; rRem = SPECS.jt; } // 常にrushCountを加算
+            if(isST) { mode = 'ST'; rRem = SPECS.st; rushCount++; } else { mode = '時短'; rRem = SPECS.jt; }
             addLog(`>> ${mode} ${lcdCount}回 ${bonusText}【${logDigit}】 当り!`);
             currentRushHits++;
             updateUI(); await new Promise(r => setTimeout(r, 1800));
@@ -287,6 +306,7 @@
         updateUI(); resetBtns();
         if(isAuto) setTimeout(startProcess, (autoSpeed === 'fast' ? 5 : 300));
     }
+    
     function toggleAuto(s) { if(isAuto && autoSpeed === s) { isAuto = false; originalSpeedSetting = 'slow'; } else { isAuto = true; autoSpeed = s; originalSpeedSetting = s; if(!isAnim) startProcess(); } resetBtns(); }
     function resetBtns() { document.querySelectorAll('.btn-auto').forEach(b => b.classList.remove('btn-stop')); if(isAuto) document.getElementById('btn-' + autoSpeed).classList.add('btn-stop'); }
     function toggleOpt(t) { if(t==='all') optAll=!optAll; if(t==='kokuchi') optKokuchi=!optKokuchi; document.getElementById('btn-'+t).classList.toggle('active'); }
@@ -323,6 +343,7 @@
 </script>
 </body>
 </html>
+
 
 
 
