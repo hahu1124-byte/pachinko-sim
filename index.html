@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>EVANGELION Sim -Layout Update-</title>
+    <title>EVANGELION Sim -Log Adjustment-</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&display=swap');
@@ -14,12 +14,9 @@
         .main-content { width: 100%; max-width: 440px; display: flex; flex-direction: column; align-items: center; padding: 10px; box-sizing: border-box; }
         
         .machine { width: 100%; background: #111; border: 2px solid #d00000; border-radius: 15px; padding: 12px; position: relative; box-sizing: border-box; }
-        /* 図柄表示部分（1.5倍サイズ） */
         .screen { background: #000; height: 350px; border-radius: 10px; border: 2px solid #444; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; width: 100%; }
         .digit-container { display: flex; gap: 5px; }
         .digit { font-size: 8.5rem; font-weight: 900; font-family: 'Shippori Mincho B1', serif; width: 110px; text-align: center; }
-        
-        /* モード・残り回数表示を右下へ移動 */
         .mode-display { position: absolute; bottom: 35px; right: 15px; color: #d00000; font-weight: bold; font-size: 0.9rem; text-shadow: 0 0 5px #000; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 3px; border-right: 3px solid #d00000; }
         
         .gold { color: #ffeb3b; text-shadow: 0 0 30px #ffeb3b; }
@@ -33,7 +30,6 @@
         
         .vibrate { animation: vibration 0.05s infinite; }
         @keyframes vibration { 0% { transform: translate(0,0); } 25% { transform: translate(-4px, 4px); } 50% { transform: translate(4px, -4px); } 75% { transform: translate(-4px, -4px); } 100% { transform: translate(0,0); } }
-        
         .flash-active { animation: flash-white 0.05s 20; }
         @keyframes flash-white { 0%, 100% { background: #000; } 50% { background: #fff; } }
         
@@ -59,8 +55,8 @@
         .btn-auto { flex: 1; background: #d00000; color: white; border: 1px solid #ff4444; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 1rem; }
         .btn-stop { background: #444 !important; border-color: #666 !important; }
         
-        /* 履歴表示部分（1.5倍サイズ） */
-        .log { width: 100%; max-width: 440px; height: 290px; background: #000; margin-top: 10px; padding: 10px; font-size: 0.9rem; color: #ff4444; overflow-y: auto; border: 1px solid #333; font-family: monospace; box-sizing: border-box; line-height: 1.4; }
+        /* 履歴表示：フォントサイズを2px(約0.13rem)縮小 */
+        .log { width: 100%; max-width: 440px; height: 290px; background: #000; margin-top: 10px; padding: 10px; font-size: 0.77rem; color: #ff4444; overflow-y: auto; border: 1px solid #333; font-family: monospace; box-sizing: border-box; line-height: 1.4; }
         
         #modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; justify-content: center; align-items: center; }
         #modal-content { background: #111; border: 2px solid #d00000; width: 92%; max-width: 400px; padding: 15px; border-radius: 12px; }
@@ -100,7 +96,7 @@
                 <button class="btn-auto" id="btn-fast" onclick="toggleAuto('fast')">高速オート</button>
             </div>
         </div>
-        <div class="log" id="log">> レイアウトを調整しました（液晶右下にST回数を表示）。</div>
+        <div class="log" id="log">> 履歴の文字サイズを2px小さくしました。</div>
     </div>
 
 <script>
@@ -266,6 +262,7 @@
 </script>
 </body>
 </html>
+
 
 
 
