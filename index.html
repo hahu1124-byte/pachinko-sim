@@ -160,7 +160,6 @@
             if (res.name.length > 0) res.heavy = true;
         }
         let names = res.name;
-        // 単体100%演出が含まれるか判定
         const hasSureSingle = names.some(n => ["虹レバ", "インフラ", "カヲル", "さよなら", "全回転"].includes(n));
         
         if (hasSureSingle || names.length >= 3) { res.trust = 100; res.isSure = true; } 
@@ -172,14 +171,33 @@
 
     async function startProcess() {
         if(!isAuto || isAnim) return;
+        
+        // --- 終了判定ロジックの修正 ---
         if(mode !== '通常' && rRem <= 0) { 
-            let endType = (mode === 'ST') ? 'ST終了' : '時短終了';
-            addLog(`【${endType}】 ${currentRushHits}回終了`); 
-            let prevMode = mode; 
-            mode = '通常'; rushCount = 0; currentRushHits = 0; 
+            let prevMode = mode;
+            if (prevMode === 'ST') {
+                if (currentRushHits <= 1) addLog(`【ST終了】 スルー単発`);
+                else addLog(`【ST終了】 連チャン${currentRushHits}回`);
+            } else {
+                addLog(`【時短終了】`);
+            }
+
+            mode = '通常'; 
+            rushCount = 0; 
+            currentRushHits = 0; 
             lcdCount = (prevMode==='ST') ? 0 : 100;
-            updateUI(); if(!optAll) { isAuto = false; resetBtns(); return; } 
+            updateUI(); 
+
+            // 高速オート継続判定：時短終了かつオートが高速なら止めない。それ以外かつ全ボタンOFFなら止める。
+            if(!(prevMode === '時短' && autoSpeed === 'fast')) {
+                if(!optAll) { 
+                    isAuto = false; 
+                    resetBtns(); 
+                    return; 
+                }
+            }
         }
+
         let prob = (mode==='ST') ? SPECS.s : SPECS.n;
         let isHit = Math.random() < (1 / prob);
         let eff = selectEffect(isHit);
@@ -195,13 +213,9 @@
         const machineEl = document.getElementById('machine');
 
         if(eff.heavy) { 
-            // ログの構築
             let logText = `${mode} ${lcdCount}回【${eff.displayName}】信頼度:${eff.trust.toFixed(1)}%`;
-            // プレミア演出（単体100%）が含まれる場合
             const pNames = ["虹レバ", "インフラ", "カヲル", "さよなら", "全回転"];
-            if (eff.isSure && eff.name.some(n => pNames.includes(n))) {
-                logText += " プレミア出現！";
-            }
+            if (eff.isSure && eff.name.some(n => pNames.includes(n))) logText += " プレミア出現！";
             addLog(logText); 
 
             if(eff.vibe) {
@@ -299,6 +313,7 @@
 </script>
 </body>
 </html>
+
 
 
 
