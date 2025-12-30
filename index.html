@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EVANGELION Sim -Fixed Spec-</title>
+    <title>EVANGELION Sim -Hidden Lamp-</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&display=swap');
         body { background: #000; color: white; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
@@ -15,13 +15,25 @@
         .flash-active { animation: flash 0.05s 15; }
         @keyframes rainbow { 0% { border-color: #ff0000; } 20% { border-color: #ffff00; } 40% { border-color: #00ff00; } 60% { border-color: #00ffff; } 80% { border-color: #0000ff; } 100% { border-color: #ff00ff; } }
         .rainbow-active { animation: rainbow 0.5s infinite; border-width: 4px !important; }
+        
+        /* 隠しランプ用虹アニメーション */
+        @keyframes hidden-rainbow { 
+            0% { background: #ff0000; box-shadow: 0 0 10px #ff0000; } 
+            33% { background: #00ff00; box-shadow: 0 0 10px #00ff00; }
+            66% { background: #0000ff; box-shadow: 0 0 10px #0000ff; }
+            100% { background: #ff0000; box-shadow: 0 0 10px #ff0000; }
+        }
 
         header { width: 100%; height: 45px; background: #000; border-bottom: 2px solid #d00000; display: flex; align-items: center; padding: 0 15px; box-sizing: border-box; }
         .logo-main { flex-grow: 1; text-align: center; font-family: 'Shippori Mincho B1', serif; font-size: 1rem; color: #d00000; }
 
         .main-content { flex-grow: 1; display: flex; flex-direction: column; align-items: center; padding: 10px; overflow-y: auto; }
-        .machine { width: 100%; max-width: 400px; background: #111; border: 2px solid #d00000; border-radius: 15px; padding: 12px; }
+        .machine { width: 100%; max-width: 400px; background: #111; border: 2px solid #d00000; border-radius: 15px; padding: 12px; position: relative; }
         
+        /* 隠しランプ本体 */
+        #hidden-lamp { position: absolute; top: 15px; right: 20px; width: 10px; height: 10px; border-radius: 50%; background: #222; z-index: 100; transition: 0.3s; }
+        .hidden-active { animation: hidden-rainbow 0.3s infinite !important; }
+
         .screen { background: #000; height: 240px; border-radius: 8px; border: 2px solid #444; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; margin-bottom: 8px; }
         .digit-container { display: flex; gap: 15px; }
         .digit { font-size: 6.5rem; font-weight: 900; font-family: 'Shippori Mincho B1', serif; width: 85px; text-align: center; z-index: 10; }
@@ -62,6 +74,8 @@
 
 <div class="main-content">
     <div class="machine" id="machine">
+        <div id="hidden-lamp"></div>
+
         <div class="screen" id="screen">
             <div class="digit-container">
                 <div id="d1" class="digit odd">1</div><div id="d2" class="digit even">2</div><div id="d3" class="digit odd">3</div>
@@ -96,7 +110,7 @@
             </div>
         </div>
     </div>
-    <div class="log" id="log">> 全機能復旧完了。スペック固定。</div>
+    <div class="log" id="log">> 隠しランプ実装。違和感に気づけるか。</div>
 </div>
 
 <script>
@@ -127,8 +141,16 @@
             let effect = selectEffect(isHit);
 
             updateHojo(effect.name === "赤保留");
-            if(mode==='通常') totalBall -= 3.125; // 1回転のマイナス（4円換算等）
+            if(mode==='通常') totalBall -= 3.125;
             currentCount++;
+
+            // 演出開始前に隠しランプのリセット
+            document.getElementById('hidden-lamp').className = '';
+
+            // 隠しランプ（カヲル）演出：大当り時の一部でひっそり点灯
+            if(isHit && Math.random() < 0.08) {
+                document.getElementById('hidden-lamp').className = 'hidden-active';
+            }
 
             if(effect.name === "全回転") {
                 isAnim = true; addLog("【プレミア】全回転演出発生！！");
@@ -169,12 +191,12 @@
                 addLog(`> ${effect.name} 外れ...`);
             }
 
+            // 隠しランプ消灯
+            document.getElementById('hidden-lamp').className = '';
+
             if(mode!=='通常' && !isHit && effect.name !== "全回転") {
                 rRem--;
-                if(rRem<=0) { 
-                    addLog(`${mode}終了 ${rushCount}連`); mode='通常'; rushCount=0; 
-                    if(!isFullAuto) { isAuto=false; resetBtns(); }
-                }
+                if(rRem<=0) { addLog(`${mode}終了 ${rushCount}連`); mode='通常'; rushCount=0; if(!isFullAuto) { isAuto=false; resetBtns(); } }
             }
             isAnim = false;
         }
