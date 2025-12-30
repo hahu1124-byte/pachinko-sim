@@ -11,9 +11,7 @@
         header { width: 100%; height: 50px; background: #111; border-bottom: 2px solid #8a2be2; display: flex; align-items: center; padding: 0 10px; box-sizing: border-box; gap: 8px; position: sticky; top: 0; z-index: 100; }
         .header-btn { background: #333; color: #ccc; border: 1px solid #555; padding: 5px 8px; font-size: 0.7rem; cursor: pointer; border-radius: 4px; white-space: nowrap; }
         .btn-graph { background: #8a2be2; color: white; border-color: #a450ff; }
-        /* 最大ハマリ表示用のスタイル */
         .max-hamari-display { background: #000; color: #ff4444; border: 1px solid #ff4444; padding: 4px 8px; font-size: 0.75rem; border-radius: 4px; cursor: pointer; font-weight: bold; overflow: hidden; text-overflow: ellipsis; }
-        
         .main-content { width: 100%; max-width: 440px; display: flex; flex-direction: column; align-items: center; padding: 10px; box-sizing: border-box; }
         .machine { width: 100%; background: #111; border: 3px solid #8a2be2; border-radius: 15px; padding: 12px; position: relative; box-sizing: border-box; transition: border-color 0.2s, box-shadow 0.2s; }
         .screen { background: #000; height: 300px; border-radius: 10px; border: 2px solid #444; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; width: 100%; }
@@ -27,14 +25,14 @@
         .lamp-active { animation: rainbow-bg 0.3s infinite; box-shadow: 0 0 20px #fff; }
         @keyframes rainbow-bg { 0% { background: #f00; } 20% { background: #ff0; } 40% { background: #0f0; } 60% { background: #0ff; } 80% { background: #00f; } 100% { background: #f0f; } }
         .vibrate { animation: vibration 0.05s infinite; }
-        @keyframes vibration { 0% { transform: translate(0,0); } 25% { transform: translate(-4px, 4px); } 50% { transform: translate(4px, -4px); } 75% { transform: translate(-4px, -4px); } 100% { transform: translate(0,0); } }
+        /* 保留がぷるぷる震える演出用 */
+        .heso-vibe { animation: vibration 0.1s infinite !important; background: radial-gradient(circle, #fff, #8a2be2) !important; box-shadow: 0 0 10px #8a2be2; }
+        @keyframes vibration { 0% { transform: translate(0,0); } 25% { transform: translate(-2px, 2px); } 50% { transform: translate(2px, -2px); } 75% { transform: translate(-2px, -2px); } 100% { transform: translate(0,0); } }
         .flash-active { animation: flash-white 0.05s 20; }
         @keyframes flash-white { 0%, 100% { background: #000; } 50% { background: #fff; } }
         .heso-overlay { position: absolute; bottom: 10px; display: flex; align-items: center; gap: 8px; }
         .heso-ball { width: 10px; height: 10px; background: #222; border-radius: 50%; border: 1px solid #555; transition: all 0.2s; }
         .heso-current { width: 13px !important; height: 13px !important; border-width: 2px !important; margin-right: 8px; border-color: #fff !important; }
-        .heso-migi { border-radius: 2px !important; width: 12px; height: 12px; border: 1.2px solid #fff; }
-        .heso-migi.heso-current { width: 15.6px !important; height: 15.6px !important; border-width: 2px !important; }
         .heso-on { background: #888; }
         .heso-red { background: radial-gradient(circle, #ff4444, #880000); box-shadow: 0 0 8px #ff0000; border-color: #f00; }
         .heso-green { background: radial-gradient(circle, #44ff44, #008800); box-shadow: 0 0 8px #00ff00; border-color: #0f0; }
@@ -110,7 +108,7 @@
                 <button class="btn-auto" id="btn-fast" onclick="toggleAuto('fast')">高速オート</button>
             </div>
         </div>
-        <div class="log" id="log">> 最大ハマリ記録とグラフの白文字化を反映しました。</div>
+        <div class="log" id="log">> 保留占有率を修正し「ぷるぷる保留」を追加しました。</div>
     </div>
     
 <script>
@@ -123,7 +121,7 @@
     let maxHamari = 0, maxHamariDetail = "記録なし";
 
     // 信頼度マップ
-    const TRUST_MAP_N = { "白レバ": 0.90, "赤レバ": 0.965, "赤保留": 0.90, "次回予告": 0.65, "レイ背景": 0.85, "金系": 0.50 };
+    const TRUST_MAP_N = { "白レバ": 0.90, "赤レバ": 0.965, "赤保留": 0.90, "次回予告": 0.65, "レイ背景": 0.85, "金系": 0.50, "緑保留": 0.11, "青保留": 0.05, "ぷるぷる保留": 0.93 };
     const TRUST_MAP_S = { "白レバ": 0.95, "赤レバ": 0.99, "赤保留": 0.95, "次回予告": 1.0, "レイ背景": 0.92, "金系": 0.80 };
 
     function triggerVibeUI(color) {
@@ -141,29 +139,39 @@
         let holdType = "none", preVibe = "none", roll = Math.random() * 100;
 
         if (isHit) {
-            // 当選時の演出決定（占有率に基づき複合）
             if (mode === '通常') {
-                if (Math.random() < 0.667) {
+                // 通常時：大当り時占有率
+                let hRoll = Math.random() * 100;
+                if (hRoll < 33) holdType = "red";
+                else if (hRoll < 43) { holdType = "vibe"; preVibe = (Math.random() < 0.6 ? "white" : "red"); } // ぷるぷる保留(10%)
+                else if (hRoll < 46) holdType = "green"; // 3%
+                else if (hRoll < 47) holdType = "blue";  // 1%
+                // レバブル全体占有率(66.7%)の残り調整
+                if (preVibe === "none" && Math.random() < 0.567) { 
                     let vr = Math.random() * 100;
                     preVibe = vr < 50 ? "white" : (vr < 85 ? "red" : "rainbow");
                 }
-                if (Math.random() < 0.33) holdType = "red";
             } else {
-                // ST中の当選演出（占有率固定）
+                // ST中の当選演出
                 if (Math.random() < 0.10) holdType = "rainbow"; 
                 else if (Math.random() < 0.50) holdType = "red";
                 let vr = Math.random()*100;
                 if (vr < 30) preVibe = "red"; else if (vr < 60) preVibe = "white";
             }
         } else {
-            // ハズレ時の演出
-            if (mode === '通常' && roll < 0.01) preVibe = (Math.random() < 0.8 ? "white" : "red");
-            if (mode === '通常' && roll < 0.5) holdType = "green";
+            // ハズレ時の保留出現
+            let hRoll = Math.random() * 100;
+            if (mode === '通常') {
+                if (hRoll < 0.1) holdType = "red";
+                else if (hRoll < 1.0) holdType = "green";
+                else if (hRoll < 3.0) holdType = "blue";
+                if (roll < 0.01) preVibe = (Math.random() < 0.8 ? "white" : "red");
+            }
         }
 
         reservedStock.push({ isHit: isHit, holdType: holdType, preVibe: preVibe });
         if (preVibe !== "none") triggerVibeUI(preVibe);
-        if ((holdType === "red" || preVibe !== "none") && isAuto && autoSpeed === "fast") { autoSpeed = 'slow'; resetBtns(); }
+        if ((holdType === "red" || holdType === "vibe" || preVibe !== "none") && isAuto && autoSpeed === "fast") { autoSpeed = 'slow'; resetBtns(); }
         updateHesoUI();
     }
 
@@ -172,7 +180,11 @@
         const map = (mode !== '通常') ? TRUST_MAP_S : TRUST_MAP_N;
 
         if (res.holdType === "red") res.name.push("赤保留");
+        if (res.holdType === "green") res.name.push("緑保留");
+        if (res.holdType === "blue") res.name.push("青保留");
+        if (res.holdType === "vibe") res.name.push("ぷるぷる保留");
         if (res.holdType === "rainbow") { res.name.push("虹保留"); res.isSure = true; }
+        
         if (res.vibeColor !== "none") { 
             res.vibe = true; 
             if(res.vibeColor === "rainbow") { res.name.push("虹レバ"); res.isSure = true; }
@@ -185,7 +197,7 @@
                 if (Math.random() < 0.40) { res.name.push("次回予告"); res.text="次回予告"; }
                 if (Math.random() < 0.20) { res.name.push("レイ背景"); res.text="レイ背景"; }
                 if (Math.random() < 0.60) res.name.push("金系");
-                if (res.name.length === 0) res.name.push("その他(0.5%)");
+                if (res.name.length === 0) res.name.push("その他");
             } else {
                 if (Math.random() < 0.10) { res.name.push("次回予告"); res.text="次回予告"; }
                 else if (Math.random() < 0.33) res.name.push("金系");
@@ -199,8 +211,7 @@
             let fail = 1; 
             res.name.forEach(n => fail *= (1 - (map[n] || 0.05)));
             res.trust = (1 - fail) * 100;
-            // 3種複合以上で100%にする
-            if (res.name.length >= 3) res.trust = 100;
+            if (mode === '通常' && res.name.length >= 3) res.trust = 100;
         } else {
             res.trust = (mode === '通常' ? 0.1 : 1.0);
         }
@@ -299,10 +310,14 @@
     function updateHesoUI() { 
         const isM = (mode !== '通常'); 
         const h0 = document.getElementById('h0');
-        h0.className = `heso-ball heso-current ${isM?'heso-migi':''} ${activeJob?(activeJob.holdType!='none'?'heso-'+activeJob.holdType:'heso-on'):''}`;
+        h0.className = `heso-ball heso-current ${isM?'heso-migi':''} ${activeJob?(activeJob.holdType!='none'?'heso-'+activeJob.holdType:(activeJob.holdType==='vibe'?'heso-vibe':'heso-on')):''}`;
+        if(activeJob && activeJob.holdType === 'vibe') h0.classList.add('heso-vibe');
         for(let i=1; i<=4; i++) { 
             const el = document.getElementById('h'+i); const s = reservedStock[i-1]; 
-            el.className = `heso-ball ${isM?'heso-migi':''} ${s?(s.holdType!='none'?'heso-'+s.holdType:'heso-on'):''}`; 
+            if(s) {
+                el.className = `heso-ball ${isM?'heso-migi':''} ${s.holdType!='none'?'heso-'+s.holdType:'heso-on'}`;
+                if(s.holdType === 'vibe') el.classList.add('heso-vibe');
+            } else { el.className = `heso-ball ${isM?'heso-migi':''}`; }
         } 
     }
     function updateUI() { 
@@ -328,6 +343,7 @@
 </script>
 </body>
 </html>
+
 
 
 
