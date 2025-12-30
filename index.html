@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>EVANGELION Sim -Fix-</title>
+    <title>EVANGELION Sim -3% 10R-</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&display=swap');
-        body { background: #000; color: white; font-family: sans-serif; margin: 0; padding: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; overflow-x: hidden; }
+        body { background: #000; color: white; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; overflow-x: hidden; }
         header { width: 100%; height: 50px; background: #111; border-bottom: 2px solid #d00000; display: flex; align-items: center; padding: 0 10px; box-sizing: border-box; gap: 10px; position: sticky; top: 0; z-index: 100; }
         .header-btn { background: #333; color: #ccc; border: 1px solid #555; padding: 5px 8px; font-size: 0.7rem; cursor: pointer; border-radius: 4px; }
         .btn-graph { background: #d00000; color: white; border-color: #ff4444; }
@@ -15,7 +15,7 @@
         .machine { width: 100%; background: #111; border: 2px solid #d00000; border-radius: 15px; padding: 12px; position: relative; box-sizing: border-box; }
         .screen { background: #000; height: 300px; border-radius: 10px; border: 2px solid #444; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; width: 100%; }
         .digit-container { display: flex; gap: 5px; }
-        .digit { font-size: 7rem; font-weight: 900; font-family: 'Shippori Mincho B1', serif; width: 85px; text-align: center; }
+        .digit { font-size: 8rem; font-weight: 900; font-family: 'Shippori Mincho B1', serif; width: 100px; text-align: center; }
         .gold { color: #ffeb3b; text-shadow: 0 0 30px #ffeb3b; }
         .odd { color: #ff4444; text-shadow: 0 0 20px #ff4444; }
         .even { color: #4444ff; text-shadow: 0 0 20px #4444ff; }
@@ -23,14 +23,14 @@
         .lamp-active { animation: rainbow-bg 0.5s infinite; box-shadow: 0 0 15px #fff; }
         @keyframes rainbow-bg { 0% { background: #f00; } 20% { background: #ff0; } 40% { background: #0f0; } 60% { background: #0ff; } 80% { background: #00f; } 100% { background: #f0f; } }
         .vibrate { animation: viberation 0.05s infinite; }
-        @keyframes viberation { 0% { transform: translate(0,0); } 10% { transform: translate(-2px, 2px); } 20% { transform: translate(2px, -2px); } 100% { transform: translate(0,0); } }
+        @keyframes viberation { 0% { transform: translate(0,0); } 10% { transform: translate(-3px, 3px); } 20% { transform: translate(3px, -3px); } 100% { transform: translate(0,0); } }
         .flash-active { animation: flash-white 0.05s 20; }
         @keyframes flash-white { 0%, 100% { background: #000; } 50% { background: #fff; } }
         .heso-overlay { position: absolute; bottom: 10px; display: flex; gap: 8px; }
         .heso-ball { width: 10px; height: 10px; background: #222; border-radius: 50%; border: 1px solid #555; }
         .heso-red { background: radial-gradient(circle, #ff4444, #880000); box-shadow: 0 0 8px #ff0000; border-color: #f00; }
         .heso-on { background: #888; }
-        .effect-text { position: absolute; color: white; font-weight: bold; font-size: 2rem; z-index: 5; text-shadow: 0 0 10px #000; background: rgba(0,0,0,0.7); padding: 5px 15px; border-radius: 5px; display: none; }
+        .effect-text { position: absolute; color: white; font-weight: bold; font-size: 2.2rem; z-index: 5; text-shadow: 0 0 10px #000; background: rgba(0,0,0,0.7); padding: 5px 15px; border-radius: 5px; display: none; }
         .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-top: 12px; }
         .stat-item { background: #000; border: 1px solid #333; padding: 5px 0; text-align: center; border-radius: 4px; }
         .stat-val { font-size: 0.9rem; font-weight: bold; color: #d00000; font-family: monospace; }
@@ -80,17 +80,16 @@
             <button class="btn-auto" id="btn-fast" onclick="toggleAuto('fast')">高速オート</button>
         </div>
     </div>
-    <div class="log" id="log">> 復旧完了しました。</div>
+    <div class="log" id="log">> 通常時7図柄(10R:1400個)を3%に設定しました。</div>
 </div>
 
 <script>
     const SPECS = { n: 319.7, s: 99.4, st: 163, jt: 100 };
-    let hits=0, rushCount=0, currentCount=0, totalBall=0, totalRot=0, heso=0;
+    let hits=0, rushCount=0, currentCount=0, totalBall=0, totalRot=0, heso=0, currentRushHits=0;
     let mode='通常', rRem=0, isAuto=false, autoSpeed='slow', isAnim=false;
     let optAll=false, optKokuchi=false;
     let slumpData=[0], slumpLabels=["0"], historyData=[], historyLabels=[];
     let sChart, hChart;
-    let currentRushHits = 0;
 
     function openModal() { document.getElementById('modal-overlay').style.display='flex'; updateCharts(); }
     function closeModal() { document.getElementById('modal-overlay').style.display='none'; }
@@ -112,16 +111,32 @@
         else { isAuto=true; autoSpeed=s; resetBtns(); document.getElementById('btn-'+s).classList.add('btn-stop'); startProcess(); }
     }
     function resetBtns() { document.querySelectorAll('.btn-auto').forEach(b => b.classList.remove('btn-stop')); }
-    function resetData() { hits=0; rushCount=0; currentCount=0; totalBall=0; totalRot=0; heso=0; slumpData=[0]; slumpLabels=["0"]; historyData=[]; historyLabels=[]; currentRushHits=0; updateUI(); updateHeso(); addLog("リセット"); }
+    function resetData() { hits=0; rushCount=0; currentCount=0; totalBall=0; totalRot=0; heso=0; currentRushHits=0; slumpData=[0]; slumpLabels=["0"]; historyData=[]; historyLabels=[]; updateUI(); updateHeso(); addLog("リセット"); }
 
     async function startProcess() {
         if(!isAuto || isAnim) return;
         if(heso < 4) heso++;
 
         let isHit = Math.random() < (1 / (mode==='ST' ? SPECS.s : SPECS.n));
-        let willEnterRush = isHit && (mode !== '通常' || Math.random() < 0.59);
-        let eff = selectEffect(isHit, willEnterRush);
+        
+        // 振り分け判定
+        let rand = Math.random() * 100;
+        let is10R = false;
+        let willEnterRush = false;
 
+        if (isHit) {
+            if (mode === '通常') {
+                if (rand < 3) { is10R = true; willEnterRush = true; } // 3% 10R(7図柄・RUSH)
+                else if (rand < 59) { is10R = false; willEnterRush = true; } // 56% 3R(偶数・RUSH)
+                else { is10R = false; willEnterRush = false; } // 41% 3R(偶数・時短)
+            } else {
+                // RUSH中/時短中は全大当り10R(1400個)
+                is10R = true;
+                willEnterRush = true;
+            }
+        }
+        
+        let eff = selectEffect(isHit, willEnterRush);
         if(optKokuchi && isHit) { eff.heavy=true; eff.flash=true; eff.lamp=true; eff.name="完全告知"; eff.trust=100; eff.freq=0.3; }
         
         let originalSpeed = autoSpeed;
@@ -154,11 +169,12 @@
         if(isHit) {
             isAnim=true; hits++;
             historyData.push(currentCount); historyLabels.push(hits);
-            let d = willEnterRush ? 7 : 2;
+            
+            let d = is10R ? 7 : 2;
             [1,2,3].forEach(i => { const el=document.getElementById('d'+i); el.innerText=d; el.className='digit '+(d===7?'gold':'even'); });
             
             if(mode==='通常') {
-                addLog(`>> ${currentCount}回転 【${d}】 大当り!`);
+                addLog(`>> ${currentCount}回転 【${d}】 大当り! ${is10R ? '(10R)' : '(3R)'}`);
                 if(willEnterRush) { 
                     addLog(">>> RUSH突入！");
                     mode='ST'; rRem=SPECS.st; rushCount=1; currentRushHits=1;
@@ -170,7 +186,7 @@
                 if(mode==='ST') rushCount = currentRushHits;
                 if(willEnterRush) { mode='ST'; rRem=SPECS.st; } else { mode='時短'; rRem=SPECS.jt; }
             }
-            totalBall += (d===7 ? 1400 : 420);
+            totalBall += (is10R ? 1400 : 420);
             updateUI(); await new Promise(r => setTimeout(r, 1800));
             currentCount=0; document.getElementById('lamp').classList.remove('lamp-active');
         } else if(eff.heavy && mode==='通常') {
@@ -220,3 +236,4 @@
 </script>
 </body>
 </html>
+
