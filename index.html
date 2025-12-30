@@ -8,69 +8,37 @@
         @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&display=swap');
 
         body { background: #050505; color: white; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        
-        /* ヘッダーエリア（ボタンとロゴを保護） */
-        header { 
-            width: 100%; height: 60px; background: #000; border-bottom: 2px solid #d00000; 
-            display: flex; align-items: center; padding: 0 15px; box-sizing: border-box; z-index: 110;
-        }
-
-        /* サイドバー（引き出し式） */
-        .sidebar { 
-            position: absolute; left: -250px; top: 0; width: 220px; height: 100%; 
-            background: #000; border-right: 2px solid #d00000; padding: 20px; 
-            z-index: 120; transition: 0.3s; box-shadow: 5px 0 15px rgba(208, 0, 0, 0.5); 
-        }
+        header { width: 100%; height: 50px; background: #000; border-bottom: 2px solid #d00000; display: flex; align-items: center; padding: 0 15px; box-sizing: border-box; z-index: 110; }
+        .sidebar { position: absolute; left: -250px; top: 0; width: 220px; height: 100%; background: #000; border-right: 2px solid #d00000; padding: 20px; z-index: 120; transition: 0.3s; box-shadow: 5px 0 15px rgba(208, 0, 0, 0.5); }
         .sidebar.open { left: 0; }
-        .machine-item { padding: 12px; background: #1a1a1a; border: 1px solid #d00000; color: #ff4444; margin-bottom: 10px; font-size: 0.8rem; font-weight: bold; cursor: pointer; text-align: center; }
+        .menu-btn { background: #d00000; color: white; border: 1px solid #ff4444; padding: 5px 10px; cursor: pointer; font-weight: bold; font-size: 0.8rem; }
+        .logo-main { flex-grow: 1; text-align: center; font-family: 'Shippori Mincho B1', serif; font-size: 1rem; color: #d00000; text-shadow: 0 0 5px #d00000; margin-right: 40px; }
 
-        /* メニューボタン（NERVパネル風） */
-        .menu-btn { 
-            background: #d00000; color: white; border: 1px solid #ff4444; 
-            padding: 8px 12px; cursor: pointer; font-weight: bold; font-size: 0.8rem;
-            box-shadow: 0 0 10px rgba(208,0,0,0.5);
-        }
-
-        .logo-main { 
-            flex-grow: 1; text-align: center; font-family: 'Shippori Mincho B1', serif; 
-            font-size: 1.1rem; color: #d00000; letter-spacing: 1px; text-shadow: 0 0 5px #d00000; 
-            margin-right: 40px; /* ボタンとのバランス調整 */
-        }
-
-        /* メイン画面（ヘッダー分を確保） */
-        .main-content { 
-            flex-grow: 1; display: flex; flex-direction: column; align-items: center; 
-            justify-content: flex-start; padding: 15px; width: 100%; overflow-y: auto; box-sizing: border-box;
-        }
-
+        .main-content { flex-grow: 1; display: flex; flex-direction: column; align-items: center; padding: 10px; width: 100%; overflow-y: auto; box-sizing: border-box; }
         .machine { width: 100%; max-width: 400px; background: #111; border: 2px solid #d00000; border-radius: 10px; padding: 15px; box-sizing: border-box; }
         
-        .screen { 
-            background: #000; height: 180px; border-radius: 5px; border: 1px solid #444; 
-            display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            margin-bottom: 15px; position: relative; overflow: hidden; box-shadow: inset 0 0 20px #d0000055; 
-        }
-        #display { font-size: 4rem; font-weight: 900; z-index: 2; font-family: 'Shippori Mincho B1', serif; }
+        /* 液晶画面：3つの数字 */
+        .screen { background: #000; height: 160px; border-radius: 5px; border: 1px solid #444; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; position: relative; overflow: hidden; box-shadow: inset 0 0 20px #d0000055; }
+        .reels { display: flex; gap: 15px; z-index: 2; }
+        .digit { font-size: 4rem; font-weight: 900; font-family: 'Shippori Mincho B1', serif; width: 60px; text-align: center; }
         
-        .flash-overlay { position: absolute; top:0; left:0; width:100%; height:100%; pointer-events: none; z-index: 1; display: none; }
+        .flash-overlay { position: absolute; top:0; left:0; width:100%; height:100%; pointer-events: none; z-index: 3; display: none; }
         .is-hitting { display: block; animation: rainbow 0.1s linear infinite; opacity: 0.6; }
         @keyframes rainbow { 0%{background:red;} 20%{background:orange;} 40%{background:yellow;} 60%{background:white;} 80%{background:purple;} 100%{background:red;} }
 
-        /* スペック表 */
-        .spec-table { width: 100%; margin-bottom: 15px; border-collapse: collapse; font-size: 0.7rem; background: #1a1a1a; color: #aaa; }
-        .spec-table th, .spec-table td { border: 1px solid #333; padding: 5px; text-align: center; }
-        .spec-table th { background: #222; color: #ff4444; font-weight: normal; }
-        .highlight { color: #fff; font-weight: bold; }
+        .spec-table { width: 100%; margin-bottom: 10px; border-collapse: collapse; font-size: 0.7rem; background: #1a1a1a; }
+        .spec-table th, .spec-table td { border: 1px solid #333; padding: 4px; text-align: center; }
+        .spec-table th { color: #ff4444; }
 
-        .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 15px; }
+        .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 10px; }
         .stat-item { background: #000; border: 1px solid #333; padding: 5px; text-align: center; }
         .stat-val { display: block; font-size: 0.85rem; font-weight: bold; color: #d00000; }
         .stat-label { font-size: 0.5rem; color: #666; }
 
-        #btn { background: #d00000; color: white; border: 2px solid #ff4444; padding: 15px; font-size: 1.1rem; cursor: pointer; width: 100%; font-weight: bold; font-family: 'Shippori Mincho B1', serif; }
+        #btn { background: #d00000; color: white; border: 2px solid #ff4444; padding: 12px; font-size: 1.1rem; cursor: pointer; width: 100%; font-weight: bold; font-family: 'Shippori Mincho B1', serif; }
         #btn.active { background: #333; color: #666; border-color: #444; }
 
-        .log { width: 100%; max-width: 400px; height: 90px; background: #000; margin-top: 10px; padding: 8px; border-radius: 5px; font-size: 0.7rem; color: #ff4444; overflow-y: auto; box-sizing: border-box; border: 1px solid #333; font-family: monospace; }
+        .log { width: 100%; max-width: 400px; height: 80px; background: #000; margin-top: 10px; padding: 8px; border-radius: 5px; font-size: 0.7rem; color: #ff4444; overflow-y: auto; box-sizing: border-box; border: 1px solid #333; font-family: monospace; }
     </style>
 </head>
 <body>
@@ -81,30 +49,28 @@
 </header>
 
 <div class="sidebar" id="sidebar">
-    <div style="color:#d00000; font-weight:bold; margin-bottom:20px; text-align:center;">SELECT MACHINE</div>
+    <div style="color:#d00000; font-weight:bold; margin-bottom:20px; text-align:center;">MACHINE LIST</div>
     <ul style="list-style: none; padding: 0;">
-        <li class="machine-item">Pエヴァ15 未来への咆哮</li>
+        <li class="machine-item" style="padding:10px; background:#111; border:1px solid #d00000; color:#ff4444; font-size:0.8rem; text-align:center;">Pエヴァ15 未来への咆哮</li>
     </ul>
-    <button onclick="toggleSidebar()" style="width: 100%; background: #333; color: white; border: none; padding: 10px; cursor: pointer; font-size:0.8rem;">CLOSE</button>
+    <button onclick="toggleSidebar()" style="width: 100%; background: #333; color: white; border: none; padding: 10px; margin-top: 10px;">CLOSE</button>
 </div>
 
 <div class="main-content">
     <div class="machine">
         <div class="screen">
             <div id="flash" class="flash-overlay"></div>
-            <div id="display">READY</div>
-            <div id="sub-display" style="color:#d00000; font-size:0.7rem; margin-top:5px; font-weight:bold;">STANDBY</div>
+            <div class="reels">
+                <div id="d1" class="digit">0</div>
+                <div id="d2" class="digit">0</div>
+                <div id="d3" class="digit">0</div>
+            </div>
+            <div id="sub-display" style="position:absolute; bottom:10px; color:#d00000; font-size:0.6rem; font-weight:bold;">STANDBY</div>
         </div>
 
         <table class="spec-table">
-            <tr>
-                <th>通常時</th><td class="highlight">1/319.7</td>
-                <th>右打ち中</th><td class="highlight">1/99.4</td>
-            </tr>
-            <tr>
-                <th>ST突入率</th><td class="highlight">約70%※</td>
-                <th>RUSH継続</th><td class="highlight">約81%</td>
-            </tr>
+            <tr><th>通常</th><td style="color:#fff">1/319.7</td><th>右打</th><td style="color:#fff">1/99.4</td></tr>
+            <tr><th>突入</th><td style="color:#fff">約70%</td><th>継続</th><td style="color:#fff">約81%</td></tr>
         </table>
 
         <div class="stat-grid">
@@ -116,29 +82,13 @@
 
         <button id="btn" onclick="toggleAuto()">オート開始</button>
     </div>
-
     <div class="log" id="log">--- 作戦行動履歴 ---<br></div>
 </div>
 
 <script>
     const SPEC = { normal_prob: 319.7, st_prob: 99.4, st_taps: 163, jititan_taps: 100, st_rush_rate: 0.59, payout: 1500 };
-    let totalCount = 0, currentCount = 0, hits = 0, rushCount = 0, investment = 0, totalReturn = 0;
-    let mode = 'NORMAL', stRemaining = 0, isAuto = false, autoTimer = null;
-
-    function playHitSound() {
-        try {
-            const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(440, ctx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.1);
-            gain.gain.setValueAtTime(0.1, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
-            osc.connect(gain); gain.connect(ctx.destination);
-            osc.start(); osc.stop(ctx.currentTime + 0.5);
-        } catch(e) {}
-    }
+    let hits = 0, rushCount = 0, investment = 0, totalReturn = 0, currentCount = 0;
+    let mode = 'NORMAL', stRemaining = 0, isAuto = false, isAnimating = false, autoTimer = null;
 
     function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
 
@@ -148,68 +98,111 @@
             isAuto = true;
             document.getElementById('btn').innerText = "STOP";
             document.getElementById('btn').classList.add('active');
-            autoTimer = setInterval(play, 30); 
+            startProcess();
         }
     }
 
     function stopAuto() {
         isAuto = false;
-        clearInterval(autoTimer);
+        clearTimeout(autoTimer);
         document.getElementById('btn').innerText = "オート開始";
         document.getElementById('btn').classList.remove('active');
     }
 
-    function play() {
-        investment += 20;
-        totalCount++; currentCount++;
-        let prob = (mode === 'ST') ? SPEC.st_prob : SPEC.normal_prob;
+    async function startProcess() {
+        if (!isAuto || isAnimating) return;
         
-        if (Math.random() < 1 / prob) { 
-            handleHit(); 
+        investment += 20;
+        currentCount++;
+        updateUI();
+
+        let prob = (mode === 'ST') ? SPEC.st_prob : SPEC.normal_prob;
+        let hit = Math.random() < 1 / prob;
+
+        await runAnimation(hit);
+
+        if (hit) {
+            handleHit();
         } else {
-            document.getElementById('display').innerText = Math.floor(Math.random() * 10);
             if (mode !== 'NORMAL') {
                 stRemaining--;
                 if (stRemaining <= 0) {
-                    addLog(`警告：${(mode === 'ST') ? "STスルー" : "時短スルー"}`);
-                    mode = 'NORMAL'; currentCount = 0; rushCount = 0;
+                    addLog(`警告：${(mode === 'ST') ? "ST" : "時短"}スルー`);
+                    mode = 'NORMAL'; rushCount = 0; currentCount = 0;
+                    updateUI();
                     stopAuto();
+                    return;
                 }
             }
+            // オート継続
+            if (isAuto) autoTimer = setTimeout(startProcess, 100);
         }
-        updateUI();
+    }
+
+    function runAnimation(isHit) {
+        return new Promise(resolve => {
+            isAnimating = true;
+            const d1 = document.getElementById('d1'), d2 = document.getElementById('d2'), d3 = document.getElementById('d3');
+            let count = 0;
+            
+            let shuffle = setInterval(() => {
+                d1.innerText = Math.floor(Math.random()*10);
+                d2.innerText = Math.floor(Math.random()*10);
+                d3.innerText = Math.floor(Math.random()*10);
+                count++;
+                if (count > 5) {
+                    clearInterval(shuffle);
+                    // リーチ演出判定
+                    let l = isHit ? 7 : Math.floor(Math.random()*10);
+                    let r = l;
+                    d1.innerText = l; d3.innerText = r;
+                    
+                    // リーチなら中をゆっくり
+                    let midCount = 0;
+                    let midShuffle = setInterval(() => {
+                        d2.innerText = Math.floor(Math.random()*10);
+                        midCount++;
+                        if (midCount > 10) {
+                            clearInterval(midShuffle);
+                            d2.innerText = isHit ? l : (l + 1) % 10;
+                            isAnimating = false;
+                            resolve();
+                        }
+                    }, 100);
+                }
+            }, 50);
+        });
     }
 
     function handleHit() {
-        stopAuto();
         hits++;
         totalReturn += SPEC.payout;
-        playHitSound();
-        const display = document.getElementById('display');
-        const flash = document.getElementById('flash');
-        display.innerText = "VII";
-        display.style.color = "#ffeb3b";
-        flash.style.display = 'block';
-        flash.classList.add('is-hitting');
-        setTimeout(() => {
-            flash.style.display = 'none';
-            flash.classList.remove('is-hitting');
-            display.style.color = "white";
-        }, 2000);
-
+        document.getElementById('flash').classList.add('is-hitting');
+        
         if (mode === 'NORMAL') {
             if (Math.random() < SPEC.st_rush_rate) {
                 mode = 'ST'; stRemaining = SPEC.st_taps; rushCount = 1;
-                addLog(`覚醒：大当り(IMPACT RUSH突入)`);
+                addLog(`覚醒：大当り(ST突入)`);
             } else {
                 mode = 'JITITAN'; stRemaining = SPEC.jititan_taps;
-                addLog(`捕捉：大当り(時短100回)`);
+                addLog(`捕捉：大当り(時短100)`);
             }
         } else {
             mode = 'ST'; stRemaining = SPEC.st_taps; rushCount++;
             addLog(`継続：${rushCount}連目`);
         }
         currentCount = 0;
+        updateUI();
+
+        setTimeout(() => {
+            document.getElementById('flash').classList.remove('is-hitting');
+            // 右打ち中ならオート継続、通常からなら一度止める（お好みで）
+            if (isAuto && (mode === 'ST' || mode === 'JITITAN')) {
+                startProcess();
+            } else {
+                stopAuto();
+            }
+        }, 2000);
     }
 
     function updateUI() {
@@ -218,7 +211,7 @@
         document.getElementById('current-rot').innerText = currentCount;
         document.getElementById('balance').innerText = (totalReturn - investment).toLocaleString();
         const sub = document.getElementById('sub-display');
-        sub.innerText = (mode === 'ST') ? `IMPACT RUSH残り: ${stRemaining}` : (mode === 'JITITAN') ? `チャンスタイム残り: ${stRemaining}` : "通常時：待機中";
+        sub.innerText = (mode === 'ST') ? `IMPACT RUSH残り: ${stRemaining}` : (mode === 'JITITAN') ? `チャンスタイム残り: ${stRemaining}` : "通常時：作戦待機中";
     }
 
     function addLog(msg) {
