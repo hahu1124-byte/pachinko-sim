@@ -7,24 +7,49 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&display=swap');
 
-        body { background: #050505; color: white; font-family: sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        body { background: #050505; color: white; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
-        /* サイドバー */
-        .sidebar { position: absolute; left: -250px; top: 0; width: 220px; height: 100%; background: #000; border-right: 2px solid #d00000; padding: 20px; z-index: 100; transition: 0.3s; box-shadow: 5px 0 15px rgba(208, 0, 0, 0.3); }
+        /* ヘッダーエリア（ボタンとロゴを保護） */
+        header { 
+            width: 100%; height: 60px; background: #000; border-bottom: 2px solid #d00000; 
+            display: flex; align-items: center; padding: 0 15px; box-sizing: border-box; z-index: 110;
+        }
+
+        /* サイドバー（引き出し式） */
+        .sidebar { 
+            position: absolute; left: -250px; top: 0; width: 220px; height: 100%; 
+            background: #000; border-right: 2px solid #d00000; padding: 20px; 
+            z-index: 120; transition: 0.3s; box-shadow: 5px 0 15px rgba(208, 0, 0, 0.5); 
+        }
         .sidebar.open { left: 0; }
-        .machine-item { padding: 12px; background: #1a1a1a; border: 1px solid #d00000; color: #ff4444; border-radius: 2px; margin-bottom: 10px; font-size: 0.8rem; font-weight: bold; cursor: pointer; }
+        .machine-item { padding: 12px; background: #1a1a1a; border: 1px solid #d00000; color: #ff4444; margin-bottom: 10px; font-size: 0.8rem; font-weight: bold; cursor: pointer; text-align: center; }
 
-        /* ロゴ部分 */
-        .logo-area { text-align: center; margin-bottom: 15px; border-bottom: 2px solid #d00000; padding-bottom: 5px; }
-        .logo-main { font-family: 'Shippori Mincho B1', serif; font-size: 1.2rem; color: #d00000; letter-spacing: 2px; text-shadow: 0 0 5px #d00000; }
+        /* メニューボタン（NERVパネル風） */
+        .menu-btn { 
+            background: #d00000; color: white; border: 1px solid #ff4444; 
+            padding: 8px 12px; cursor: pointer; font-weight: bold; font-size: 0.8rem;
+            box-shadow: 0 0 10px rgba(208,0,0,0.5);
+        }
 
-        .menu-btn { position: absolute; top: 10px; left: 10px; z-index: 101; background: #d00000; color: white; border: none; padding: 8px 12px; border-radius: 2px; cursor: pointer; font-weight: bold; }
+        .logo-main { 
+            flex-grow: 1; text-align: center; font-family: 'Shippori Mincho B1', serif; 
+            font-size: 1.1rem; color: #d00000; letter-spacing: 1px; text-shadow: 0 0 5px #d00000; 
+            margin-right: 40px; /* ボタンとのバランス調整 */
+        }
 
-        /* メイン画面 */
-        .main-content { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 60px 10px 10px; width: 100%; overflow-y: auto; }
+        /* メイン画面（ヘッダー分を確保） */
+        .main-content { 
+            flex-grow: 1; display: flex; flex-direction: column; align-items: center; 
+            justify-content: flex-start; padding: 15px; width: 100%; overflow-y: auto; box-sizing: border-box;
+        }
+
         .machine { width: 100%; max-width: 400px; background: #111; border: 2px solid #d00000; border-radius: 10px; padding: 15px; box-sizing: border-box; }
         
-        .screen { background: #000; height: 180px; border-radius: 5px; border: 1px solid #444; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 15px; position: relative; overflow: hidden; box-shadow: inset 0 0 20px #d0000055; }
+        .screen { 
+            background: #000; height: 180px; border-radius: 5px; border: 1px solid #444; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            margin-bottom: 15px; position: relative; overflow: hidden; box-shadow: inset 0 0 20px #d0000055; 
+        }
         #display { font-size: 4rem; font-weight: 900; z-index: 2; font-family: 'Shippori Mincho B1', serif; }
         
         .flash-overlay { position: absolute; top:0; left:0; width:100%; height:100%; pointer-events: none; z-index: 1; display: none; }
@@ -32,41 +57,38 @@
         @keyframes rainbow { 0%{background:red;} 20%{background:orange;} 40%{background:yellow;} 60%{background:white;} 80%{background:purple;} 100%{background:red;} }
 
         /* スペック表 */
-        .spec-table { width: 100%; margin-bottom: 15px; border-collapse: collapse; font-size: 0.75rem; background: #1a1a1a; color: #aaa; }
-        .spec-table th, .spec-table td { border: 1px solid #333; padding: 6px; text-align: center; }
+        .spec-table { width: 100%; margin-bottom: 15px; border-collapse: collapse; font-size: 0.7rem; background: #1a1a1a; color: #aaa; }
+        .spec-table th, .spec-table td { border: 1px solid #333; padding: 5px; text-align: center; }
         .spec-table th { background: #222; color: #ff4444; font-weight: normal; }
         .highlight { color: #fff; font-weight: bold; }
 
         .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 15px; }
         .stat-item { background: #000; border: 1px solid #333; padding: 5px; text-align: center; }
-        .stat-val { display: block; font-size: 0.9rem; font-weight: bold; color: #d00000; }
+        .stat-val { display: block; font-size: 0.85rem; font-weight: bold; color: #d00000; }
         .stat-label { font-size: 0.5rem; color: #666; }
 
-        #btn { background: #d00000; color: white; border: 2px solid #ff4444; padding: 12px; font-size: 1.1rem; cursor: pointer; width: 100%; font-weight: bold; font-family: 'Shippori Mincho B1', serif; transition: 0.2s; }
+        #btn { background: #d00000; color: white; border: 2px solid #ff4444; padding: 15px; font-size: 1.1rem; cursor: pointer; width: 100%; font-weight: bold; font-family: 'Shippori Mincho B1', serif; }
         #btn.active { background: #333; color: #666; border-color: #444; }
 
-        .log { width: 100%; max-width: 400px; height: 100px; background: #000; margin-top: 10px; padding: 8px; border-radius: 5px; font-size: 0.7rem; color: #ff4444; overflow-y: auto; box-sizing: border-box; border: 1px solid #333; font-family: monospace; }
+        .log { width: 100%; max-width: 400px; height: 90px; background: #000; margin-top: 10px; padding: 8px; border-radius: 5px; font-size: 0.7rem; color: #ff4444; overflow-y: auto; box-sizing: border-box; border: 1px solid #333; font-family: monospace; }
     </style>
 </head>
 <body>
 
-<button class="menu-btn" onclick="toggleSidebar()">≡ 機種選択</button>
+<header>
+    <button class="menu-btn" onclick="toggleSidebar()">MENU</button>
+    <div class="logo-main">EVANGELION Sim</div>
+</header>
 
 <div class="sidebar" id="sidebar">
-    <div class="logo-area">
-        <div class="logo-main">汎用シミュ</div>
-    </div>
+    <div style="color:#d00000; font-weight:bold; margin-bottom:20px; text-align:center;">SELECT MACHINE</div>
     <ul style="list-style: none; padding: 0;">
         <li class="machine-item">Pエヴァ15 未来への咆哮</li>
     </ul>
-    <button onclick="toggleSidebar()" style="width: 100%; background: #333; color: white; border: none; padding: 10px; cursor: pointer;">閉じる</button>
+    <button onclick="toggleSidebar()" style="width: 100%; background: #333; color: white; border: none; padding: 10px; cursor: pointer; font-size:0.8rem;">CLOSE</button>
 </div>
 
 <div class="main-content">
-    <div class="logo-area" style="width: 100%; max-width: 400px;">
-        <div class="logo-main">新機能：未来への咆哮（風）</div>
-    </div>
-
     <div class="machine">
         <div class="screen">
             <div id="flash" class="flash-overlay"></div>
@@ -77,11 +99,11 @@
         <table class="spec-table">
             <tr>
                 <th>通常時</th><td class="highlight">1/319.7</td>
-                <th>ST/時短</th><td class="highlight">1/99.4 / 1/319</td>
+                <th>右打ち中</th><td class="highlight">1/99.4</td>
             </tr>
             <tr>
                 <th>ST突入率</th><td class="highlight">約70%※</td>
-                <th>継続率</th><td class="highlight">約81%</td>
+                <th>RUSH継続</th><td class="highlight">約81%</td>
             </tr>
         </table>
 
@@ -106,15 +128,15 @@
     function playHitSound() {
         try {
             const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            const osc1 = ctx.createOscillator();
+            const osc = ctx.createOscillator();
             const gain = ctx.createGain();
-            osc1.type = 'sawtooth';
-            osc1.frequency.setValueAtTime(440, ctx.currentTime);
-            osc1.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.1);
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(440, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.1);
             gain.gain.setValueAtTime(0.1, ctx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
-            osc1.connect(gain); gain.connect(ctx.destination);
-            osc1.start(); osc1.stop(ctx.currentTime + 0.5);
+            osc.connect(gain); gain.connect(ctx.destination);
+            osc.start(); osc.stop(ctx.currentTime + 0.5);
         } catch(e) {}
     }
 
@@ -124,7 +146,7 @@
         if (isAuto) { stopAuto(); } 
         else {
             isAuto = true;
-            document.getElementById('btn').innerText = "ストップ";
+            document.getElementById('btn').innerText = "STOP";
             document.getElementById('btn').classList.add('active');
             autoTimer = setInterval(play, 30); 
         }
@@ -149,13 +171,9 @@
             if (mode !== 'NORMAL') {
                 stRemaining--;
                 if (stRemaining <= 0) {
-                    // ST/時短終了時の処理
-                    const endMsg = (mode === 'ST') ? "STスルー" : "時短スルー";
-                    addLog(`警告：${endMsg}`);
-                    mode = 'NORMAL'; 
-                    currentCount = 0; 
-                    rushCount = 0;
-                    stopAuto(); // オートを停止
+                    addLog(`警告：${(mode === 'ST') ? "STスルー" : "時短スルー"}`);
+                    mode = 'NORMAL'; currentCount = 0; rushCount = 0;
+                    stopAuto();
                 }
             }
         }
@@ -163,7 +181,7 @@
     }
 
     function handleHit() {
-        stopAuto(); // 当たったら一旦停止
+        stopAuto();
         hits++;
         totalReturn += SPEC.payout;
         playHitSound();
