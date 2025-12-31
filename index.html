@@ -1,308 +1,383 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>EVANGELION Sim -2025 Standard-</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>EVANGELION Sim -2025 Standard-</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&display=swap');
+        body { background: #000; color: white; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; overflow-x: hidden; }
+        header { width: 100%; height: 50px; background: #111; border-bottom: 2px solid #8a2be2; display: flex; align-items: center; padding: 0 10px; box-sizing: border-box; gap: 8px; position: sticky; top: 0; z-index: 100; }
+        .header-btn { background: #333; color: #ccc; border: 1px solid #555; padding: 5px 8px; font-size: 0.7rem; cursor: pointer; border-radius: 4px; white-space: nowrap; }
+        .btn-graph { background: #8a2be2; color: white; border-color: #a450ff; }
+        .max-hamari-display { background: #000; color: #ff4444; border: 1px solid #ff4444; padding: 4px 8px; font-size: 0.75rem; border-radius: 4px; font-weight: bold; }
+        .main-content { width: 100%; max-width: 440px; display: flex; flex-direction: column; align-items: center; padding: 10px; box-sizing: border-box; }
+        
+        .machine { width: 100%; background: #111; border: 3px solid #8a2be2; border-radius: 15px; padding: 12px; position: relative; box-sizing: border-box; transition: all 0.1s; }
+        .screen { background: #000; height: 300px; border-radius: 10px; border: 2px solid #444; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; width: 100%; transition: all 0.1s; }
+        
+        /* 図柄と履歴表示を1.5倍にする対応 */
+        .digit-container { display: flex; gap: 5px; }
+        .digit { font-size: 8.5rem; font-weight: 900; font-family: 'Shippori Mincho B1', serif; width: 110px; text-align: center; } 
+        .mode-display { position: absolute; bottom: 35px; right: 15px; color: #8a2be2; font-weight: bold; font-size: 0.9rem; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 3px; border-right: 3px solid #8a2be2; text-align: right; min-width: 90px; }
+        
+        .gold { color: #ffeb3b; text-shadow: 0 0 30px #ffeb3b; }
+        .odd { color: #ff4444; text-shadow: 0 0 20px #ff4444; }
+        .even { color: #4444ff; text-shadow: 0 0 20px #4444ff; }
 
-<!-- =========================
-     STYLE
-========================= -->
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&display=swap');
+        .hidden-lamp { position: absolute; top: 12px; right: 20px; width: 15px; height: 15px; background: #222; border-radius: 50%; border: 1px solid #444; }
+        .lamp-active { animation: rainbow-bg 0.3s infinite; box-shadow: 0 0 20px #fff; }
+        @keyframes rainbow-bg { 0% { background: #f00; } 20% { background: #ff0; } 40% { background: #0f0; } 60% { background: #0ff; } 80% { background: #00f; } 100% { background: #f0f; } }
+        
+        .vibrate { animation: vibration 0.05s infinite; }
+        .vibe-white { border-color: #ffffff !important; box-shadow: 0 0 30px #ffffff, inset 0 0 20px #ffffff !important; }
+        .vibe-red { border-color: #ff0000 !important; box-shadow: 0 0 30px #ff0000, inset 0 0 20px #ff0000 !important; }
+        .vibe-rainbow { animation: vibration 0.05s infinite, rainbow-border 0.2s infinite !important; }
 
-/* ---------- 基本 ---------- */
-body {
-    background:#000;
-    color:#fff;
-    margin:0;
-    font-family:sans-serif;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    min-height:100vh;
-}
-header {
-    width:100%;
-    height:50px;
-    background:#111;
-    border-bottom:2px solid #8a2be2;
-    display:flex;
-    align-items:center;
-    gap:8px;
-    padding:0 10px;
-    box-sizing:border-box;
-    position:sticky;
-    top:0;
-    z-index:100;
-}
-.header-btn {
-    background:#333;
-    color:#ccc;
-    border:1px solid #555;
-    padding:5px 8px;
-    font-size:0.7rem;
-    border-radius:4px;
-    cursor:pointer;
-}
-.btn-graph {
-    background:#8a2be2;
-    color:#fff;
-}
-.max-hamari-display {
-    background:#000;
-    color:#ff4444;
-    border:1px solid #ff4444;
-    padding:4px 8px;
-    font-size:0.75rem;
-    border-radius:4px;
-    font-weight:bold;
-}
+        @keyframes rainbow-border {
+            0% { border-color: #f00; box-shadow: 0 0 30px #f00; }
+            33% { border-color: #0f0; box-shadow: 0 0 30px #0f0; }
+            66% { border-color: #00f; box-shadow: 0 0 30px #00f; }
+            100% { border-color: #f0f; box-shadow: 0 0 30px #f0f; }
+        }
+        @keyframes vibration { 0% { transform: translate(0,0); } 25% { transform: translate(-2px, 2px); } 50% { transform: translate(2px, -2px); } 75% { transform: translate(-2px, -2px); } 100% { transform: translate(0,0); } }
 
-/* ---------- メイン ---------- */
-.main-content {
-    width:100%;
-    max-width:440px;
-    padding:10px;
-    box-sizing:border-box;
-}
-.machine {
-    background:#111;
-    border:3px solid #8a2be2;
-    border-radius:15px;
-    padding:12px;
-}
+        /* 保留エリアの設定 */
+        .heso-overlay { position: absolute; bottom: 10px; display: flex; align-items: center; gap: 10px; transition: all 0.3s; }
+        .heso-ball { width: 18px; height: 18px; background: #222; border-radius: 50%; border: 1px solid #555; transition: all 0.1s; }
+        .heso-overlay.right-mode { bottom: 80px; right: 10px; flex-direction: column-reverse; gap: 6px; }
+        .heso-current { border-width: 2px !important; border-color: #fff !important; }
+        .heso-on { background: #888; }
+        .heso-red { background: radial-gradient(circle, #ff4444, #880000); box-shadow: 0 0 8px #ff0000; border-color: #f00; }
+        .heso-green { background: radial-gradient(circle, #44ff44, #008800); box-shadow: 0 0 8px #00ff00; border-color: #0f0; }
+        .heso-blue { background: radial-gradient(circle, #4444ff, #000088); box-shadow: 0 0 8px #0000ff; border-color: #00f; }
+        .heso-rainbow { animation: rainbow-bg 0.5s infinite; }
+        .heso-vibe { animation: vibration 0.1s infinite !important; background: radial-gradient(circle, #fff, #8a2be2) !important; box-shadow: 0 0 10px #8a2be2; border-color: #fff !important; }
+        .heso-blink { animation: blink 0.3s infinite; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
-/* ---------- 画面 ---------- */
-.screen {
-    background:#000;
-    height:300px;
-    border:2px solid #444;
-    border-radius:10px;
-    display:flex;
-    flex-direction:column;
-    justify-content:center;
-    align-items:center;
-    position:relative;
-    overflow:hidden;
-}
-.digit-container {
-    display:flex;
-    gap:5px;
-}
-.digit {
-    font-size:8.5rem;
-    font-weight:900;
-    width:110px;
-    text-align:center;
-    font-family:'Shippori Mincho B1', serif;
-}
-.odd { color:#ff4444; text-shadow:0 0 20px #ff4444; }
-.even { color:#4444ff; text-shadow:0 0 20px #4444ff; }
-.gold { color:#ffeb3b; text-shadow:0 0 30px #ffeb3b; }
-
-.mode-display {
-    position:absolute;
-    bottom:35px;
-    right:15px;
-    font-size:0.9rem;
-    color:#8a2be2;
-    font-weight:bold;
-}
-
-/* ---------- 保留 ---------- */
-.heso-overlay {
-    position:absolute;
-    bottom:10px;
-    display:flex;
-    gap:10px;
-}
-.heso-overlay.right-mode {
-    right:10px;
-    bottom:80px;
-    flex-direction:column-reverse;
-}
-
-/* 通常時：● */
-.heso-ball {
-    width:18px;
-    height:18px;
-    background:#222;
-    border:1px solid #555;
-    border-radius:50%;
-}
-
-/* ST・時短中：■ */
-.heso-overlay.right-mode .heso-ball {
-    border-radius:3px;
-}
-
-/* 色 */
-.heso-on { background:#888; }
-.heso-red {
-    background:radial-gradient(circle,#ff4444,#880000);
-    box-shadow:0 0 8px #ff0000;
-}
-.heso-green {
-    background:radial-gradient(circle,#44ff44,#008800);
-    box-shadow:0 0 8px #00ff00;
-}
-.heso-blue {
-    background:radial-gradient(circle,#4444ff,#000088);
-    box-shadow:0 0 8px #0000ff;
-}
-.heso-blink { animation:blink 0.3s infinite; }
-@keyframes blink { 50%{opacity:.3;} }
-
-/* ---------- ボタン ---------- */
-.control-panel {
-    display:flex;
-    gap:8px;
-    margin-top:12px;
-}
-.btn-auto {
-    flex:1;
-    background:#8a2be2;
-    border:1px solid #a450ff;
-    color:#fff;
-    font-weight:bold;
-    border-radius:6px;
-}
-.btn-stop {
-    background:#444!important;
-}
-
-/* ---------- ログ ---------- */
-.log {
-    margin-top:10px;
-    height:350px;
-    background:#000;
-    border:1px solid #333;
-    padding:10px;
-    font-family:monospace;
-    overflow-y:auto;
-}
-
-/* ---------- エフェクト ---------- */
-.hidden-lamp {
-    position:absolute;
-    top:12px;
-    right:20px;
-    width:15px;
-    height:15px;
-    border-radius:50%;
-    background:#222;
-}
-.lamp-active {
-    animation:rainbow 0.3s infinite;
-}
-@keyframes rainbow {
-    0%{background:red;}50%{background:yellow;}100%{background:cyan;}
-}
-</style>
+        .stat-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-top: 12px; }
+        .stat-item { background: #000; border: 1px solid #333; padding: 5px 0; text-align: center; border-radius: 4px; }
+        .stat-val { font-size: 1.2rem; font-weight: bold; font-family: monospace; color: #fff; }
+        .stat-label { font-size: 0.55rem; color: #888; display: block; }
+        
+        .control-panel { margin-top: 12px; display: flex; gap: 8px; width: 100%; height: 65px; }
+        .side-btns { display: flex; flex-direction: column; gap: 4px; width: 55px; }
+        .side-btn { flex: 1; background: #222; color: #666; border: 1px solid #444; font-size: 0.7rem; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .side-btn.active { background: #8a2be2; color: #fff; border-color: #a450ff; }
+        .btn-auto { flex: 1; background: #8a2be2; color: white; border: 1px solid #a450ff; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 1rem; }
+        .btn-stop { background: #444 !important; border-color: #666 !important; }
+        
+        /* 履歴表示を1.5倍サイズにする対応 */
+        .log { width: 100%; max-width: 440px; height: 350px; background: #000; margin-top: 10px; padding: 10px; font-size: 0.95rem; color: #ffffff; overflow-y: auto; border: 1px solid #333; font-family: monospace; box-sizing: border-box; line-height: 1.5; } 
+        #modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; justify-content: center; align-items: center; }
+        #modal-content { background: #111; border: 2px solid #8a2be2; width: 92%; max-width: 450px; padding: 15px; border-radius: 12px; overflow-y: auto; max-height: 90vh; }
+        .graph-area { background: #000; height: 200px; margin-bottom: 20px; border: 1px solid #333; }
+        .effect-text { position: absolute; color: white; font-weight: bold; font-size: 2.2rem; z-index: 5; text-shadow: 0 0 10px #000; background: rgba(0,0,0,0.7); padding: 5px 15px; border-radius: 5px; display: none; text-align: center; }
+    </style>
 </head>
-
 <body>
-
-<header>
-    <button class="header-btn">機種選択</button>
-    <button class="header-btn btn-graph">データグラフ</button>
-    <button class="header-btn" onclick="location.reload()">リセット</button>
-    <div id="max-hamari-box" class="max-hamari-display">最大ハマリ: 0</div>
-</header>
-
-<div class="main-content">
-<div class="machine" id="machine">
-    <div id="lamp" class="hidden-lamp"></div>
-
-    <div class="screen">
-        <div class="digit-container">
-            <div id="d1" class="digit odd">1</div>
-            <div id="d2" class="digit odd">2</div>
-            <div id="d3" class="digit odd">3</div>
-        </div>
-
-        <div id="sub-display" class="mode-display">通常:0</div>
-
-        <!-- 保留 -->
-        <div id="heso-area" class="heso-overlay">
-            <div id="h0" class="heso-ball"></div>
-            <div id="h1" class="heso-ball"></div>
-            <div id="h2" class="heso-ball"></div>
-            <div id="h3" class="heso-ball"></div>
-            <div id="h4" class="heso-ball"></div>
+    <header>
+        <button class="header-btn">機種選択</button>
+        <button class="header-btn btn-graph" onclick="openModal()">データグラフ</button>
+        <button class="header-btn" onclick="resetData()">リセット</button>
+        <div id="max-hamari-box" class="max-hamari-display">最大ハマリ: 0</div>
+    </header>
+    <div id="modal-overlay">
+        <div id="modal-content">
+            <span style="float:right; cursor:pointer; font-size:1.5rem;" onclick="closeModal()">×</span>
+            <h3 style="font-size: 0.9rem; margin: 0 0 10px 0; color: #8a2be2;">差玉スランプグラフ</h3>
+            <div class="graph-area"><canvas id="slumpChart"></canvas></div>
+            <h3 style="font-size: 0.9rem; margin: 0 0 10px 0; color: #8a2be2;">連荘履歴</h3>
+            <div class="graph-area"><canvas id="historyChart"></canvas></div>
         </div>
     </div>
-
-    <div class="control-panel">
-        <button id="btn-slow" class="btn-auto" onclick="toggleAuto('slow')">低速オート</button>
-        <button id="btn-fast" class="btn-auto" onclick="toggleAuto('fast')">高速オート</button>
+    <div class="main-content">
+        <div class="machine" id="machine">
+            <div id="lamp" class="hidden-lamp"></div>
+            <div class="screen" id="screen">
+                <div id="effect-overlay" class="effect-text"></div>
+                <div class="digit-container">
+                    <div id="d1" class="digit odd">1</div>
+                    <div id="d2" class="digit odd">2</div>
+                    <div id="d3" class="digit odd">3</div>
+                </div>
+                <div id="sub-display" class="mode-display">通常:0</div>
+                <div id="heso-area" class="heso-overlay">
+                    <div id="h0" class="heso-ball heso-current"></div>
+                    <div id="h1" class="heso-ball"></div>
+                    <div id="h2" class="heso-ball"></div>
+                    <div id="h3" class="heso-ball"></div>
+                    <div id="h4" class="heso-ball"></div>
+                </div>
+            </div>
+            <div class="stat-grid">
+                <div class="stat-item"><span class="stat-label">大当り</span><span id="hits" class="stat-val">0</span></div>
+                <div class="stat-item"><span class="stat-label">連チャン</span><span id="rush-count" class="stat-val">0</span></div>
+                <div class="stat-item"><span class="stat-label">現在回転</span><span id="current-rot" class="stat-val">0</span></div>
+                <div class="stat-item"><span class="stat-label">累計回転</span><span id="total-rot" class="stat-val">0</span></div>
+                <div class="stat-item"><span class="stat-label">差玉数</span><span id="balance" class="stat-val">0</span></div>
+            </div>
+            <div class="control-panel">
+                <div class="side-btns">
+                    <button id="btn-all" class="side-btn" onclick="toggleOpt('all')">全</button>
+                    <button id="btn-kokuchi" class="side-btn" onclick="toggleOpt('kokuchi')">告知</button>
+                </div>
+                <button class="btn-auto" id="btn-slow" onclick="toggleAuto('slow')">低速オート</button>
+                <button class="btn-auto" id="btn-fast" onclick="toggleAuto('fast')">高速オート</button>
+            </div>
+        </div>
+        <div class="log" id="log">> システム起動完了</div>
     </div>
-</div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+const SPECS = { n: 319.7, s: 99.4, st: 163, jt: 100 };
+let hits = 0, rushCount = 0, currentRot = 0, totalRot = 0, totalBall = 0, currentRushHits = 0, maxHamari = 0;
+let mode = '通常', rRem = 0, isAuto = false, autoSpeed = 'slow', isAnim = false;
+let lcdCount = 0, optKokuchi = false, originalSpeedSetting = 'slow';
+let reservedStock = [], activeJob = null;
+let slumpData = [0], slumpLabels = ["0"], historyData = [], historyLabels = [];
+let sChart, hChart, firstHitRot = 0, rushSeriesCount = 0;
 
-<div id="log" class="log">> システム起動完了</div>
-</div>
+// 信頼度マップ
+const TRUST_MAP_N = { "白レバ": 0.90, "赤レバ": 0.965, "虹レバ": 1.0, "赤保留": 0.90, "緑保留": 0.11, "青保留": 0.03, "点滅保留": 0.01, "次回予告": 0.65, "レイ背景": 0.85, "金系": 0.50, "渚カヲル": 1.0 };
+const TRUST_MAP_S = { "白レバ": 0.95, "赤レバ": 0.99, "虹レバ": 1.0, "赤保留": 0.95, "緑保留": 0.20, "青保留": 0.05, "点滅保留": 0.01, "次回予告": 1.0, "金系": 0.80, "インフラ": 1.0 };
 
-<!-- =========================
-     SCRIPT
-========================= -->
-<script>
-/* ---- 基本状態 ---- */
-const SPECS = { n:319.7, s:99.4, st:163, jt:100 };
-let mode = '通常';
-let isAuto = false;
-let autoSpeed = 'slow';
-let currentRot = 0;
-let totalRot = 0;
-let maxHamari = 0;
+window.onload = () => { initCharts(); updateUI(); };
 
-/* ---- UI ---- */
-function updateUI(){
-    document.getElementById('sub-display').innerText =
-        mode === '通常' ? `通常:${currentRot}` : `${mode}`;
+function getDigitClass(num, currentMode) {
+    if (num === 7 && (currentMode !== '通常')) return 'digit gold';
+    return (num % 2 !== 0) ? 'digit odd' : 'digit even';
 }
 
-/* ---- 保留UI ---- */
-function updateHesoUI(){
-    const heso = document.getElementById('heso-area');
-    mode !== '通常'
-        ? heso.classList.add('right-mode')
-        : heso.classList.remove('right-mode');
+function refillStock() {
+    let maxHold = 4;
+    if (mode !== '通常') maxHold = Math.min(4, rRem - (activeJob ? 1 : 0));
+    while (reservedStock.length < maxHold) { reservedStock.push(createJob()); }
+    updateHesoUI();
+}
 
-    for(let i=0;i<5;i++){
-        const el = document.getElementById('h'+i);
-        el.className = 'heso-ball heso-on';
+function createJob() {
+    let prob = (mode !== '通常' ? SPECS.s : SPECS.n);
+    let isHit = Math.random() < (1 / prob);
+    let res = { isHit, heavy: false, name: [], trust: 0, vibe: false, vibeColor: "none", flash: false, text: "", holdType: "none", isSure: false };
+    let r = Math.random() * 100;
+
+    if (isHit) {
+        res.heavy = true;
+        if (mode === '通常' || mode === '時短') {
+            if (r < 14) { res.name.push("次回予告"); res.text = "次回予告"; }
+            else if (r < 28) { res.name.push("金系"); }
+            else if (r < 37) { res.name.push("レイ背景"); res.text = "レイ背景"; }
+            else if (r < 38) { res.name.push("渚カヲル"); res.isSure = true; }
+            let hR = Math.random() * 100;
+            if (hR < 35) { 
+                let vr = Math.random() * 100; res.vibe = true;
+                res.vibeColor = (vr < 60) ? "white" : (vr < 90 ? "red" : "rainbow");
+                let vName = res.vibeColor === "white" ? "白レバ" : (res.vibeColor === "red" ? "赤レバ" : "虹レバ");
+                res.name.push(vName); res.holdType = "vibe"; 
+                if (res.vibeColor === "rainbow") res.isSure = true;
+            } else if (hR < 60) { res.name.push("赤保留"); res.holdType = "red"; }
+            else if (hR < 70) { res.name.push("緑保留"); res.holdType = "green"; }
+            else if (hR < 75) { res.name.push("青保留"); res.holdType = "blue"; }
+            else if (hR < 80) { res.name.push("点滅保留"); res.holdType = "blink"; }
+        } else {
+            if (r < 10) { res.name.push("次回予告"); res.text = "次回予告"; res.isSure = true; }
+            let hR = Math.random() * 100;
+            if (hR < 40) { 
+                let vr = Math.random() * 100; res.vibe = true;
+                res.vibeColor = (vr < 60) ? "white" : (vr < 90 ? "red" : "rainbow");
+                res.name.push(res.vibeColor==="rainbow"?"虹レバ":(res.vibeColor==="red"?"赤レバ":"白レバ"));
+                res.holdType = "vibe";
+            } else if (hR < 60) { res.name.push("赤保留"); res.holdType = "red"; }
+        }
+    } else {
+        let hr = Math.random() * 100;
+        let limitH = (mode === '通常') ? 0.05 : 0.01;
+        if (mode === '通常' || mode === '時短') {
+            if (hr < limitH) { res.name.push("赤レバ"); res.holdType = "vibe"; res.vibe = true; res.vibeColor = "red"; res.heavy = true; }
+            else if (hr < (limitH + 0.0016)) { res.name.push("赤レバ"); res.holdType = "vibe"; res.vibe = true; res.vibeColor = "red"; res.heavy = true; }
+            else if (hr < (limitH + 0.0016 + 0.008)) { res.name.push("白レバ"); res.holdType = "vibe"; res.vibe = true; res.vibeColor = "white"; res.heavy = true; }
+            else if (hr < (limitH + 0.0016 + 0.008 + 0.008)) { res.name.push("赤保留"); res.holdType = "red"; res.heavy = true; }
+            else if (hr < (limitH + 0.0016 + 0.008 + 0.008 + 0.12)) { res.name.push("次回予告"); res.text = "次回予告"; res.heavy = true; }
+            else if (hr < (limitH + 0.0016 + 0.008 + 0.008 + 0.12 + 0.16)) { res.name.push("金系"); res.heavy = true; }
+            else if (hr < (limitH + 0.0016 + 0.008 + 0.008 + 0.12 + 0.16 + 0.015)) { res.name.push("レイ背景"); res.text = "レイ背景"; res.heavy = true; }
+            else if (hr < 1.0) { res.name.push("緑保留"); res.holdType = "green"; }
+            else if (hr < 3.0) { res.name.push("青保留"); res.holdType = "blue"; }
+            else if (hr < 4.0) { res.name.push("点滅保留"); res.holdType = "blink"; }
+        } else {
+            if (hr < limitH) { res.name.push("白レバ"); res.holdType = "vibe"; res.vibe = true; res.vibeColor = "white"; }
+        }
+    }
+    const map = (mode !== '通常') ? TRUST_MAP_S : TRUST_MAP_N;
+    if (res.isSure) res.trust = 100.00;
+    else if (res.name.length > 0) { let fail = 1; res.name.forEach(n => { if(map[n]) fail *= (1 - map[n]); }); res.trust = (1 - fail) * 100; }
+    else res.trust = (mode === '通常' ? (1/SPECS.n)*100 : (1/SPECS.s)*100); 
+    res.displayName = Array.from(new Set(res.name)).join("+") || "弱演出";
+    return res;
+}
+
+function generateFinalDigits(isHit, hitNum) {
+    if (isHit) return [hitNum, hitNum, hitNum];
+    while(true) {
+        let d1 = Math.floor(Math.random()*9)+1;
+        let d3 = Math.floor(Math.random()*9)+1;
+        let d2 = Math.floor(Math.random()*9)+1;
+        if (Math.random() < 0.25) { d3 = d1; while(d2 === d1) d2 = Math.floor(Math.random()*9)+1; } 
+        else { while(d1 === d3) d3 = Math.floor(Math.random()*9)+1; }
+        let sorted = [d1, d2, d3].sort().join('');
+        if (sorted === "135") continue;
+        return [d1, d2, d3];
     }
 }
 
-/* ---- 回転処理（簡略） ---- */
-function spin(){
-    currentRot++;
-    totalRot++;
-    if(currentRot > maxHamari){
-        maxHamari = currentRot;
-        document.getElementById('max-hamari-box').innerText =
-            `最大ハマリ: ${maxHamari}`;
+async function startProcess() {
+    if (!isAuto || isAnim) return;
+    if (mode !== '通常' && rRem <= 0 && reservedStock.length === 0 && !activeJob) {
+        let prev = mode; 
+        // 終了時のログ追加
+        addLog(`【${prev}終了】 ${currentRushHits <= 1 ? (currentRushHits === 0 ? '0回' : '1回(' + prev + ')') : currentRushHits + '連'}`);
+        rushSeriesCount++; historyData.push(firstHitRot); historyLabels.push(`${rushSeriesCount}回目(${currentRushHits === 1 ? '単' : currentRushHits + '連'})`); hChart.update();
+        mode = '通常'; currentRushHits = 0; firstHitRot = 0; updateUI();
+        if (prev === '時短' && originalSpeedSetting === 'fast') autoSpeed = 'fast'; else { isAuto = false; updateAutoBtns(); return; }
     }
-    updateUI();
+    refillStock();
+    activeJob = reservedStock.shift(); refillStock(); updateUI();
+    let eff = activeJob;
+    if (optKokuchi && activeJob.isHit) { eff.flash = true; eff.isSure = true; eff.trust = 100; eff.displayName = "インフラ告知"; }
+    totalRot++; currentRot++; lcdCount++; 
+    if (mode !== '通常') { rRem--; totalBall -= 0.05; } else { totalBall -= (250 / 18); }
+    updateCharts();
+    if (eff.trust >= 50 || activeJob.isHit) addLog(`${mode} ${lcdCount}回転【${eff.displayName}】信頼度:${eff.trust.toFixed(2)}%`);
+    
+    const machineEl = document.getElementById('machine');
+    const screenEl = document.getElementById('screen');
+    if (eff.vibe) {
+        machineEl.classList.add('vibrate'); screenEl.classList.add('vibrate');
+        if (eff.vibeColor === "white") { machineEl.classList.add('vibe-white'); screenEl.classList.add('vibe-white'); }
+        else if (eff.vibeColor === "red") { machineEl.classList.add('vibe-red'); screenEl.classList.add('vibe-red'); }
+        else if (eff.vibeColor === "rainbow") { machineEl.classList.add('vibe-rainbow'); screenEl.classList.add('vibe-rainbow'); }
+    }
+    if (eff.flash) document.getElementById('lamp').classList.add('lamp-active');
+    if (eff.text) { const ov = document.getElementById('effect-overlay'); ov.innerText = eff.text; ov.style.display = 'block'; }
+
+    let spinTime = (eff.heavy || reservedStock.some(j=>j.heavy)) ? 1800 : (autoSpeed === 'fast' ? 250 : 500);
+    let spin = setInterval(() => { [1,2,3].forEach(i => { let n = Math.floor(Math.random()*9)+1; const el = document.getElementById('d'+i); el.innerText = n; el.className = getDigitClass(n, mode); }); }, 40);
+
+    await new Promise(r => setTimeout(r, spinTime));
+    clearInterval(spin);
+
+    let finalNums, hitDigit;
+    if (activeJob.isHit) {
+        let rand = Math.random() * 100;
+        if (mode === '通常') {
+            if (rand < 3) hitDigit = 7; 
+            else if (rand < 39) { let odds = [1,3,5,9]; hitDigit = odds[Math.floor(Math.random()*odds.length)]; } 
+            else if (rand < 59) { let evens = [2,4,6,8]; hitDigit = evens[Math.floor(Math.random()*evens.length)]; } 
+            else { let evens = [2,4,6,8]; hitDigit = evens[Math.floor(Math.random()*evens.length)]; } 
+        } else {
+            hitDigit = (Math.random() < 0.5) ? 3 : 2;
+        }
+        finalNums = [hitDigit, hitDigit, hitDigit];
+    } else {
+        finalNums = generateFinalDigits(false, 0);
+    }
+
+    for(let i of [1,3,2]) {
+        const el = document.getElementById('d'+i);
+        el.innerText = finalNums[i-1];
+        el.className = getDigitClass(finalNums[i-1], mode);
+        if(autoSpeed !== 'fast') await new Promise(r => setTimeout(r, 100));
+    }
+
+    machineEl.classList.remove('vibrate', 'vibe-white', 'vibe-red', 'vibe-rainbow');
+    screenEl.classList.remove('vibrate', 'vibe-white', 'vibe-red', 'vibe-rainbow');
+    document.getElementById('lamp').classList.remove('lamp-active');
+    document.getElementById('effect-overlay').style.display = 'none';
+
+    if (activeJob.isHit) {
+        isAnim = true; hits++; 
+        if (mode === '通常') { 
+            firstHitRot = lcdCount; 
+            if (currentRot > maxHamari) { maxHamari = currentRot; document.getElementById('max-hamari-box').innerText = `最大ハマリ: ${maxHamari}`; }
+        }
+        
+        let bonusBall;
+        let isST = false, needsUpgrade = false;
+        let originalHit = hitDigit;
+
+        if (mode === '通常') {
+            rushCount = 1;
+            if (originalHit === 7) { isST = true; bonusBall = 1400; addLog(">> 全回転！！"); }
+            else if (originalHit % 2 !== 0) { isST = true; bonusBall = 420; }
+            else {
+                if (Math.random() < (20 / 61)) { 
+                    isST = true; needsUpgrade = true; bonusBall = 420;
+                } else {
+                    isST = false; bonusBall = 420;
+                }
+            }
+            addLog(`>> 当たり！ 【${originalHit}】${lcdCount}回転`);
+        } else {
+            isST = true; bonusBall = 1400; rushCount++;
+            addLog(`>> 当たり！ 【${originalHit}】${lcdCount}回転`); // 右打ちは昇格ログを出さない
+        }
+
+        totalBall += bonusBall;
+        currentRot = 0;
+        await new Promise(r => setTimeout(r, 1000));
+
+        if (mode === '通常' && needsUpgrade) {
+            let nextOdd = [1,3,5,9][Math.floor(Math.random()*4)];
+            addLog(`>> ${nextOdd}図柄へ昇格！！`);
+            document.getElementById('lamp').classList.add('lamp-active');
+            [1,2,3].forEach(i => { const el = document.getElementById('d'+i); el.innerText = nextOdd; el.className = 'digit odd'; });
+            await new Promise(r => setTimeout(r, 800));
+            document.getElementById('lamp').classList.remove('lamp-active');
+        }
+
+        if (isST) { mode = 'ST'; rRem = SPECS.st; } else { mode = '時短'; rRem = SPECS.jt; }
+        currentRushHits++; lcdCount = 0; activeJob = null; updateUI(); 
+        await new Promise(r => setTimeout(r, 600)); 
+    } else { 
+        activeJob = null; 
+        await new Promise(r => setTimeout(r, (autoSpeed === 'fast' ? 50 : 600))); 
+    }
+    isAnim = false; updateUI(); updateAutoBtns();
+    if (isAuto) setTimeout(startProcess, (autoSpeed === 'fast' ? 10 : 150));
 }
 
-/* ---- オート ---- */
-function toggleAuto(speed){
-    isAuto = !isAuto;
-    autoSpeed = speed;
-    if(isAuto) autoLoop();
-}
-function autoLoop(){
-    if(!isAuto) return;
-    spin();
-    setTimeout(autoLoop, autoSpeed==='fast'?100:400);
+function toggleAuto(s) { if(isAuto && autoSpeed === s) { isAuto = false; } else { isAuto = true; autoSpeed = s; originalSpeedSetting = s; if(!isAnim) startProcess(); } updateAutoBtns(); }
+function updateAutoBtns() { document.getElementById('btn-slow').classList.toggle('btn-stop', isAuto && autoSpeed === 'slow'); document.getElementById('btn-fast').classList.toggle('btn-stop', isAuto && autoSpeed === 'fast'); }
+function toggleOpt(t) { if(t==='kokuchi') optKokuchi=!optKokuchi; document.getElementById('btn-'+t).classList.toggle('active'); }
+
+/* 保留UIの更新処理（ST/時短中のレイアウト維持） */
+function updateHesoUI() { 
+    const hA = document.getElementById('heso-area'); 
+    mode !== '通常' ? hA.classList.add('right-mode') : hA.classList.remove('right-mode'); 
+    for(let i=0; i<=4; i++) { 
+        const el = document.getElementById('h'+i); 
+        const s = (i===0) ? activeJob : (reservedStock[i-1] || null); 
+        el.className = `heso-ball ${i===0?'heso-current':''}`; 
+        if(s) { 
+            if(s.holdType === 'red') el.classList.add('heso-red'); 
+            else if(s.holdType === 'green') el.classList.add('heso-green'); 
+            else if(s.holdType === 'blue') el.classList.add('heso-blue'); 
+            else if(s.holdType === 'blink') el.classList.add('heso-blink'); 
+            else if(s.holdType === 'vibe') el.classList.add('heso-vibe'); 
+            else if(s.holdType === 'rainbow') el.classList.add('heso-rainbow'); 
+            else el.classList.add('heso-on'); 
+        } 
+    } 
 }
 
-/* ---- 初期 ---- */
-updateUI();
-updateHesoUI();
-</script>
-
+function updateUI() { document.getElementById('hits').innerText = hits; document.getElementById('rush-count').innerText = rushCount; document.getElementById('current-rot').innerText = currentRot; document.getElementById('total-rot').innerText = totalRot; document.getElementById('balance').innerText = Math.floor(totalBall).toLocaleString(); document.getElementById('sub-display').innerText = mode==='通常' ? `通常:${lcdCount}` : `${mode}:${rRem}`; updateHesoUI(); }
+function addLog(m) { const l = document.getElementById('log'); l.innerHTML = `> ${m}<br>${l.innerHTML}`; }
+function initCharts() { sChart = new Chart(document.getElementById('slumpChart').getContext('2d'), { type: 'line', data: { labels: slumpLabels, datasets: [{ label: '差玉', data: slumpData, borderColor: '#8a2be2', borderWidth: 2, fill: false, pointRadius: 0 }] }, options: { responsive: true, maintainAspectRatio: false } }); hChart = new Chart(document.getElementById('historyChart').getContext('2d'), { type: 'bar', data: { labels: historyLabels, datasets: [{ label: '初当り回転', data: historyData, backgroundColor: '#ff4444' }] }, options: { responsive: true, maintainAspectRatio: false } }); }
+function updateCharts() { slumpData.push(totalBall); slumpLabels.push(totalRot.toString()); sChart.update('none'); }
+function openModal() { document.getElementById('modal-overlay').style.display='flex'; }
+function closeModal() { document.getElementById('modal-overlay').style.display='none'; }
+function resetData() { if(confirm('リセット？')) location.reload(); }
+    </script>
 </body>
 </html>
