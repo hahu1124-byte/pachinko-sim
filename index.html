@@ -128,7 +128,6 @@
     let slumpData = [0], slumpLabels = ["0"], historyData = [], historyLabels = [];
     let sChart, hChart;
 
-    // 指示に基づいた信頼度の設定
     const TRUST_MAP_N = { "白レバ": 0.90, "赤レバ": 0.965, "赤保留": 0.90, "次回予告": 0.65, "レイ背景": 0.85, "金系": 0.50, "渚カヲル": 1.0 };
     const TRUST_MAP_S = { "白レバ": 0.95, "赤レバ": 0.99, "赤保留": 0.95, "次回予告": 1.0, "金系": 0.80 };
 
@@ -139,44 +138,40 @@
         return (num % 2 !== 0) ? 'digit odd' : 'digit even';
     }
 
+    // 保留作成時に演出も一緒に抽選（赤保留などを先読みとして表示するため）
     function createJob() {
         let prob = (mode !== '通常' ? SPECS.s : SPECS.n);
         let isHit = Math.random() < (1 / prob);
-        return { isHit };
-    }
-
-    function selectEffect(job) {
-        let res = { heavy: false, name: [], trust: 0, vibe: false, vibeColor: "none", flash: false, text: "", holdType: "none", isSure: false };
+        let res = { isHit, heavy: false, name: [], trust: 0, vibe: false, vibeColor: "none", flash: false, text: "", holdType: "none", isSure: false };
         let r = Math.random() * 100;
 
-        if (job.isHit) {
+        if (isHit) {
             res.heavy = true;
             if (mode === '通常' || mode === '時短') {
                 if (r < 10) { res.name.push("次回予告"); res.text = "次回予告"; }
-                else if (r < 35) { res.name.push("金系"); } // 25%
-                else if (r < 60) { res.name.push("赤保留"); res.holdType = "red"; } // 25% (UP分)
+                else if (r < 35) { res.name.push("金系"); }
+                else if (r < 60) { res.name.push("赤保留"); res.holdType = "red"; }
                 else if (r < 80) { 
                     let vr = Math.random() * 100; res.vibe = true;
                     res.vibeColor = (vr < 60) ? "white" : (vr < 90 ? "red" : "rainbow");
                     res.name.push(res.vibeColor + "レバ");
                 }
-                else if (r < 99) { res.name.push("レイ背景"); res.text = "レイ背景"; } // レイ背景・カヲル等
-                else { res.name.push("弱演出"); res.heavy = false; } // 1% 演出なし当たり
+                else if (r < 99) { res.name.push("レイ背景"); res.text = "レイ背景"; }
+                else { res.name.push("演出なし"); res.heavy = false; } // 1%
             } else {
-                // ST中 演出バランス
-                if (r < 10) { res.name.push("次回予告"); res.text = "次回予告"; res.isSure = true; } // 10%
-                else if (r < 43) { res.name.push("金系"); } // 33%
-                else if (r < 64) { res.name.push("赤保留"); res.holdType = "red"; } // 21% (UP分)
+                if (r < 10) { res.name.push("次回予告"); res.text = "次回予告"; res.isSure = true; }
+                else if (r < 43) { res.name.push("金系"); }
+                else if (r < 64) { res.name.push("赤保留"); res.holdType = "red"; }
                 else if (r < 84) { 
                     let vr = Math.random() * 100; res.vibe = true;
                     res.vibeColor = (vr < 60) ? "white" : (vr < 90 ? "red" : "rainbow");
                     res.name.push(res.vibeColor + "レバ");
                 }
                 else if (r < 99) { res.flash = true; res.isSure = true; res.name.push("インフラ"); }
-                else { res.name.push("弱演出"); res.heavy = false; } // 1% 演出なし当たり
+                else { res.name.push("演出なし"); res.heavy = false; } // 1%
             }
         } else {
-            // ハズレ時のガセ
+            // ハズレガセ
             if (r < 1.5) { res.name.push("金系"); res.heavy = true; }
             else if (r < 3) { res.name.push("赤保留"); res.holdType = "red"; res.heavy = true; }
             else if (r < 4.5) { res.name.push("次回予告"); res.text = "次回予告"; res.heavy = true; }
@@ -185,8 +180,7 @@
         const map = (mode !== '通常') ? TRUST_MAP_S : TRUST_MAP_N;
         if (res.isSure) res.trust = 100;
         else if (res.name.length > 0) {
-            let fail = 1;
-            res.name.forEach(n => { if(map[n]) fail *= (1 - map[n]); });
+            let fail = 1; res.name.forEach(n => { if(map[n]) fail *= (1 - map[n]); });
             res.trust = (1 - fail) * 100;
         } else { res.trust = (mode === '通常' ? 0.1 : 0.8); }
         res.displayName = res.name.join("+") || "弱予告";
@@ -195,17 +189,27 @@
 
     async function startProcess() {
         if (!isAuto || isAnim) return;
+
+        // モード終了判定
         if (mode !== '通常' && rRem <= 0 && reservedStock.length === 0 && !activeJob) {
             let prev = mode; 
             addLog(`【${prev}終了】 ${currentRushHits <= 1 ? (currentRushHits === 0 ? '0回' : '1回(' + prev + ')') : currentRushHits + '連'}`);
             mode = '通常'; currentRushHits = 0; updateUI();
             if (prev === '時短' && originalSpeedSetting === 'fast') { autoSpeed = 'fast'; } else { isAuto = false; updateAutoBtns(); return; }
         }
-        while (reservedStock.length < 4 && (mode === '通常' || (mode !== '通常' && rRem > reservedStock.length))) { reservedStock.push(createJob()); }
+
+        // ★保留の補充（常に最大4個まで貯める）
+        while (reservedStock.length < 4 && (mode === '通常' || (mode !== '通常' && rRem > (reservedStock.length + (activeJob?1:0))))) { 
+            reservedStock.push(createJob()); 
+        }
+
         if (reservedStock.length === 0 && !activeJob) { isAuto = false; updateAutoBtns(); return; }
 
-        activeJob = reservedStock.shift(); updateHesoUI();
-        let eff = selectEffect(activeJob);
+        // 次の保留を消化開始
+        activeJob = reservedStock.shift(); 
+        updateUI(); // 保留表示を即座に更新
+
+        let eff = activeJob;
         if (optKokuchi && activeJob.isHit) { eff.flash = true; eff.isSure = true; eff.trust = 100; eff.displayName = "インフラ告知"; }
 
         totalRot++; currentRot++; lcdCount++; 
@@ -225,17 +229,15 @@
         }, 40);
         await new Promise(r => setTimeout(r, spinTime));
         clearInterval(spin);
+
         document.getElementById('machine').classList.remove('vibrate');
         document.getElementById('lamp').classList.remove('lamp-active');
         document.getElementById('effect-overlay').style.display = 'none';
         
         if (activeJob.isHit) {
             isAnim = true; hits++; 
-            let hitRot = lcdCount; 
-            if (mode === '通常') { 
-                if (currentRot > maxHamari) { maxHamari = currentRot; document.getElementById('max-hamari-box').innerText = `最大ハマリ: ${maxHamari}`; } 
-                historyData.push(currentRot); historyLabels.push(hits + "回目"); 
-            }
+            if (mode === '通常' && currentRot > maxHamari) { maxHamari = currentRot; document.getElementById('max-hamari-box').innerText = `最大ハマリ: ${maxHamari}`; }
+            if (mode === '通常') { historyData.push(currentRot); historyLabels.push(hits + "回目"); }
             currentRot = 0;
             let rand = Math.random()*100, logDigit, isST = false, prevMode = mode;
             if (mode !== '通常') { logDigit = (rand < 50) ? 7 : 1; isST = true; totalBall += 1400; }
@@ -243,11 +245,10 @@
             [1,2,3].forEach(i => { const el = document.getElementById('d'+i); el.innerText = logDigit; el.className = getDigitClass(logDigit); });
             await new Promise(r => setTimeout(r, 1200));
             if (isST) { mode = 'ST'; rRem = SPECS.st; rushCount++; } else { mode = '時短'; rRem = SPECS.jt; }
-            if (prevMode === '通常') { addLog(`>> ${mode}突入 【${logDigit}】 当たり!`); }
-            else { addLog(`>> ${hitRot}回転 【${logDigit}】 当たり!`); }
-            currentRushHits++; lcdCount = 0; updateUI(); await new Promise(r => setTimeout(r, 1200)); 
-            activeJob = null;
+            addLog(`>> ${mode}突入 【${logDigit}】 当たり!`);
+            currentRushHits++; lcdCount = 0; activeJob = null; updateUI(); await new Promise(r => setTimeout(r, 1200)); 
         } else { activeJob = null; }
+
         isAnim = false; updateUI(); updateAutoBtns();
         if (isAuto) setTimeout(startProcess, (autoSpeed === 'fast' ? 10 : 200));
     }
@@ -255,7 +256,22 @@
     function toggleAuto(s) { if(isAuto && autoSpeed === s) { isAuto = false; } else { isAuto = true; autoSpeed = s; originalSpeedSetting = s; if(!isAnim) startProcess(); } updateAutoBtns(); }
     function updateAutoBtns() { document.getElementById('btn-slow').classList.toggle('btn-stop', isAuto && autoSpeed === 'slow'); document.getElementById('btn-fast').classList.toggle('btn-stop', isAuto && autoSpeed === 'fast'); }
     function toggleOpt(t) { if(t==='kokuchi') optKokuchi=!optKokuchi; document.getElementById('btn-'+t).classList.toggle('active'); }
-    function updateHesoUI() { const hA = document.getElementById('heso-area'); mode !== '通常' ? hA.classList.add('right-mode') : hA.classList.remove('right-mode'); for(let i=0; i<=4; i++) { const el = document.getElementById('h'+i); const s = (i===0) ? activeJob : (reservedStock[i-1] || null); el.className = `heso-ball ${i===0?'heso-current':''}`; if(s) { if(s.holdType === 'red') el.classList.add('heso-red'); else if(s.holdType === 'rainbow') el.classList.add('heso-rainbow'); else el.classList.add('heso-on'); } } }
+    
+    function updateHesoUI() { 
+        const hA = document.getElementById('heso-area'); 
+        mode !== '通常' ? hA.classList.add('right-mode') : hA.classList.remove('right-mode'); 
+        for(let i=0; i<=4; i++) { 
+            const el = document.getElementById('h'+i); 
+            const s = (i===0) ? activeJob : reservedStock[i-1]; 
+            el.className = `heso-ball ${i===0?'heso-current':''}`; 
+            if(s) { 
+                if(s.holdType === 'red') el.classList.add('heso-red'); 
+                else if(s.holdType === 'rainbow') el.classList.add('heso-rainbow'); 
+                else el.classList.add('heso-on'); 
+            } 
+        } 
+    }
+    
     function updateUI() { document.getElementById('hits').innerText = hits; document.getElementById('rush-count').innerText = rushCount; document.getElementById('current-rot').innerText = currentRot; document.getElementById('total-rot').innerText = totalRot; document.getElementById('balance').innerText = Math.floor(totalBall).toLocaleString(); document.getElementById('sub-display').innerText = mode==='通常' ? `通常:${lcdCount}` : `${mode}:${rRem}`; updateHesoUI(); }
     function addLog(m) { const l = document.getElementById('log'); l.innerHTML = `> ${m}<br>${l.innerHTML}`; }
     function initCharts() {
@@ -269,6 +285,7 @@
 </script>
 </body>
 </html>
+
 
 
 
