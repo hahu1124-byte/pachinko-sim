@@ -191,7 +191,10 @@ function createJob() {
         let hr = Math.random() * 100;
         let isN = (mode === '通常' || mode === '時短');
         let redGase = isN ? 0.05 : 0.01;
-        let whiteVibeGase = isN ? 0.02 : 0.005, redVibeGase = isN ? 0.005 : 0.001;
+        // 白レバブルの外れ率を0.01%に修正
+        let redVibeGase = isN ? 0.005 : 0.001; 
+        let whiteVibeGase = isN ? 0.01 : 0.005; 
+        
         if (hr < redVibeGase) { res.name.push("赤レバ"); res.holdType = "vibe"; res.vibe = true; res.vibeColor = "red"; res.heavy = true; }
         else if (hr < (redVibeGase + whiteVibeGase)) { res.name.push("白レバ"); res.holdType = "vibe"; res.vibe = true; res.vibeColor = "white"; res.heavy = true; }
         else if (hr < (redVibeGase + whiteVibeGase + redGase)) { res.name.push("赤保留"); res.holdType = "red"; res.heavy = true; }
@@ -211,7 +214,6 @@ function createJob() {
 async function startProcess() {
     if (!isAuto || isAnim) return;
 
-    // 先読みの中に強演出があるかチェック
     let hasHeavyInStock = reservedStock.some(job => job.heavy === true);
 
     if (mode !== '通常' && rRem <= 0 && reservedStock.length === 0 && !activeJob) {
@@ -238,7 +240,6 @@ async function startProcess() {
         if (eff.text) { const ov = document.getElementById('effect-overlay'); ov.innerText = eff.text; ov.style.display = 'block'; }
     }
 
-    // 強演出がある場合、または先読みに強演出がある場合は2000ms。それ以外は設定速度。
     let spinTime = (eff.heavy || hasHeavyInStock) ? 2000 : (autoSpeed === 'fast' ? 50 : 500);
     
     let spin = setInterval(() => { [1,2,3].forEach(i => { let n = Math.floor(Math.random()*9)+1; const el = document.getElementById('d'+i); el.innerText=n; el.className = getDigitClass(n); }); }, 40);
@@ -257,13 +258,13 @@ async function startProcess() {
         let rand = Math.random() * 100, logDigit, isST = false, oldMode = mode, needsUpgrade = false, isZenkaiten = false;
 
         if (mode !== '通常') { 
-            logDigit = (rand < 50) ? 7 : 1; isST = true; totalBall += (logDigit === 7 ? 1400 : 420); rushCount++;
-        } else { 
             rushCount = 1; 
-            if (rand < 3) { logDigit = 7; isST = true; totalBall += 1400; isZenkaiten = true; } // 10R(全回転)
-            else if (rand < 39) { logDigit = 3; isST = true; totalBall += 420; } // 直撃奇数
-            else if (rand < 59) { logDigit = 2; isST = true; totalBall += 420; needsUpgrade = true; } // 昇格確変
-            else { logDigit = 2; isST = false; totalBall += 420; } // 時短
+            if (rand < 3) { logDigit = 7; isST = true; totalBall += 1400; isZenkaiten = true; }
+            else if (rand < 39) { logDigit = 3; isST = true; totalBall += 420; } 
+            else if (rand < 59) { logDigit = 2; isST = true; totalBall += 420; needsUpgrade = true; } 
+            else { logDigit = 2; isST = false; totalBall += 420; }
+        } else { 
+            logDigit = (rand < 50) ? 7 : 1; isST = true; totalBall += (logDigit === 7 ? 1400 : 420); rushCount++;
         }
 
         if (isZenkaiten) { 
@@ -289,14 +290,9 @@ async function startProcess() {
         currentRushHits++; lcdCount = 0; activeJob = null; refillStock(); updateUI(); 
         await new Promise(r => setTimeout(r, 800)); 
     } else { 
-        // はずれた時の停止画面表示（1秒間）
-        [1,2,3].forEach(i => { 
-            const el = document.getElementById('d'+i);
-            // 現在表示されている数字を維持しつつ、ハズレ目として表示
-            el.className = getDigitClass(parseInt(el.innerText));
-        });
+        [1,2,3].forEach(i => { const el = document.getElementById('d'+i); el.className = getDigitClass(parseInt(el.innerText)); });
         activeJob = null; 
-        await new Promise(r => setTimeout(r, 1000)); // ハズレ時の1秒保持
+        await new Promise(r => setTimeout(r, 1000)); 
     }
     
     isAnim = false; updateUI(); updateAutoBtns();
