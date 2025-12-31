@@ -15,7 +15,7 @@
         .machine { width: 100%; background: #111; border: 3px solid #8a2be2; border-radius: 15px; padding: 12px; position: relative; box-sizing: border-box; }
         .screen { background: #000; height: 300px; border-radius: 10px; border: 2px solid #444; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; width: 100%; }
         
-        /* 1.5倍サイズ図柄 */
+        /* 1.5倍サイズ図柄表示 */
         .digit-container { display: flex; gap: 5px; }
         .digit { font-size: 8.5rem; font-weight: 900; font-family: 'Shippori Mincho B1', serif; width: 110px; text-align: center; } 
         .mode-display { position: absolute; bottom: 35px; right: 15px; color: #8a2be2; font-weight: bold; font-size: 0.9rem; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 3px; border-right: 3px solid #8a2be2; text-align: right; min-width: 90px; }
@@ -46,16 +46,19 @@
         .heso-blink { animation: blink 0.3s infinite; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
+        /* 1.5倍サイズ履歴表示（グリッドの下のlog部分に反映） */
         .stat-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-top: 12px; }
         .stat-item { background: #000; border: 1px solid #333; padding: 5px 0; text-align: center; border-radius: 4px; }
         .stat-val { font-size: 1.2rem; font-weight: bold; font-family: monospace; color: #fff; }
         .stat-label { font-size: 0.55rem; color: #888; display: block; }
+        
         .control-panel { margin-top: 12px; display: flex; gap: 8px; width: 100%; height: 65px; }
         .side-btns { display: flex; flex-direction: column; gap: 4px; width: 55px; }
         .side-btn { flex: 1; background: #222; color: #666; border: 1px solid #444; font-size: 0.7rem; border-radius: 4px; cursor: pointer; font-weight: bold; }
         .side-btn.active { background: #8a2be2; color: #fff; border-color: #a450ff; }
         .btn-auto { flex: 1; background: #8a2be2; color: white; border: 1px solid #a450ff; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 1rem; }
         .btn-stop { background: #444 !important; border-color: #666 !important; }
+        
         .log { width: 100%; max-width: 440px; height: 350px; background: #000; margin-top: 10px; padding: 10px; font-size: 0.95rem; color: #ffffff; overflow-y: auto; border: 1px solid #333; font-family: monospace; box-sizing: border-box; line-height: 1.5; } 
         #modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; justify-content: center; align-items: center; }
         #modal-content { background: #111; border: 2px solid #8a2be2; width: 92%; max-width: 450px; padding: 15px; border-radius: 12px; overflow-y: auto; max-height: 90vh; }
@@ -117,8 +120,7 @@
         <div class="log" id="log">> システム起動完了</div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
-<script>
+    <script>
 const SPECS = { n: 319.7, s: 99.4, st: 163, jt: 100 };
 let hits = 0, rushCount = 0, currentRot = 0, totalRot = 0, totalBall = 0, currentRushHits = 0, maxHamari = 0;
 let mode = '通常', rRem = 0, isAuto = false, autoSpeed = 'slow', isAnim = false;
@@ -193,13 +195,14 @@ function createJob() {
         let isN = (mode === '通常' || mode === '時短');
         let redGase = isN ? 0.05 : 0.01;
         let redVibeGase = isN ? 0.005 : 0.001; 
-        let whiteVibeGase = isN ? 0.01 : 0.005; // 通常時 0.01%
+        let whiteVibeGase = isN ? 0.01 : 0.005; 
         if (hr < redVibeGase) { res.name.push("赤レバ"); res.holdType = "vibe"; res.vibe = true; res.vibeColor = "red"; res.heavy = true; }
         else if (hr < (redVibeGase + whiteVibeGase)) { res.name.push("白レバ"); res.holdType = "vibe"; res.vibe = true; res.vibeColor = "white"; res.heavy = true; }
         else if (hr < (redVibeGase + whiteVibeGase + redGase)) { res.name.push("赤保留"); res.holdType = "red"; res.heavy = true; }
         else if (hr < (redVibeGase + whiteVibeGase + redGase + 0.1)) { res.name.push("緑保留"); res.holdType = "green"; }
         else if (hr < (redVibeGase + whiteVibeGase + redGase + 1.0)) { res.name.push("青保留"); res.holdType = "blue"; }
     }
+    
     const map = (mode !== '通常') ? TRUST_MAP_S : TRUST_MAP_N;
     if (res.isSure) {
         res.trust = 100.00;
@@ -232,15 +235,18 @@ async function startProcess() {
     if (mode !== '通常') { rRem--; totalBall -= 0.05; } else { totalBall -= (250 / 18); }
     updateCharts();
 
-    // 履歴出力
-    addLog(`${mode} ${lcdCount}回転【${eff.displayName}】信頼度:${eff.trust.toFixed(2)}%`);
+    // 【修正】履歴出力条件：信頼度50%以上、または当たり時のみ
+    if (eff.trust >= 50 || activeJob.isHit) {
+        addLog(`${mode} ${lcdCount}回転【${eff.displayName}】信頼度:${eff.trust.toFixed(2)}%`);
+    }
+    
     if (eff.vibe) document.getElementById('machine').classList.add('vibrate');
     if (eff.flash) document.getElementById('lamp').classList.add('lamp-active');
     if (eff.text) { const ov = document.getElementById('effect-overlay'); ov.innerText = eff.text; ov.style.display = 'block'; }
 
-    // 【高速オート対応】アニメーション時間と更新間隔の調整
+    // 高速オート時のアニメーション調整
     let spinTime = (eff.heavy || hasHeavyInStock) ? 2000 : (autoSpeed === 'fast' ? 300 : 500);
-    let intervalTime = (autoSpeed === 'fast') ? 20 : 40; // 高速時は20ms間隔で図柄更新
+    let intervalTime = (autoSpeed === 'fast') ? 20 : 40; 
 
     let spin = setInterval(() => { 
         [1,2,3].forEach(i => { 
@@ -296,7 +302,6 @@ async function startProcess() {
     } else { 
         [1,2,3].forEach(i => { const el = document.getElementById('d'+i); el.className = getDigitClass(parseInt(el.innerText)); });
         activeJob = null; 
-        // 【高速オート対応】停止後のウェイトを短縮
         let waitAfterStop = (autoSpeed === 'fast') ? 100 : 1000;
         await new Promise(r => setTimeout(r, waitAfterStop)); 
     }
