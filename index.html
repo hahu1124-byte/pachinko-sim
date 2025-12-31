@@ -33,21 +33,12 @@
         .vibe-red { border-color: #ff0000 !important; box-shadow: 0 0 30px #ff0000, inset 0 0 20px #ff0000 !important; }
         .vibe-rainbow { animation: vibration 0.05s infinite, rainbow-border 0.2s infinite !important; }
 
-        @keyframes rainbow-border {
-            0% { border-color: #f00; box-shadow: 0 0 30px #f00; }
-            33% { border-color: #0f0; box-shadow: 0 0 30px #0f0; }
-            66% { border-color: #00f; box-shadow: 0 0 30px #00f; }
-            100% { border-color: #f0f; box-shadow: 0 0 30px #f0f; }
-        }
         @keyframes vibration { 0% { transform: translate(0,0); } 25% { transform: translate(-2px, 2px); } 50% { transform: translate(2px, -2px); } 75% { transform: translate(-2px, -2px); } 100% { transform: translate(0,0); } }
 
         /* 保留のデザイン */
         .heso-overlay { position: absolute; bottom: 10px; display: flex; align-items: center; gap: 10px; transition: all 0.3s; }
-        .heso-ball { width: 18px; height: 18px; background: #222; border-radius: 50%; border: 1px solid #555; transition: all 0.1s; box-sizing: border-box; }
-        
-        /* ST・時短中の四角保留（□） */
+        .heso-ball { width: 18px; height: 18px; background: #222; border-radius: 50%; border: 1px solid #555; transition: all 0.3s ease; box-sizing: border-box; }
         .heso-overlay.right-mode .heso-ball { border-radius: 2px !important; width: 16px; height: 16px; }
-        
         .heso-overlay.right-mode { bottom: 80px; right: 10px; flex-direction: column-reverse; gap: 6px; }
         .heso-current { border-width: 2px !important; border-color: #fff !important; }
         .heso-on { background: #888; }
@@ -58,6 +49,8 @@
         .heso-vibe { animation: vibration 0.1s infinite !important; background: radial-gradient(circle, #fff, #8a2be2) !important; box-shadow: 0 0 10px #8a2be2; border-color: #fff !important; }
         .heso-blink { animation: blink 0.3s infinite; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        @keyframes upgrade-flash { 0% { transform: scale(1); filter: brightness(1); } 50% { transform: scale(1.4); filter: brightness(2); } 100% { transform: scale(1); filter: brightness(1); } }
+        .upgrade-anim { animation: upgrade-flash 0.4s ease-out; }
 
         .stat-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-top: 12px; }
         .stat-item { background: #000; border: 1px solid #333; padding: 5px 0; text-align: center; border-radius: 4px; }
@@ -151,6 +144,22 @@ function getDigitClass(num, currentMode) {
     return (num % 2 !== 0) ? 'digit odd' : 'digit even';
 }
 
+function upgradeReservedStock() {
+    const stepOrder = ["none", "blue", "green", "red", "vibe", "rainbow"];
+    reservedStock.forEach(job => {
+        if (job.currentView !== job.holdType) {
+            if (Math.random() < 0.25) {
+                let curIdx = stepOrder.indexOf(job.currentView);
+                let targetIdx = stepOrder.indexOf(job.holdType);
+                if (curIdx < targetIdx) {
+                    job.currentView = stepOrder[curIdx + 1];
+                    job.upgraded = true;
+                }
+            }
+        }
+    });
+}
+
 function refillStock() {
     let maxHold = 4;
     if (mode !== '通常') maxHold = Math.min(4, rRem - (activeJob ? 1 : 0));
@@ -161,7 +170,7 @@ function refillStock() {
 function createJob() {
     let prob = (mode !== '通常' ? SPECS.s : SPECS.n);
     let isHit = Math.random() < (1 / prob);
-    let res = { isHit, heavy: false, name: [], trust: 0, vibe: false, vibeColor: "none", flash: false, text: "", holdType: "none", isSure: false };
+    let res = { isHit, heavy: false, name: [], trust: 0, vibe: false, vibeColor: "none", flash: false, text: "", holdType: "none", currentView: "none", upgraded: false, isSure: false };
     let r = Math.random() * 100;
 
     if (isHit) {
@@ -215,19 +224,27 @@ function createJob() {
     else if (res.name.length > 0) { let fail = 1; res.name.forEach(n => { if(map[n]) fail *= (1 - map[n]); }); res.trust = (1 - fail) * 100; }
     else res.trust = (mode === '通常' ? (1/SPECS.n)*100 : (1/SPECS.s)*100); 
     res.displayName = Array.from(new Set(res.name)).join("+") || "弱演出";
+
+    // 初期表示色の設定
+    if (res.holdType === "red" || res.holdType === "vibe") {
+        let rr = Math.random();
+        res.currentView = rr < 0.4 ? "blue" : (rr < 0.8 ? "green" : "red");
+    } else if (res.holdType === "rainbow") {
+        res.currentView = Math.random() < 0.5 ? "green" : "red";
+    } else {
+        res.currentView = res.holdType;
+    }
+
     return res;
 }
 
 function generateFinalDigits(isHit, hitNum) {
     if (isHit) return [hitNum, hitNum, hitNum];
     while(true) {
-        let d1 = Math.floor(Math.random()*9)+1;
-        let d3 = Math.floor(Math.random()*9)+1;
-        let d2 = Math.floor(Math.random()*9)+1;
+        let d1 = Math.floor(Math.random()*9)+1, d3 = Math.floor(Math.random()*9)+1, d2 = Math.floor(Math.random()*9)+1;
         if (Math.random() < 0.25) { d3 = d1; while(d2 === d1) d2 = Math.floor(Math.random()*9)+1; } 
         else { while(d1 === d3) d3 = Math.floor(Math.random()*9)+1; }
-        let sorted = [d1, d2, d3].sort().join('');
-        if (sorted === "135") continue;
+        if ([d1, d2, d3].sort().join('') === "135") continue;
         return [d1, d2, d3];
     }
 }
@@ -241,8 +258,14 @@ async function startProcess() {
         mode = '通常'; currentRushHits = 0; firstHitRot = 0; updateUI();
         if (prev === '時短' && originalSpeedSetting === 'fast') autoSpeed = 'fast'; else { isAuto = false; updateAutoBtns(); return; }
     }
+    
+    upgradeReservedStock();
+    activeJob = reservedStock.shift(); 
+    if(activeJob) activeJob.currentView = activeJob.holdType; 
+    
     refillStock();
-    activeJob = reservedStock.shift(); refillStock(); updateUI();
+    updateUI();
+    
     let eff = activeJob;
     if (optKokuchi && activeJob.isHit) { eff.flash = true; eff.isSure = true; eff.trust = 100; eff.displayName = "インフラ告知"; }
     totalRot++; currentRot++; lcdCount++; 
@@ -250,8 +273,7 @@ async function startProcess() {
     updateCharts();
     if (eff.trust >= 50 || activeJob.isHit) addLog(`${mode} ${lcdCount}回転【${eff.displayName}】信頼度:${eff.trust.toFixed(2)}%`);
     
-    const machineEl = document.getElementById('machine');
-    const screenEl = document.getElementById('screen');
+    const machineEl = document.getElementById('machine'), screenEl = document.getElementById('screen');
     if (eff.vibe) {
         machineEl.classList.add('vibrate'); screenEl.classList.add('vibrate');
         if (eff.vibeColor === "white") { machineEl.classList.add('vibe-white'); screenEl.classList.add('vibe-white'); }
@@ -263,7 +285,6 @@ async function startProcess() {
 
     let spinTime = (eff.heavy || reservedStock.some(j=>j.heavy)) ? 1800 : (autoSpeed === 'fast' ? 250 : 500);
     let spin = setInterval(() => { [1,2,3].forEach(i => { let n = Math.floor(Math.random()*9)+1; const el = document.getElementById('d'+i); el.innerText = n; el.className = getDigitClass(n, mode); }); }, 40);
-
     await new Promise(r => setTimeout(r, spinTime));
     clearInterval(spin);
 
@@ -275,21 +296,14 @@ async function startProcess() {
             else if (rand < 39) { let odds = [1,3,5,9]; hitDigit = odds[Math.floor(Math.random()*odds.length)]; } 
             else if (rand < 59) { let evens = [2,4,6,8]; hitDigit = evens[Math.floor(Math.random()*evens.length)]; } 
             else { let evens = [2,4,6,8]; hitDigit = evens[Math.floor(Math.random()*evens.length)]; } 
-        } else {
-            hitDigit = (Math.random() < 0.5) ? 3 : 2;
-        }
+        } else { hitDigit = (Math.random() < 0.5) ? 3 : 2; }
         finalNums = [hitDigit, hitDigit, hitDigit];
-    } else {
-        finalNums = generateFinalDigits(false, 0);
-    }
+    } else { finalNums = generateFinalDigits(false, 0); }
 
     for(let i of [1,3,2]) {
-        const el = document.getElementById('d'+i);
-        el.innerText = finalNums[i-1];
-        el.className = getDigitClass(finalNums[i-1], mode);
+        const el = document.getElementById('d'+i); el.innerText = finalNums[i-1]; el.className = getDigitClass(finalNums[i-1], mode);
         if(autoSpeed !== 'fast') await new Promise(r => setTimeout(r, 100));
     }
-
     machineEl.classList.remove('vibrate', 'vibe-white', 'vibe-red', 'vibe-rainbow');
     screenEl.classList.remove('vibrate', 'vibe-white', 'vibe-red', 'vibe-rainbow');
     document.getElementById('lamp').classList.remove('lamp-active');
@@ -301,32 +315,17 @@ async function startProcess() {
             firstHitRot = lcdCount; 
             if (currentRot > maxHamari) { maxHamari = currentRot; document.getElementById('max-hamari-box').innerText = `最大ハマリ: ${maxHamari}`; }
         }
-        
-        let bonusBall;
-        let isST = false, needsUpgrade = false;
-        let originalHit = hitDigit;
-
+        let bonusBall, isST = false, needsUpgrade = false, originalHit = hitDigit;
         if (mode === '通常') {
             rushCount = 1;
             if (originalHit === 7) { isST = true; bonusBall = 1400; addLog(">> 全回転！！"); }
             else if (originalHit % 2 !== 0) { isST = true; bonusBall = 420; }
-            else {
-                if (Math.random() < (20 / 61)) { 
-                    isST = true; needsUpgrade = true; bonusBall = 420;
-                } else {
-                    isST = false; bonusBall = 420;
-                }
-            }
+            else { if (Math.random() < (20 / 61)) { isST = true; needsUpgrade = true; bonusBall = 420; } else { isST = false; bonusBall = 420; } }
             addLog(`>> 当たり！ 【${originalHit}】${lcdCount}回転`);
-        } else {
-            isST = true; bonusBall = 1400; rushCount++;
-            addLog(`>> 当たり！ 【${originalHit}】${lcdCount}回転`);
-        }
+        } else { isST = true; bonusBall = 1400; rushCount++; addLog(`>> 当たり！ 【${originalHit}】${lcdCount}回転`); }
 
-        totalBall += bonusBall;
-        currentRot = 0;
+        totalBall += bonusBall; currentRot = 0;
         await new Promise(r => setTimeout(r, 1000));
-
         if (mode === '通常' && needsUpgrade) {
             let nextOdd = [1,3,5,9][Math.floor(Math.random()*4)];
             addLog(`>> ${nextOdd}図柄へ昇格！！`);
@@ -335,14 +334,10 @@ async function startProcess() {
             await new Promise(r => setTimeout(r, 800));
             document.getElementById('lamp').classList.remove('lamp-active');
         }
-
         if (isST) { mode = 'ST'; rRem = SPECS.st; } else { mode = '時短'; rRem = SPECS.jt; }
         currentRushHits++; lcdCount = 0; activeJob = null; updateUI(); 
         await new Promise(r => setTimeout(r, 600)); 
-    } else { 
-        activeJob = null; 
-        await new Promise(r => setTimeout(r, (autoSpeed === 'fast' ? 50 : 600))); 
-    }
+    } else { activeJob = null; await new Promise(r => setTimeout(r, (autoSpeed === 'fast' ? 50 : 600))); }
     isAnim = false; updateUI(); updateAutoBtns();
     if (isAuto) setTimeout(startProcess, (autoSpeed === 'fast' ? 10 : 150));
 }
@@ -359,13 +354,15 @@ function updateHesoUI() {
         const s = (i===0) ? activeJob : (reservedStock[i-1] || null); 
         el.className = `heso-ball ${i===0?'heso-current':''}`; 
         if(s) { 
-            if(s.holdType === 'red') el.classList.add('heso-red'); 
-            else if(s.holdType === 'green') el.classList.add('heso-green'); 
-            else if(s.holdType === 'blue') el.classList.add('heso-blue'); 
-            else if(s.holdType === 'blink') el.classList.add('heso-blink'); 
-            else if(s.holdType === 'vibe') el.classList.add('heso-vibe'); 
-            else if(s.holdType === 'rainbow') el.classList.add('heso-rainbow'); 
-            else el.classList.add('heso-on'); 
+            let v = s.currentView;
+            if(v === 'red') el.classList.add('heso-red'); 
+            else if(v === 'green') el.classList.add('heso-green'); 
+            else if(v === 'blue') el.classList.add('heso-blue'); 
+            else if(v === 'blink') el.classList.add('heso-blink'); 
+            else if(v === 'vibe') el.classList.add('heso-vibe'); 
+            else if(v === 'rainbow') el.classList.add('heso-rainbow'); 
+            else if(v !== 'none') el.classList.add('heso-on'); 
+            if (s.upgraded) { el.classList.add('upgrade-anim'); s.upgraded = false; }
         } 
     } 
 }
