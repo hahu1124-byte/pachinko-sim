@@ -189,13 +189,21 @@ function createJob() {
 
 async function startProcess() {
     if (!isAuto || isAnim) return;
+    
+    // 連チャン終了時（通常に戻る際）：rushCountはリセットしない
     if (mode !== '通常' && rRem <= 0 && reservedStock.length === 0 && !activeJob) {
         let prev = mode; 
         addLog(`【${prev}終了】 ${currentRushHits <= 1 ? (currentRushHits === 0 ? '0回' : '1回(' + prev + ')') : currentRushHits + '連'}`);
-        mode = '通常'; currentRushHits = 0; rushCount = 0; 
+        mode = '通常'; 
+        currentRushHits = 0; 
         updateUI();
-        if (prev === '時短' && originalSpeedSetting === 'fast') { autoSpeed = 'fast'; } else { isAuto = false; updateAutoBtns(); return; }
+        if (prev === '時短' && originalSpeedSetting === 'fast') { 
+            autoSpeed = 'fast'; 
+        } else { 
+            isAuto = false; updateAutoBtns(); return; 
+        }
     }
+
     refillStock();
     if (reservedStock.length === 0 && !activeJob) { isAuto = false; updateAutoBtns(); return; }
     activeJob = reservedStock.shift(); refillStock(); updateUI();
@@ -228,16 +236,17 @@ async function startProcess() {
         currentRot = 0;
         
         let rand = Math.random()*100, logDigit, isST = false, oldMode = mode;
-        let displayDigit; // 液晶表示専用の図柄
+        let displayDigit;
 
         if (mode !== '通常') { 
-            // 右打ち中はログ図柄(1 or 7)を決めたあと、見た目だけを「7」に固定
             logDigit = (rand < 50) ? 7 : 1;
             displayDigit = 7; 
             isST = true; 
             totalBall += 1400; 
+            rushCount++; // 右打ち中は加算のみ
         } else { 
-            // 通常時はログと見た目を一致させる
+            // 通常時からの当選：ここで初めて前回の連チャンをリセットして「1」にする
+            rushCount = 1; 
             if (rand < 60) { 
                 logDigit = (rand < 5 ? 7 : 3); 
                 displayDigit = logDigit; 
@@ -251,15 +260,13 @@ async function startProcess() {
             }
         }
 
-        // 液晶表示（必ず displayDigit を使う）
         [1,2,3].forEach(i => { const el = document.getElementById('d'+i); el.innerText = displayDigit; el.className = getDigitClass(displayDigit); });
         await new Promise(r => setTimeout(r, 1200));
         
         if (isST) { mode = 'ST'; rRem = SPECS.st; } else { mode = '時短'; rRem = SPECS.jt; }
         
-        rushCount++; currentRushHits++; 
+        currentRushHits++; 
         
-        // 履歴ログ（必ず logDigit を使う）
         if (oldMode === 'ST' || oldMode === '時短') { 
             addLog(`>> 当たり！ 【${logDigit}】 ${lcdCount}回転`); 
         } else { 
@@ -288,6 +295,7 @@ function resetData() { if(confirm('データをリセットしますか？')) lo
 </script>
 </body>
 </html>
+
 
 
 
