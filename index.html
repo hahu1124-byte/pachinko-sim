@@ -138,7 +138,7 @@ let sChart, hChart, firstHitRot = 0, rushSeriesCount = 0;
 
 const TRUST_MAP = { 
     "白レバ": 0.90, "赤レバ": 0.965, "虹レバ": 1.0, "赤保留": 0.90, "緑保留": 0.11, "青保留": 0.03, "次回予告": 0.65, "レイ背景": 0.85, "金系": 0.50, "渚カヲル": 1.0, "点滅保留": 0.01,
-    "ST白レバ": 0.95, "ST赤レバ": 0.99, "ST次回予告": 1.0, "STレイ背景": 0.98, "ST金系": 0.80, "ST緑保留": 0.20, "ST青保留": 0.05
+    "ST白レバ": 0.95, "ST赤レバ": 0.99, "ST次回予告": 1.0, "STレイ背景": 1.0, "ST金系": 0.80, "ST緑保留": 0.20, "ST青保留": 0.05, "ST赤保留": 0.95
 };
 
 window.onload = () => { initCharts(); refillStock(); updateUI(); };
@@ -167,14 +167,14 @@ function createJob() {
         if (res.name.length > 0) {
             let fail = 1; res.name.forEach(n => { if(TRUST_MAP[n]) fail *= (1 - TRUST_MAP[n]); });
             res.trust = (1 - fail) * 100;
-        } else { res.trust = 0.10; } // 信頼度を1.13%から0.1%に変更
+        } else { res.trust = 0.10; }
     } else {
         if (r < 0.05) { res.name.push("虹レバ"); res.vibe = true; res.vibeColor = "rainbow"; res.holdType = "vibe"; res.isSure = true; }
         else if (r < 0.20) { res.name.push("ST赤レバ"); res.vibe = true; res.vibeColor = "red"; res.holdType = "vibe"; }
         else if (r < 0.40) { res.name.push("ST次回予告"); res.text = "次回予告"; }
         else if (r < 0.70) { res.name.push("STレイ背景"); res.text = "レイ背景"; }
         else if (r < 1.00) { res.name.push("ST白レバ"); res.vibe = true; res.vibeColor = "white"; res.holdType = "vibe"; }
-        else if (r < 1.40) { res.name.push("赤保留"); res.holdType = "red"; }
+        else if (r < 1.40) { res.name.push("ST赤保留"); res.holdType = "red"; }
         else if (r < 1.90) { res.name.push("ST金系"); }
         else if (r < 3.90) { res.name.push("ST緑保留"); res.holdType = "green"; }
         else if (r < 7.90) { res.name.push("ST青保留"); res.holdType = "blue"; }
@@ -297,6 +297,7 @@ function resetData() { if(confirm('データをリセットしますか？')) lo
     </script>
 </body>
 </html>
+
 
 
 
