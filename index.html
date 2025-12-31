@@ -14,23 +14,18 @@
         .main-content { width: 100%; max-width: 440px; display: flex; flex-direction: column; align-items: center; padding: 10px; box-sizing: border-box; }
         .machine { width: 100%; background: #111; border: 3px solid #8a2be2; border-radius: 15px; padding: 12px; position: relative; box-sizing: border-box; }
         .screen { background: #000; height: 300px; border-radius: 10px; border: 2px solid #444; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; width: 100%; }
-        
         .digit-container { display: flex; gap: 5px; }
         .digit { font-size: 8.5rem; font-weight: 900; font-family: 'Shippori Mincho B1', serif; width: 110px; text-align: center; } 
         .mode-display { position: absolute; bottom: 35px; right: 15px; color: #8a2be2; font-weight: bold; font-size: 0.9rem; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 3px; border-right: 3px solid #8a2be2; text-align: right; min-width: 90px; }
-        
         .gold { color: #ffeb3b; text-shadow: 0 0 30px #ffeb3b; }
         .odd { color: #ff4444; text-shadow: 0 0 20px #ff4444; }
         .even { color: #4444ff; text-shadow: 0 0 20px #4444ff; }
-
         .hidden-lamp { position: absolute; top: 12px; right: 20px; width: 15px; height: 15px; background: #222; border-radius: 50%; border: 1px solid #444; }
         .lamp-active { animation: rainbow-bg 0.3s infinite; box-shadow: 0 0 20px #fff; }
         @keyframes rainbow-bg { 0% { background: #f00; } 20% { background: #ff0; } 40% { background: #0f0; } 60% { background: #0ff; } 80% { background: #00f; } 100% { background: #f0f; } }
         .vibrate { animation: vibration 0.05s infinite; }
         @keyframes vibration { 0% { transform: translate(0,0); } 25% { transform: translate(-2px, 2px); } 50% { transform: translate(2px, -2px); } 75% { transform: translate(-2px, -2px); } 100% { transform: translate(0,0); } }
-
         .all-spin-bg { animation: rainbow-bg 0.8s infinite; box-shadow: inset 0 0 100px rgba(255,255,255,0.5); }
-
         .heso-overlay { position: absolute; bottom: 10px; display: flex; align-items: center; gap: 10px; transition: all 0.3s; }
         .heso-ball { width: 18px; height: 18px; background: #222; border-radius: 50%; border: 1px solid #555; transition: all 0.1s; }
         .heso-overlay.right-mode { bottom: 80px; right: 10px; flex-direction: column-reverse; gap: 6px; }
@@ -44,7 +39,6 @@
         .heso-vibe { animation: vibration 0.1s infinite !important; background: radial-gradient(circle, #fff, #8a2be2) !important; box-shadow: 0 0 10px #8a2be2; border-color: #fff !important; }
         .heso-blink { animation: blink 0.3s infinite; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-
         .stat-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-top: 12px; }
         .stat-item { background: #000; border: 1px solid #333; padding: 5px 0; text-align: center; border-radius: 4px; }
         .stat-val { font-size: 1.2rem; font-weight: bold; font-family: monospace; color: #fff; }
@@ -116,8 +110,7 @@
         <div class="log" id="log">> システム起動完了</div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<script>
+    <script>
 const SPECS = { n: 319.7, s: 99.4, st: 163, jt: 100 };
 let hits = 0, rushCount = 0, currentRot = 0, totalRot = 0, totalBall = 0, currentRushHits = 0, maxHamari = 0;
 let mode = '通常', rRem = 0, isAuto = false, autoSpeed = 'slow', isAnim = false;
@@ -191,10 +184,8 @@ function createJob() {
         let hr = Math.random() * 100;
         let isN = (mode === '通常' || mode === '時短');
         let redGase = isN ? 0.05 : 0.01;
-        // 白レバブルの外れ率を0.01%に修正
         let redVibeGase = isN ? 0.005 : 0.001; 
         let whiteVibeGase = isN ? 0.01 : 0.005; 
-        
         if (hr < redVibeGase) { res.name.push("赤レバ"); res.holdType = "vibe"; res.vibe = true; res.vibeColor = "red"; res.heavy = true; }
         else if (hr < (redVibeGase + whiteVibeGase)) { res.name.push("白レバ"); res.holdType = "vibe"; res.vibe = true; res.vibeColor = "white"; res.heavy = true; }
         else if (hr < (redVibeGase + whiteVibeGase + redGase)) { res.name.push("赤保留"); res.holdType = "red"; res.heavy = true; }
@@ -213,9 +204,7 @@ function createJob() {
 
 async function startProcess() {
     if (!isAuto || isAnim) return;
-
     let hasHeavyInStock = reservedStock.some(job => job.heavy === true);
-
     if (mode !== '通常' && rRem <= 0 && reservedStock.length === 0 && !activeJob) {
         let prev = mode; 
         addLog(`【${prev}終了】 ${currentRushHits <= 1 ? (currentRushHits === 0 ? '0回' : '1回(' + prev + ')') : currentRushHits + '連'}`);
@@ -226,58 +215,48 @@ async function startProcess() {
     refillStock();
     if (reservedStock.length === 0 && !activeJob) { isAuto = false; updateAutoBtns(); return; }
     activeJob = reservedStock.shift(); refillStock(); updateUI();
-
     let eff = activeJob;
     if (optKokuchi && activeJob.isHit) { eff.flash = true; eff.isSure = true; eff.trust = 100; eff.displayName = "インフラ告知"; }
     totalRot++; currentRot++; lcdCount++; 
     if (mode !== '通常') { rRem--; totalBall -= 0.05; } else { totalBall -= (250 / 18); }
     updateCharts();
-
     if (eff.heavy || activeJob.isHit) {
         addLog(`${mode} ${lcdCount}回転【${eff.displayName}】信頼度:${eff.trust.toFixed(1)}%`);
         if (eff.vibe) document.getElementById('machine').classList.add('vibrate');
         if (eff.flash) document.getElementById('lamp').classList.add('lamp-active');
         if (eff.text) { const ov = document.getElementById('effect-overlay'); ov.innerText = eff.text; ov.style.display = 'block'; }
     }
-
     let spinTime = (eff.heavy || hasHeavyInStock) ? 2000 : (autoSpeed === 'fast' ? 50 : 500);
-    
     let spin = setInterval(() => { [1,2,3].forEach(i => { let n = Math.floor(Math.random()*9)+1; const el = document.getElementById('d'+i); el.innerText=n; el.className = getDigitClass(n); }); }, 40);
     await new Promise(r => setTimeout(r, spinTime));
     clearInterval(spin);
     document.getElementById('machine').classList.remove('vibrate');
     document.getElementById('lamp').classList.remove('lamp-active');
     document.getElementById('effect-overlay').style.display = 'none';
-    
     if (activeJob.isHit) {
         isAnim = true; hits++; 
         historyData.push(lcdCount); historyLabels.push(hits + "回目");
         if (mode === '通常' && currentRot > maxHamari) { maxHamari = currentRot; document.getElementById('max-hamari-box').innerText = `最大ハマリ: ${maxHamari}`; }
         currentRot = 0;
-        
-        let rand = Math.random() * 100, logDigit, isST = false, oldMode = mode, needsUpgrade = false, isZenkaiten = false;
-
-        if (mode !== '通常') { 
+        let rand = Math.random() * 100, logDigit, isST = false, needsUpgrade = false, isZenkaiten = false;
+        if (mode === '通常') {
             rushCount = 1; 
             if (rand < 3) { logDigit = 7; isST = true; totalBall += 1400; isZenkaiten = true; }
-            else if (rand < 39) { logDigit = 3; isST = true; totalBall += 420; } 
+            else if (rand < 39) { logDigit = 3; isST = true; totalBall += 420; }
             else if (rand < 59) { logDigit = 2; isST = true; totalBall += 420; needsUpgrade = true; } 
             else { logDigit = 2; isST = false; totalBall += 420; }
         } else { 
-            logDigit = (rand < 50) ? 7 : 1; isST = true; totalBall += (logDigit === 7 ? 1400 : 420); rushCount++;
+            logDigit = 7; isST = true; totalBall += 1400; rushCount++; 
         }
-
         if (isZenkaiten) { 
             addLog(">> 全回転演出発生！！"); 
             document.getElementById('screen').classList.add('all-spin-bg');
             await new Promise(r => setTimeout(r, 2000));
             document.getElementById('screen').classList.remove('all-spin-bg');
         }
-
         [1,2,3].forEach(i => { const el = document.getElementById('d'+i); el.innerText = logDigit; el.className = getDigitClass(logDigit); });
         addLog(`>> 当たり！ 【${logDigit}】 ${lcdCount}回転`);
         await new Promise(r => setTimeout(r, 1200));
-
         if (needsUpgrade) {
             addLog(">> 昇格！ 奇数図柄へ変化");
             document.getElementById('lamp').classList.add('lamp-active');
@@ -285,7 +264,6 @@ async function startProcess() {
             await new Promise(r => setTimeout(r, 1000));
             document.getElementById('lamp').classList.remove('lamp-active');
         }
-        
         if (isST) { mode = 'ST'; rRem = SPECS.st; } else { mode = '時短'; rRem = SPECS.jt; }
         currentRushHits++; lcdCount = 0; activeJob = null; refillStock(); updateUI(); 
         await new Promise(r => setTimeout(r, 800)); 
@@ -294,11 +272,9 @@ async function startProcess() {
         activeJob = null; 
         await new Promise(r => setTimeout(r, 1000)); 
     }
-    
     isAnim = false; updateUI(); updateAutoBtns();
     if (isAuto) setTimeout(startProcess, (autoSpeed === 'fast' ? 10 : 200));
 }
-
 function toggleAuto(s) { if(isAuto && autoSpeed === s) { isAuto = false; } else { isAuto = true; autoSpeed = s; originalSpeedSetting = s; if(!isAnim) startProcess(); } updateAutoBtns(); }
 function updateAutoBtns() { document.getElementById('btn-slow').classList.toggle('btn-stop', isAuto && autoSpeed === 'slow'); document.getElementById('btn-fast').classList.toggle('btn-stop', isAuto && autoSpeed === 'fast'); }
 function toggleOpt(t) { if(t==='kokuchi') optKokuchi=!optKokuchi; document.getElementById('btn-'+t).classList.toggle('active'); }
