@@ -141,7 +141,7 @@
             "ST白レバ": 0.95, "ST赤レバ": 0.99, "ST次回予告": 1.0, "STレイ背景": 0.98, "ST金系": 0.80, "ST緑保留": 0.20, "ST青保留": 0.05
         };
 
-        window.onload = () => { initCharts(); updateUI(); };
+        window.onload = () => { initCharts(); refillStock(); updateUI(); };
 
         function getDigitClass(num, currentMode) {
             if (num === 7 && (currentMode !== '通常')) return 'digit gold';
@@ -188,11 +188,14 @@
 
         async function startProcess() {
             if (!isAuto || isAnim) return;
-            if (mode !== '通常' && rRem <= 0 && reservedStock.length === 0 && !activeJob) {
+
+            // ST/時短終了判定
+            if (mode !== '通常' && rRem <= 0) {
                 addLog(`【${mode}終了】 ${currentRushHits}連`);
                 rushSeriesCount++; historyData.push(firstHitRot); historyLabels.push(`${rushSeriesCount}回目(${currentRushHits}連)`); hChart.update();
-                mode = '通常'; currentRushHits = 0; firstHitRot = 0; updateUI(); isAuto = false; updateAutoBtns(); return;
+                mode = '通常'; currentRushHits = 0; firstHitRot = 0; updateUI(); 
             }
+
             activeJob = reservedStock.shift(); if(activeJob) activeJob.currentView = activeJob.holdType;
             refillStock(); updateUI();
             let eff = activeJob;
@@ -201,29 +204,34 @@
             if (mode !== '通常') { rRem--; totalBall -= 0.05; } else { totalBall -= 13.8; }
             updateCharts();
             if (eff.trust >= 50 || eff.isHit) { addLog(`${mode} ${lcdCount}回転【${eff.displayName}】信頼度:${eff.trust.toFixed(1)}%`); }
+            
             const machineEl = document.getElementById('machine'), screenEl = document.getElementById('screen');
             if (eff.vibe) { machineEl.classList.add('vibrate', 'vibe-' + eff.vibeColor); screenEl.classList.add('vibrate', 'vibe-' + eff.vibeColor); }
             if (eff.flash) document.getElementById('lamp').classList.add('lamp-active');
             if (eff.text) { const ov = document.getElementById('effect-overlay'); ov.innerText = eff.text; ov.style.display = 'block'; }
+            
             let spinTime = (eff.heavy) ? 1800 : (autoSpeed === 'fast' ? 200 : 600);
             let spin = setInterval(() => { [1,2,3].forEach(i => { let n = Math.floor(Math.random()*9)+1; const el = document.getElementById('d'+i); el.innerText = n; el.className = getDigitClass(n, mode); }); }, 40);
             await new Promise(r => setTimeout(r, spinTime));
             clearInterval(spin);
+            
             let finalNums, hitDigit;
             if (eff.isHit) {
                 let rand = Math.random() * 100;
-                if (mode === '通常') {
+                if (mode === '通常' || mode === '時短') {
                     if (rand < 3) hitDigit = 7; 
-                    else if (rand < 44) { let evens = [2,4,6,8]; hitDigit = evens[Math.floor(Math.random()*evens.length)]; } 
-                    else { let odds = [1,3,5,9]; hitDigit = odds[Math.floor(Math.random()*odds.length)]; } 
-                } else { hitDigit = (Math.random() < 0.5) ? 3 : 2; }
+                    else if (rand < 44) { hitDigit = [2,4,6,8][Math.floor(Math.random()*4)]; } 
+                    else { hitDigit = [1,3,5,9][Math.floor(Math.random()*4)]; } 
+                } else { hitDigit = (Math.random() < 0.5) ? 3 : 1; }
                 finalNums = [hitDigit, hitDigit, hitDigit];
             } else { finalNums = generateFinalDigits(); }
+            
             [1,3,2].forEach(i => { const el = document.getElementById('d'+i); el.innerText = finalNums[i-1]; el.className = getDigitClass(finalNums[i-1], mode); });
             machineEl.classList.remove('vibrate', 'vibe-white', 'vibe-red', 'vibe-rainbow');
             screenEl.classList.remove('vibrate', 'vibe-white', 'vibe-red', 'vibe-rainbow');
             document.getElementById('lamp').classList.remove('lamp-active');
             document.getElementById('effect-overlay').style.display = 'none';
+            
             if (eff.isHit) {
                 isAnim = true; hits++; 
                 if (mode === '通常') { 
@@ -231,7 +239,7 @@
                     if (currentRot > maxHamari) { maxHamari = currentRot; document.getElementById('max-hamari-box').innerText = `最大ハマリ: ${maxHamari}`; }
                 }
                 let bonusBall, isST = false, needsUpgrade = false, originalHit = hitDigit;
-                if (mode === '通常') {
+                if (mode === '通常' || mode === '時短') {
                     rushCount = 1;
                     if (originalHit === 7) { isST = true; bonusBall = 1400; addLog(">> 全回転！！"); }
                     else if (originalHit % 2 !== 0) { isST = true; bonusBall = 420; }
@@ -240,7 +248,7 @@
                 } else { isST = true; bonusBall = 1400; rushCount++; addLog(`>> 当たり！ 【${originalHit}】${lcdCount}回転`); }
                 totalBall += bonusBall; currentRot = 0;
                 await new Promise(r => setTimeout(r, 1000));
-                if (mode === '通常' && needsUpgrade) {
+                if ((mode === '通常' || mode === '時短') && needsUpgrade) {
                     let nextOdd = [1,3,5,9][Math.floor(Math.random()*4)];
                     addLog(`>> ${nextOdd}図柄へ昇格！！`);
                     document.getElementById('lamp').classList.add('lamp-active');
@@ -253,17 +261,25 @@
                 await new Promise(r => setTimeout(r, 600)); 
             }
             isAnim = false; updateUI(); updateAutoBtns();
-            if (isAuto) setTimeout(startProcess, (autoSpeed === 'fast' ? 10 : 150));
+            if (isAuto) setTimeout(startProcess, (autoSpeed === 'fast' ? 50 : 150));
         }
 
         function generateFinalDigits() {
-            while(true) {
-                let d1 = Math.floor(Math.random()*9)+1, d3 = Math.floor(Math.random()*9)+1, d2 = Math.floor(Math.random()*9)+1;
-                if (Math.random() < 0.25) { d3 = d1; while(d2 === d1) d2 = Math.floor(Math.random()*9)+1; } 
-                else { while(d1 === d3) d3 = Math.floor(Math.random()*9)+1; }
-                if (d1 === d2 && d2 === d3) continue;
-                return [d1, d2, d3];
+            let d1 = Math.floor(Math.random()*9)+1;
+            let d3 = Math.floor(Math.random()*9)+1;
+            let d2 = Math.floor(Math.random()*9)+1;
+            
+            // リーチ演出 (25%)
+            if (Math.random() < 0.25) { 
+                d3 = d1;
+                while(d2 === d1) d2 = Math.floor(Math.random()*9)+1;
+            } else {
+                while(d1 === d3) d3 = Math.floor(Math.random()*9)+1;
             }
+            
+            // 揃ってしまった場合は再試行（再帰）
+            if (d1 === d2 && d2 === d3) return generateFinalDigits();
+            return [d1, d2, d3];
         }
 
         function refillStock() { while (reservedStock.length < 4) { reservedStock.push(createJob()); } updateHesoUI(); }
