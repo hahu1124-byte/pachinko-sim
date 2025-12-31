@@ -156,10 +156,15 @@
                     preVibe = vr < 50 ? "white" : (vr < 90 ? "red" : "rainbow");
                 }
             } else {
+                // ST中の当たり時振り分け（占有率調整）
                 let hRoll = Math.random() * 100;
-                if (hRoll < 25) holdType = "red";
-                else if (hRoll < 30) { holdType = "vibe"; preVibe = (Math.random() < 0.7 ? "white" : "red"); }
-                else if (hRoll < 39) holdType = "rainbow"; 
+                if (hRoll < 25) holdType = "red"; // 25% 赤保留
+                else if (hRoll < 40) { // 15% レバブル系 (5%から引き上げ)
+                    holdType = "vibe"; 
+                    let vr = Math.random() * 100;
+                    preVibe = vr < 60 ? "white" : (vr < 90 ? "red" : "rainbow");
+                }
+                else if (hRoll < 51) holdType = "rainbow"; // 11% 虹保留
             }
         } else {
             if (Math.random() < 0.0002) holdType = "red"; 
@@ -179,37 +184,47 @@
         const map = (mode !== '通常') ? TRUST_MAP_S : TRUST_MAP_N;
 
         if (res.isKaworu) { res.name.push("カヲル"); res.isSure = true; res.text = "渚カヲル"; res.flash = true; }
-        if (res.holdType === "red") res.name.push("赤保留");
         if (res.holdType === "rainbow") { res.name.push("虹保留"); res.isSure = true; }
-        if (res.hasCountdown) { res.name.push("カウントダウン"); res.heavy = true; }
-        if (res.vibeColor !== "none") { 
-            res.vibe = true; 
-            res.name.push(res.vibeColor === "rainbow" ? "虹レバ" : (res.vibeColor === "red" ? "赤レバ" : "白レバ")); 
-            if(res.vibeColor === "rainbow") res.isSure = true; 
-            res.heavy = true; 
-        }
+        if (res.vibeColor === "rainbow") { res.name.push("虹レバ"); res.isSure = true; res.vibe = true; }
 
         if (job.isHit) {
             if (mode === '通常') {
+                if (res.holdType === "red") res.name.push("赤保留");
+                if (res.hasCountdown) res.name.push("カウントダウン");
+                if (res.vibeColor === "white") { res.vibe = true; res.name.push("白レバ"); }
+                if (res.vibeColor === "red") { res.vibe = true; res.name.push("赤レバ"); }
                 if (!res.isKaworu) {
                     if (Math.random() < 0.40) { res.name.push("次回予告"); res.text="次回予告"; }
-                    // レイ背景判定：当たり時の5%で「さよなら」ボイス付き、15%で通常背景
                     let rayRoll = Math.random();
                     if (rayRoll < 0.05) { res.name.push("レイ背景(さよなら)"); res.text="さよなら"; res.isSure = true; }
-                    else if (rayRoll < 0.20) { res.name.push("レイ背景"); res.text="レイ背景"; }
+                    else if (rayRoll < 0.15) { res.name.push("レイ背景"); res.text="レイ背景"; }
                     if (Math.random() < 0.60) res.name.push("金系");
                 }
             } else {
-                if (Math.random() < 0.33) res.name.push("金系");
+                // ST中の当たり時演出：弱予告当りを1%に。残りは他演出へ
+                if (res.holdType === "red") res.name.push("赤保留");
+                if (res.vibeColor === "white") { res.vibe = true; res.name.push("白レバ"); }
+                if (res.vibeColor === "red") { res.vibe = true; res.name.push("赤レバ"); }
+                
+                // 金系占有33%
+                if (Math.random() < 0.33) res.name.push("金系"); 
+                // 次回予告占有10%
                 if (Math.random() < 0.10) { res.name.push("次回予告"); res.text="次回予告"; res.isSure = true; }
+                
+                // 演出が何も選ばれなかった場合、1%以外は無理やり金系などを割り当てて「生当たり」を防ぐ
+                if (res.name.length === 0 && Math.random() > 0.01) {
+                   res.name.push("金系");
+                }
             }
             res.heavy = true;
         } else {
             if (res.holdType === "red") res.name.push("赤保留");
             if (res.hasCountdown) res.name.push("カウントダウン");
-            if (mode !== '通常' && Math.random() < 0.08) res.name.push("金系");
-            // ハズレのレイ背景
-            if (mode === '通常' && Math.random() < 0.02) { res.name.push("レイ背景"); res.text="レイ背景"; res.heavy = true; }
+            if (mode !== '通常') {
+                if (Math.random() < 0.008) res.name.push("金系"); 
+            } else {
+                if (Math.random() < 0.02) { res.name.push("レイ背景"); res.text="レイ背景"; res.heavy = true; }
+            }
         }
 
         res.name = [...new Set(res.name)];
@@ -299,6 +314,7 @@
 </script>
 </body>
 </html>
+
 
 
 
