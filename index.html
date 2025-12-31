@@ -151,6 +151,8 @@ function getDigitClass(num, currentMode) {
 function createJob() {
     let res = { isHit: false, heavy: false, name: [], trust: 0, vibe: false, vibeColor: "none", flash: false, text: "", holdType: "none", currentView: "none", upgraded: false, isSure: false };
     let r = Math.random() * 100;
+
+    // --- 演出抽選ロジック (通常・時短・ST共通化とST拡張) ---
     if (mode === '通常' || mode === '時短') {
         if (r < 0.05) { res.name.push("虹レバ"); res.vibe = true; res.vibeColor = "rainbow"; res.holdType = "vibe"; res.isSure = true; }
         else if (r < 0.10) { res.name.push("渚カヲル"); res.isSure = true; }
@@ -162,21 +164,29 @@ function createJob() {
         else if (r < 1.67) { res.name.push("金系"); }
         else if (r < 5.67) { res.name.push("緑保留"); res.holdType = "green"; }
         else if (r < 13.67) { res.name.push("青保留"); res.holdType = "blue"; }
+        
         if (res.name.length > 0) {
             let fail = 1; res.name.forEach(n => { if(TRUST_MAP[n]) fail *= (1 - TRUST_MAP[n]); });
             res.trust = (1 - fail) * 100;
         } else { res.trust = 1.13; }
     } else {
-        if (r < 0.20) { res.name.push("虹レバ"); res.vibe = true; res.vibeColor = "rainbow"; res.holdType = "vibe"; res.isSure = true; }
-        else if (r < 0.49) { res.name.push("ST次回予告"); res.text = "次回予告"; }
-        else if (r < 0.69) { res.name.push("ST赤レバ"); res.vibe = true; res.vibeColor = "red"; res.holdType = "vibe"; }
-        else if (r < 1.02) { res.name.push("ST白レバ"); res.vibe = true; res.vibeColor = "white"; res.holdType = "vibe"; }
-        else if (r < 1.42) { res.name.push("赤保留"); res.holdType = "red"; }
+        // --- ST中の演出出現率を調整 ---
+        if (r < 0.05) { res.name.push("虹レバ"); res.vibe = true; res.vibeColor = "rainbow"; res.holdType = "vibe"; res.isSure = true; }
+        else if (r < 0.20) { res.name.push("ST赤レバ"); res.vibe = true; res.vibeColor = "red"; res.holdType = "vibe"; }
+        else if (r < 0.40) { res.name.push("ST次回予告"); res.text = "次回予告"; }
+        else if (r < 0.70) { res.name.push("STレイ背景"); res.text = "レイ背景"; }
+        else if (r < 1.00) { res.name.push("ST白レバ"); res.vibe = true; res.vibeColor = "white"; res.holdType = "vibe"; }
+        else if (r < 1.40) { res.name.push("赤保留"); res.holdType = "red"; }
+        else if (r < 1.90) { res.name.push("ST金系"); }
+        else if (r < 3.90) { res.name.push("ST緑保留"); res.holdType = "green"; }
+        else if (r < 7.90) { res.name.push("ST青保留"); res.holdType = "blue"; }
+        
         if (res.name.length > 0) {
             let fail = 1; res.name.forEach(n => { if(TRUST_MAP[n]) fail *= (1 - TRUST_MAP[n]); });
             res.trust = (1 - fail) * 100;
-        } else { res.trust = 0.20; }
+        } else { res.trust = 0.10; } // 謎当たり確率を下げて調整
     }
+
     if (Math.random() < (res.trust / 100)) { res.isHit = true; res.heavy = (res.trust >= 50); }
     if (res.holdType === "red" || res.holdType === "vibe") {
         let rr = Math.random();
@@ -231,30 +241,18 @@ async function startProcess() {
             if (currentRot > maxHamari) { maxHamari = currentRot; document.getElementById('max-hamari-box').innerText = `最大ハマリ: ${maxHamari}`; }
         }
         let bonusBall, isST = false, needsUpgrade = false, isRightUpgrade = false, originalHit = hitDigit;
-        
         if (mode === '通常') {
             rushCount = 1;
             if (originalHit === 7) { isST = true; bonusBall = 1400; addLog(">> 全回転！！"); }
             else if (originalHit % 2 !== 0) { isST = true; bonusBall = 420; }
-            else { 
-                if (Math.random() < 0.20) { isST = true; needsUpgrade = true; bonusBall = 420; } 
-                else { isST = false; bonusBall = 420; } 
-            }
+            else { if (Math.random() < 0.20) { isST = true; needsUpgrade = true; bonusBall = 420; } else { isST = false; bonusBall = 420; } }
         } else if (mode === '時短') {
-            isST = true; bonusBall = 1400;
-            // 時短中・ST中は揃った後に必ず「7」へ昇格させる
-            isRightUpgrade = true;
+            isST = true; bonusBall = 1400; isRightUpgrade = true;
             addLog(`>> 時短引き戻し成功！ 【${originalHit}】`);
-        } else { 
-            isST = true; bonusBall = 1400; rushCount++;
-            isRightUpgrade = true;
-        }
-        
+        } else { isST = true; bonusBall = 1400; rushCount++; isRightUpgrade = true; }
         addLog(`>> 当たり！ 【${originalHit}】${lcdCount}回転`);
         totalBall += bonusBall; currentRot = 0;
         await new Promise(r => setTimeout(r, 1000));
-        
-        // 通常時の昇格（偶数→奇数）
         if (mode === '通常' && needsUpgrade) {
             let nextOdd = [1,3,5,9][Math.floor(Math.random()*4)];
             addLog(`>> ${nextOdd}図柄へ昇格！！`);
@@ -263,21 +261,14 @@ async function startProcess() {
             await new Promise(r => setTimeout(r, 800));
             document.getElementById('lamp').classList.remove('lamp-active');
         }
-
-        // 時短・ST中の昇格（揃った図柄→7図柄）
         if (isRightUpgrade) {
-            machineEl.classList.add('vibe-rainbow'); // 虹枠で祝福
+            machineEl.classList.add('vibe-rainbow');
             document.getElementById('lamp').classList.add('lamp-active');
-            [1,2,3].forEach(i => { 
-                const el = document.getElementById('d'+i); 
-                el.innerText = 7; 
-                el.className = 'digit gold'; // 金色
-            });
+            [1,2,3].forEach(i => { const el = document.getElementById('d'+i); el.innerText = 7; el.className = 'digit gold'; });
             await new Promise(r => setTimeout(r, 1000));
             machineEl.classList.remove('vibe-rainbow');
             document.getElementById('lamp').classList.remove('lamp-active');
         }
-        
         if (isST) { mode = 'ST'; rRem = SPECS.st; } else { mode = '時短'; rRem = SPECS.jt; }
         currentRushHits++; lcdCount = 0; updateUI(); 
         await new Promise(r => setTimeout(r, 600)); 
@@ -293,7 +284,6 @@ function generateFinalDigits() {
     if (d1 === d2 && d2 === d3) return generateFinalDigits();
     return [d1, d2, d3];
 }
-
 function refillStock() { while (reservedStock.length < 4) { reservedStock.push(createJob()); } updateHesoUI(); }
 function updateHesoUI() { const hA = document.getElementById('heso-area'); mode !== '通常' ? hA.classList.add('right-mode') : hA.classList.remove('right-mode'); for(let i=0; i<=4; i++) { const el = document.getElementById('h'+i); const s = (i===0) ? activeJob : (reservedStock[i-1] || null); el.className = `heso-ball ${i===0?'heso-current':''}`; if(s) { el.classList.add('heso-' + s.currentView); } } }
 function toggleAuto(s) { if(isAuto && autoSpeed === s) { isAuto = false; } else { isAuto = true; autoSpeed = s; if(!isAnim) startProcess(); } updateAutoBtns(); }
@@ -309,6 +299,7 @@ function resetData() { if(confirm('データをリセットしますか？')) lo
     </script>
 </body>
 </html>
+
 
 
 
