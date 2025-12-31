@@ -187,38 +187,51 @@
 
     async function startProcess() {
         if (!isAuto || isAnim) return;
+
+        // モード移行判定：右打ち終了時
         if (mode !== '通常' && rRem <= 0 && reservedStock.length === 0 && !activeJob) {
-            let prev = mode; addLog(`【${prev}終了】 ${currentRushHits <= 1 ? (currentRushHits === 0 ? '0回' : '1回(' + prev + ')') : currentRushHits + '連'}`);
-            mode = '通常'; currentRushHits = 0; lcdCount = 0; updateUI();
+            let prev = mode; 
+            addLog(`【${prev}終了】 ${currentRushHits <= 1 ? (currentRushHits === 0 ? '0回' : '1回(' + prev + ')') : currentRushHits + '連'}`);
+            mode = '通常'; 
+            currentRushHits = 0; 
+            // 移行してもlcdCount（回転数表示）はリセットせず、残保留消化で増えるようにする
+            updateUI();
             if (prev === '時短' && originalSpeedSetting === 'fast') { autoSpeed = 'fast'; } else { isAuto = false; updateAutoBtns(); return; }
         }
+
         while (reservedStock.length < 4 && (mode === '通常' || (mode !== '通常' && rRem > reservedStock.length))) { reservedStock.push(createJob()); }
         if (reservedStock.length === 0) { isAuto = false; updateAutoBtns(); return; }
+
         activeJob = reservedStock.shift(); updateHesoUI();
         let eff = selectEffect(activeJob);
         if (optKokuchi && activeJob.isHit) { eff.flash = true; eff.isSure = true; eff.trust = 100; eff.displayName = "インフラ告知"; }
+
+        // 回転数の加算：どんな状態でも必ず増える
         totalRot++; currentRot++; lcdCount++; 
         if (mode !== '通常') { rRem--; totalBall -= 0.05; } else { totalBall -= (250 / 18); }
         updateCharts();
+
         if (eff.trust >= 50 || activeJob.isHit) {
             addLog(`${mode} ${lcdCount}回転【${eff.displayName}】信頼度:${eff.trust.toFixed(1)}%`);
             if (eff.vibe) document.getElementById('machine').classList.add('vibrate');
             if (eff.flash) document.getElementById('lamp').classList.add('lamp-active');
             if (eff.text) { const ov = document.getElementById('effect-overlay'); ov.innerText = eff.text; ov.style.display = 'block'; }
         }
+
         let spinTime = (eff.heavy) ? 2000 : (autoSpeed === 'fast' ? 50 : 500);
         let spin = setInterval(() => { 
             [1,2,3].forEach(i => { let n = Math.floor(Math.random()*9)+1; const el = document.getElementById('d'+i); el.innerText=n; el.className = getDigitClass(n); });
         }, 40);
         await new Promise(r => setTimeout(r, spinTime));
         clearInterval(spin);
+
         document.getElementById('machine').classList.remove('vibrate');
         document.getElementById('lamp').classList.remove('lamp-active');
         document.getElementById('effect-overlay').style.display = 'none';
         
         if (activeJob.isHit) {
             isAnim = true; hits++; 
-            let hitRot = lcdCount; // 現在の回転数を保持
+            let hitRot = lcdCount; 
             if (mode === '通常') { 
                 if (currentRot > maxHamari) { maxHamari = currentRot; document.getElementById('max-hamari-box').innerText = `最大ハマリ: ${maxHamari}`; } 
                 historyData.push(currentRot); historyLabels.push(hits + "回目"); 
@@ -233,16 +246,19 @@
             
             if (isST) { mode = 'ST'; rRem = SPECS.st; rushCount++; } else { mode = '時短'; rRem = SPECS.jt; }
             
-            // 履歴表示の条件分岐：通常時のみ「突入」を出し、右打中は回転数のみ
             if (prevMode === '通常') {
                 addLog(`>> ${mode}突入 【${logDigit}】 当たり!`);
             } else {
                 addLog(`>> ${hitRot}回転 【${logDigit}】 当たり!`);
             }
             
-            currentRushHits++; updateUI(); await new Promise(r => setTimeout(r, 1200)); 
-            lcdCount = 0; activeJob = null;
+            currentRushHits++; 
+            // 当たり確定時のみ、次の回転のカウントを開始するために0にリセット
+            lcdCount = 0; 
+            updateUI(); await new Promise(r => setTimeout(r, 1200)); 
+            activeJob = null;
         } else { activeJob = null; }
+
         isAnim = false; updateUI(); updateAutoBtns();
         if (isAuto) setTimeout(startProcess, (autoSpeed === 'fast' ? 10 : 200));
     }
@@ -264,5 +280,6 @@
 </script>
 </body>
 </html>
+
 
 
