@@ -70,11 +70,34 @@
         <button class="header-btn" onclick="resetData()">リセット</button>
         <div id="max-hamari-box" class="max-hamari-display">最大ハマリ: 0</div>
     </header>
-    <div id="modal-overlay"><div id="modal-content"><span style="float:right; cursor:pointer; font-size:1.5rem;" onclick="closeModal()">×</span><h3 style="font-size: 0.9rem; margin: 0 0 10px 0; color: #8a2be2;">差玉スランプグラフ</h3><div class="graph-area"><canvas id="slumpChart"></canvas></div><h3 style="font-size: 0.9rem; margin: 0 0 10px 0; color: #8a2be2;">大当り履歴（回転数）</h3><div class="graph-area"><canvas id="historyChart"></canvas></div></div></div>
+    <div id="modal-overlay">
+        <div id="modal-content">
+            <span style="float:right; cursor:pointer; font-size:1.5rem;" onclick="closeModal()">×</span>
+            <h3 style="font-size: 0.9rem; margin: 0 0 10px 0; color: #8a2be2;">差玉スランプグラフ</h3>
+            <div class="graph-area"><canvas id="slumpChart"></canvas></div>
+            <h3 style="font-size: 0.9rem; margin: 0 0 10px 0; color: #8a2be2;">大当り履歴（回転数）</h3>
+            <div class="graph-area"><canvas id="historyChart"></canvas></div>
+        </div>
+    </div>
     <div class="main-content">
         <div class="machine" id="machine">
             <div id="lamp" class="hidden-lamp"></div>
-            <div class="screen" id="screen"><div id="effect-overlay" class="effect-text"></div><div class="digit-container"><div id="d1" class="digit odd">1</div><div id="d2" class="digit odd">2</div><div id="d3" class="digit odd">3</div></div><div id="sub-display" class="mode-display">通常:0</div><div id="heso-area" class="heso-overlay"><div id="h0" class="heso-ball heso-current"></div><div id="h1" class="heso-ball"></div><div id="h2" class="heso-ball"></div><div id="h3" class="heso-ball"></div><div id="h4" class="heso-ball"></div></div></div>
+            <div class="screen" id="screen">
+                <div id="effect-overlay" class="effect-text"></div>
+                <div class="digit-container">
+                    <div id="d1" class="digit odd">1</div>
+                    <div id="d2" class="digit odd">2</div>
+                    <div id="d3" class="digit odd">3</div>
+                </div>
+                <div id="sub-display" class="mode-display">通常:0</div>
+                <div id="heso-area" class="heso-overlay">
+                    <div id="h0" class="heso-ball heso-current"></div>
+                    <div id="h1" class="heso-ball"></div>
+                    <div id="h2" class="heso-ball"></div>
+                    <div id="h3" class="heso-ball"></div>
+                    <div id="h4" class="heso-ball"></div>
+                </div>
+            </div>
             <div class="stat-grid">
                 <div class="stat-item"><span class="stat-label">大当り</span><span id="hits" class="stat-val">0</span></div>
                 <div class="stat-item"><span class="stat-label">連チャン</span><span id="rush-count" class="stat-val">0</span></div>
@@ -83,8 +106,12 @@
                 <div class="stat-item"><span class="stat-label">差玉数</span><span id="balance" class="stat-val">0</span></div>
             </div>
             <div class="control-panel">
-                <div class="side-btns"><button id="btn-all" class="side-btn" onclick="toggleOpt('all')">全</button><button id="btn-kokuchi" class="side-btn" onclick="toggleOpt('kokuchi')">告知</button></div>
-                <button class="btn-auto" id="btn-slow" onclick="toggleAuto('slow')">低速オート</button><button class="btn-auto" id="btn-fast" onclick="toggleAuto('fast')">高速オート</button>
+                <div class="side-btns">
+                    <button id="btn-all" class="side-btn" onclick="toggleOpt('all')">全</button>
+                    <button id="btn-kokuchi" class="side-btn" onclick="toggleOpt('kokuchi')">告知</button>
+                </div>
+                <button class="btn-auto" id="btn-slow" onclick="toggleAuto('slow')">低速オート</button>
+                <button class="btn-auto" id="btn-fast" onclick="toggleAuto('fast')">高速オート</button>
             </div>
         </div>
         <div class="log" id="log">> システム起動完了</div>
@@ -136,28 +163,24 @@ function createJob() {
         res.heavy = true;
         if (mode === '通常' || mode === '時短') {
             if (r < 10) { res.name.push("次回予告"); res.text = "次回予告"; }
-            else if (r < 35) { res.name.push("金系"); }
-            else if (r < 60) { res.name.push("赤保留"); res.holdType = "red"; }
-            else if (r < 71) { res.name.push("緑保留"); res.holdType = "green"; }
-            else if (r < 74) { res.name.push("青保留"); res.holdType = "blue"; }
-            else if (r < 75) { res.name.push("点滅保留"); res.holdType = "blink"; }
-            else if (r < 95) { 
+            else if (r < 20) { res.name.push("金系"); }
+            else if (r < 45) { res.name.push("赤保留"); res.holdType = "red"; }
+            else if (r < 80) { 
                 let vr = Math.random() * 100; res.vibe = true;
                 res.vibeColor = (vr < 60) ? "white" : (vr < 90 ? "red" : "rainbow");
                 let vName = res.vibeColor === "white" ? "白レバ" : (res.vibeColor === "red" ? "赤レバ" : "虹レバ");
                 res.name.push(vName); res.holdType = "vibe"; 
                 if (res.vibeColor === "rainbow") res.isSure = true;
             }
-            else if (r < 99) { res.name.push("レイ背景"); res.text = "レイ背景"; }
-            else { res.name.push("渚カヲル"); res.isSure = true; }
+            else if (r < 89) { res.name.push("レイ背景"); res.text = "レイ背景"; }
+            else if (r < 90) { res.name.push("渚カヲル"); res.isSure = true; }
+            else { res.name.push("弱演出"); res.heavy = false; }
         } else {
+            // ST中の当たり時演出（既存バランス維持）
             if (r < 10) { res.name.push("次回予告"); res.text = "次回予告"; res.isSure = true; }
             else if (r < 43) { res.name.push("金系"); }
             else if (r < 64) { res.name.push("赤保留"); res.holdType = "red"; }
-            else if (r < 84) { res.name.push("緑保留"); res.holdType = "green"; }
-            else if (r < 89) { res.name.push("青保留"); res.holdType = "blue"; }
-            else if (r < 90) { res.name.push("点滅保留"); res.holdType = "blink"; }
-            else if (r < 94) { 
+            else if (r < 90) { 
                 let vr = Math.random() * 100; res.vibe = true;
                 res.vibeColor = (vr < 60) ? "white" : (vr < 90 ? "red" : "rainbow");
                 let vName = res.vibeColor === "white" ? "白レバ" : (res.vibeColor === "red" ? "赤レバ" : "虹レバ");
@@ -244,7 +267,6 @@ async function startProcess() {
         
         let rand = Math.random()*100, logDigit, isST = false, oldMode = mode;
 
-        // 内部図柄（履歴用）の決定
         if (mode !== '通常') { 
             logDigit = (rand < 50) ? 7 : 1;
             isST = true; 
@@ -263,10 +285,8 @@ async function startProcess() {
             }
         }
 
-        // --- 図柄表示（一段階目：当たり図柄そのまま） ---
         [1,2,3].forEach(i => { const el = document.getElementById('d'+i); el.innerText = logDigit; el.className = getDigitClass(logDigit); });
         
-        // ログ出力
         if (oldMode === 'ST' || oldMode === '時短') { 
             addLog(`>> 当たり！ 【${logDigit}】 ${lcdCount}回転`); 
         } else { 
@@ -275,14 +295,12 @@ async function startProcess() {
         
         await new Promise(r => setTimeout(r, 1200));
 
-        // --- 図柄表示（二段階目：右打ち中なら7へ昇格） ---
         if (oldMode !== '通常' && logDigit !== 7) {
-            // 昇格アクション
-            document.getElementById('lamp').classList.add('lamp-active'); // インフラ
+            document.getElementById('lamp').classList.add('lamp-active');
             [1,2,3].forEach(i => { 
                 const el = document.getElementById('d'+i); 
                 el.innerText = 7; 
-                el.className = 'digit gold'; // 強制的に金色の7に
+                el.className = 'digit gold'; 
             });
             await new Promise(r => setTimeout(r, 1000));
             document.getElementById('lamp').classList.remove('lamp-active');
