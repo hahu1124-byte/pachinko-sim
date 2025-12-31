@@ -13,6 +13,7 @@
         .max-hamari-display { background: #000; color: #ff4444; border: 1px solid #ff4444; padding: 4px 8px; font-size: 0.75rem; border-radius: 4px; font-weight: bold; }
         .main-content { width: 100%; max-width: 440px; display: flex; flex-direction: column; align-items: center; padding: 10px; box-sizing: border-box; }
         
+        /* 筐体・液晶（指示通りレイアウト維持しつつ発光演出追加） */
         .machine { width: 100%; background: #111; border: 3px solid #8a2be2; border-radius: 15px; padding: 12px; position: relative; box-sizing: border-box; transition: all 0.1s; }
         .screen { background: #000; height: 300px; border-radius: 10px; border: 2px solid #444; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; width: 100%; transition: all 0.1s; }
         
@@ -29,7 +30,7 @@
         .lamp-active { animation: rainbow-bg 0.3s infinite; box-shadow: 0 0 20px #fff; }
         @keyframes rainbow-bg { 0% { background: #f00; } 20% { background: #ff0; } 40% { background: #0f0; } 60% { background: #0ff; } 80% { background: #00f; } 100% { background: #f0f; } }
         
-        /* レバブル演出 */
+        /* レバブル演出：枠色連動 */
         .vibrate { animation: vibration 0.05s infinite; }
         .vibe-white { border-color: #ffffff !important; box-shadow: 0 0 30px #ffffff, inset 0 0 20px #ffffff !important; }
         .vibe-red { border-color: #ff0000 !important; box-shadow: 0 0 30px #ff0000, inset 0 0 20px #ff0000 !important; }
@@ -140,10 +141,20 @@ let lcdCount = 0, optKokuchi = false, originalSpeedSetting = 'slow';
 let reservedStock = [], activeJob = null;
 let slumpData = [0], slumpLabels = ["0"], historyData = [], historyLabels = [];
 let sChart, hChart;
+
+// 連荘集計用
 let firstHitRot = 0, rushSeriesCount = 0;
 
-const TRUST_MAP_N = { "白レバ": 0.90, "赤レバ": 0.965, "虹レバ": 1.0, "赤保留": 0.90, "緑保留": 0.11, "青保留": 0.03, "点滅保留": 0.01, "次回予告": 0.65, "レイ背景": 0.85, "金系": 0.50, "渚カヲル": 1.0 };
-const TRUST_MAP_S = { "白レバ": 0.95, "赤レバ": 0.99, "虹レバ": 1.0, "赤保留": 0.95, "緑保留": 0.20, "青保留": 0.05, "点滅保留": 0.01, "次回予告": 1.0, "金系": 0.80, "インフラ": 1.0 };
+const TRUST_MAP_N = { 
+    "白レバ": 0.90, "赤レバ": 0.965, "虹レバ": 1.0, 
+    "赤保留": 0.90, "緑保留": 0.11, "青保留": 0.03, "点滅保留": 0.01,
+    "次回予告": 0.65, "レイ背景": 0.85, "金系": 0.50, "渚カヲル": 1.0 
+};
+const TRUST_MAP_S = { 
+    "白レバ": 0.95, "赤レバ": 0.99, "虹レバ": 1.0, 
+    "赤保留": 0.95, "緑保留": 0.20, "青保留": 0.05, "点滅保留": 0.01,
+    "次回予告": 1.0, "金系": 0.80, "インフラ": 1.0 
+};
 
 window.onload = () => { initCharts(); updateUI(); };
 
@@ -198,19 +209,34 @@ function createJob() {
     } else {
         let hr = Math.random() * 100;
         let isN = (mode === '通常' || mode === '時短');
-        let redGase = isN ? 0.05 : 0.01;
-        let redVibeGase = isN ? 0.005 : 0.001; 
-        let whiteVibeGase = isN ? 0.01 : 0.005; 
-        if (hr < redVibeGase) { res.name.push("赤レバ"); res.holdType = "vibe"; res.vibe = true; res.vibeColor = "red"; res.heavy = true; }
-        else if (hr < (redVibeGase + whiteVibeGase)) { res.name.push("白レバ"); res.holdType = "vibe"; res.vibe = true; res.vibeColor = "white"; res.heavy = true; }
-        else if (hr < (redVibeGase + whiteVibeGase + redGase)) { res.name.push("赤保留"); res.holdType = "red"; res.heavy = true; }
-        else if (hr < (redVibeGase + whiteVibeGase + redGase + 0.1)) { res.name.push("緑保留"); res.holdType = "green"; }
-        else if (hr < (redVibeGase + whiteVibeGase + redGase + 1.0)) { res.name.push("青保留"); res.holdType = "blue"; }
+        if (isN) {
+            // 指示通りのハズレガセ率に変更
+            if (hr < 0.0016) { res.name.push("赤レバ"); res.holdType = "vibe"; res.vibe = true; res.vibeColor = "red"; res.heavy = true; }
+            else if (hr < (0.0016 + 0.008)) { res.name.push("白レバ"); res.holdType = "vibe"; res.vibe = true; res.vibeColor = "white"; res.heavy = true; }
+            else if (hr < (0.0016 + 0.008 + 0.008)) { res.name.push("赤保留"); res.holdType = "red"; res.heavy = true; }
+            else if (hr < (0.0016 + 0.008 + 0.008 + 0.12)) { res.name.push("次回予告"); res.text = "次回予告"; res.heavy = true; }
+            else if (hr < (0.0016 + 0.008 + 0.008 + 0.12 + 0.16)) { res.name.push("金系"); res.heavy = true; }
+            else if (hr < (0.0016 + 0.008 + 0.008 + 0.12 + 0.16 + 0.015)) { res.name.push("レイ背景"); res.text = "レイ背景"; res.heavy = true; }
+            else if (hr < 1.0) { res.name.push("緑保留"); res.holdType = "green"; }
+            else if (hr < 3.0) { res.name.push("青保留"); res.holdType = "blue"; }
+            else if (hr < 4.0) { res.name.push("点滅保留"); res.holdType = "blink"; }
+        } else {
+            // ST中のガセ
+            if (hr < 0.001) { res.name.push("赤レバ"); res.holdType = "vibe"; res.vibe = true; res.vibeColor = "red"; res.heavy = true; }
+            else if (hr < 0.005) { res.name.push("白レバ"); res.holdType = "vibe"; res.vibe = true; res.vibeColor = "white"; res.heavy = true; }
+            else if (hr < 0.01) { res.name.push("赤保留"); res.holdType = "red"; res.heavy = true; }
+        }
     }
+    
     const map = (mode !== '通常') ? TRUST_MAP_S : TRUST_MAP_N;
-    if (res.isSure) res.trust = 100.00;
-    else if (res.name.length > 0) { let fail = 1; res.name.forEach(n => { if(map[n]) fail *= (1 - map[n]); }); res.trust = (1 - fail) * 100; }
-    else res.trust = (mode === '通常' ? (1/SPECS.n)*100 : (1/SPECS.s)*100); 
+    if (res.isSure) {
+        res.trust = 100.00;
+    } else if (res.name.length > 0) {
+        let fail = 1; res.name.forEach(n => { if(map[n]) fail *= (1 - map[n]); });
+        res.trust = (1 - fail) * 100;
+    } else { 
+        res.trust = (mode === '通常' ? (1/SPECS.n)*100 : (1/SPECS.s)*100); 
+    }
     res.displayName = res.name.join("+") || "弱演出";
     return res;
 }
@@ -218,26 +244,39 @@ function createJob() {
 async function startProcess() {
     if (!isAuto || isAnim) return;
     let hasHeavyInStock = reservedStock.some(job => job.heavy === true);
+    
+    // 連荘終了時：グラフへの集計追加
     if (mode !== '通常' && rRem <= 0 && reservedStock.length === 0 && !activeJob) {
         let prev = mode; 
-        addLog(`【${prev}終了】 ${currentRushHits <= 1 ? (currentRushHits === 0 ? '0回' : '1回(' + prev + ')') : currentRushHits + '連'}`);
-        rushSeriesCount++; historyData.push(firstHitRot); historyLabels.push(`${rushSeriesCount}回目(${currentRushHits === 1 ? '単' : currentRushHits + '連'})`); hChart.update();
+        let renText = currentRushHits <= 1 ? (currentRushHits === 0 ? '0回' : '1回(' + prev + ')') : currentRushHits + '連';
+        addLog(`【${prev}終了】 ${renText}`);
+        
+        rushSeriesCount++;
+        historyData.push(firstHitRot);
+        historyLabels.push(`${rushSeriesCount}回目(${currentRushHits === 1 ? '単' : currentRushHits + '連'})`);
+        hChart.update();
+
         mode = '通常'; currentRushHits = 0; firstHitRot = 0; updateUI();
         if (prev === '時短' && originalSpeedSetting === 'fast') autoSpeed = 'fast'; 
         else { isAuto = false; updateAutoBtns(); return; }
     }
+    
     refillStock();
     if (reservedStock.length === 0 && !activeJob) { isAuto = false; updateAutoBtns(); return; }
     activeJob = reservedStock.shift(); refillStock(); updateUI();
     let eff = activeJob;
     if (optKokuchi && activeJob.isHit) { eff.flash = true; eff.isSure = true; eff.trust = 100; eff.displayName = "インフラ告知"; }
+    
     totalRot++; currentRot++; lcdCount++; 
     if (mode !== '通常') { rRem--; totalBall -= 0.05; } else { totalBall -= (250 / 18); }
     updateCharts();
 
-    if (eff.trust >= 50 || activeJob.isHit) addLog(`${mode} ${lcdCount}回転【${eff.displayName}】信頼度:${eff.trust.toFixed(2)}%`);
+    // 履歴フィルタリング：50%以上
+    if (eff.trust >= 50 || activeJob.isHit) {
+        addLog(`${mode} ${lcdCount}回転【${eff.displayName}】信頼度:${eff.trust.toFixed(2)}%`);
+    }
     
-    // 【レバブル演出の強化】
+    // レバブル演出：筐体と液晶の枠色連動
     const machineEl = document.getElementById('machine');
     const screenEl = document.getElementById('screen');
     if (eff.vibe) {
@@ -252,12 +291,20 @@ async function startProcess() {
 
     let spinTime = (eff.heavy || hasHeavyInStock) ? 2000 : (autoSpeed === 'fast' ? 300 : 500);
     let intervalTime = (autoSpeed === 'fast') ? 20 : 40; 
-    let spin = setInterval(() => { [1,2,3].forEach(i => { let n = Math.floor(Math.random()*9)+1; const el = document.getElementById('d'+i); el.innerText = n; el.className = getDigitClass(n); }); }, intervalTime);
+
+    let spin = setInterval(() => { 
+        [1,2,3].forEach(i => { 
+            let n = Math.floor(Math.random()*9)+1; 
+            const el = document.getElementById('d'+i); 
+            el.innerText = n; 
+            el.className = getDigitClass(n); 
+        }); 
+    }, intervalTime);
 
     await new Promise(r => setTimeout(r, spinTime));
     clearInterval(spin);
     
-    // 演出リセット
+    // 演出クリーンアップ
     machineEl.classList.remove('vibrate', 'vibe-white', 'vibe-red', 'vibe-rainbow');
     screenEl.classList.remove('vibrate', 'vibe-white', 'vibe-red', 'vibe-rainbow');
     document.getElementById('lamp').classList.remove('lamp-active');
@@ -265,23 +312,42 @@ async function startProcess() {
 
     if (activeJob.isHit) {
         isAnim = true; hits++; 
-        if (mode === '通常') { firstHitRot = lcdCount; if (currentRot > maxHamari) { maxHamari = currentRot; document.getElementById('max-hamari-box').innerText = `最大ハマリ: ${maxHamari}`; } }
+        if (mode === '通常') {
+            firstHitRot = lcdCount; 
+            if (currentRot > maxHamari) { maxHamari = currentRot; document.getElementById('max-hamari-box').innerText = `最大ハマリ: ${maxHamari}`; }
+        }
         currentRot = 0;
         let rand = Math.random() * 100, logDigit, isST = false, needsUpgrade = false;
+        
         if (mode === '通常') {
             rushCount = 1; 
             if (rand < 3) { logDigit = 7; isST = true; totalBall += 1400; addLog(">> 全回転演出発生！！"); document.getElementById('screen').classList.add('all-spin-bg'); await new Promise(r => setTimeout(r, 2000)); document.getElementById('screen').classList.remove('all-spin-bg'); }
             else if (rand < 39) { logDigit = 3; isST = true; totalBall += 420; }
             else if (rand < 59) { logDigit = 2; isST = true; totalBall += 420; needsUpgrade = true; } 
             else { logDigit = 2; isST = false; totalBall += 420; }
-        } else { logDigit = 7; isST = true; totalBall += 1400; rushCount++; }
+        } else { 
+            logDigit = 7; isST = true; totalBall += 1400; rushCount++; 
+        }
+        
         [1,2,3].forEach(i => { const el = document.getElementById('d'+i); el.innerText = logDigit; el.className = getDigitClass(logDigit); });
         addLog(`>> 当たり！ 【${logDigit}】 ${lcdCount}回転`);
         await new Promise(r => setTimeout(r, 1200));
-        if (needsUpgrade) { addLog(">> 昇格！ 奇数図柄へ変化"); document.getElementById('lamp').classList.add('lamp-active'); [1,2,3].forEach(i => { const el = document.getElementById('d'+i); el.innerText = 3; el.className = 'digit odd'; }); await new Promise(r => setTimeout(r, 1000)); document.getElementById('lamp').classList.remove('lamp-active'); }
+        
+        if (needsUpgrade) {
+            addLog(">> 昇格！ 奇数図柄へ変化");
+            document.getElementById('lamp').classList.add('lamp-active');
+            [1,2,3].forEach(i => { const el = document.getElementById('d'+i); el.innerText = 3; el.className = 'digit odd'; });
+            await new Promise(r => setTimeout(r, 1000));
+            document.getElementById('lamp').classList.remove('lamp-active');
+        }
         if (isST) { mode = 'ST'; rRem = SPECS.st; } else { mode = '時短'; rRem = SPECS.jt; }
-        currentRushHits++; lcdCount = 0; activeJob = null; refillStock(); updateUI(); await new Promise(r => setTimeout(r, 800)); 
-    } else { [1,2,3].forEach(i => { const el = document.getElementById('d'+i); el.className = getDigitClass(parseInt(el.innerText)); }); activeJob = null; await new Promise(r => setTimeout(r, (autoSpeed === 'fast' ? 100 : 1000))); }
+        currentRushHits++; lcdCount = 0; activeJob = null; refillStock(); updateUI(); 
+        await new Promise(r => setTimeout(r, 800)); 
+    } else { 
+        [1,2,3].forEach(i => { const el = document.getElementById('d'+i); el.className = getDigitClass(parseInt(el.innerText)); });
+        activeJob = null; 
+        await new Promise(r => setTimeout(r, (autoSpeed === 'fast' ? 100 : 1000))); 
+    }
     isAnim = false; updateUI(); updateAutoBtns();
     if (isAuto) setTimeout(startProcess, (autoSpeed === 'fast' ? 10 : 200));
 }
