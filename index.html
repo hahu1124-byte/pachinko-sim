@@ -163,20 +163,22 @@ function createJob() {
     if (isHit) {
         res.heavy = true;
         if (mode === '通常' || mode === '時短') {
-            if (r < 10) { res.name.push("次回予告"); res.text = "次回予告"; }
-            else if (r < 20) { res.name.push("金系"); }
-            else if (r < 45) { res.name.push("赤保留"); res.holdType = "red"; }
-            else if (r < 80) { 
+            // 【修正】当たり時の占有率を調整
+            if (r < 14) { res.name.push("次回予告"); res.text = "次回予告"; } // 10% -> 14%
+            else if (r < 28) { res.name.push("金系"); } // 10% -> 14%
+            else if (r < 53) { res.name.push("赤保留"); res.holdType = "red"; } // 維持
+            else if (r < 88) { // 維持 
                 let vr = Math.random() * 100; res.vibe = true;
                 res.vibeColor = (vr < 60) ? "white" : (vr < 90 ? "red" : "rainbow");
                 let vName = res.vibeColor === "white" ? "白レバ" : (res.vibeColor === "red" ? "赤レバ" : "虹レバ");
                 res.name.push(vName); res.holdType = "vibe"; 
                 if (res.vibeColor === "rainbow") res.isSure = true;
             }
-            else if (r < 89) { res.name.push("レイ背景"); res.text = "レイ背景"; }
-            else if (r < 90) { res.name.push("渚カヲル"); res.isSure = true; }
-            else { res.name.push("弱演出"); res.heavy = false; }
+            else if (r < 97) { res.name.push("レイ背景"); res.text = "レイ背景"; } // 維持
+            else if (r < 98) { res.name.push("渚カヲル"); res.isSure = true; } // 維持
+            else { res.name.push("弱演出"); res.heavy = false; } // 10% -> 2%
         } else {
+            // 右打ちは変更なし
             if (r < 10) { res.name.push("次回予告"); res.text = "次回予告"; res.isSure = true; }
             else if (r < 43) { res.name.push("金系"); }
             else if (r < 64) { res.name.push("赤保留"); res.holdType = "red"; }
@@ -235,7 +237,7 @@ async function startProcess() {
     if (mode !== '通常') { rRem--; totalBall -= 0.05; } else { totalBall -= (250 / 18); }
     updateCharts();
 
-    // 【修正】履歴出力条件：信頼度50%以上、または当たり時のみ
+    // 履歴出力：信頼度50%以上、または当たり時のみ
     if (eff.trust >= 50 || activeJob.isHit) {
         addLog(`${mode} ${lcdCount}回転【${eff.displayName}】信頼度:${eff.trust.toFixed(2)}%`);
     }
@@ -244,7 +246,6 @@ async function startProcess() {
     if (eff.flash) document.getElementById('lamp').classList.add('lamp-active');
     if (eff.text) { const ov = document.getElementById('effect-overlay'); ov.innerText = eff.text; ov.style.display = 'block'; }
 
-    // 高速オート時のアニメーション調整
     let spinTime = (eff.heavy || hasHeavyInStock) ? 2000 : (autoSpeed === 'fast' ? 300 : 500);
     let intervalTime = (autoSpeed === 'fast') ? 20 : 40; 
 
