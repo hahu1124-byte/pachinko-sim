@@ -133,7 +133,7 @@ const TRUST_MAP_S = {
 window.onload = () => { initCharts(); updateUI(); };
 
 function getDigitClass(num) {
-    if (num === 7 && mode === 'ST') return 'digit gold';
+    if (num === 7 && (mode === 'ST' || mode === '時短')) return 'digit gold';
     return (num % 2 !== 0) ? 'digit odd' : 'digit even';
 }
 
@@ -192,12 +192,18 @@ function createJob() {
         else if (hr < (redVibeGase + whiteVibeGase + redGase + 0.1)) { res.name.push("緑保留"); res.holdType = "green"; }
         else if (hr < (redVibeGase + whiteVibeGase + redGase + 1.0)) { res.name.push("青保留"); res.holdType = "blue"; }
     }
+    
+    // 信頼度算出（修正版）
     const map = (mode !== '通常') ? TRUST_MAP_S : TRUST_MAP_N;
-    if (res.isSure) res.trust = 100;
-    else if (res.name.length > 0) {
+    if (res.isSure) {
+        res.trust = 100.00;
+    } else if (res.name.length > 0) {
         let fail = 1; res.name.forEach(n => { if(map[n]) fail *= (1 - map[n]); });
         res.trust = (1 - fail) * 100;
-    } else { res.trust = (mode === '通常' ? 0.31 : 1.01); }
+    } else { 
+        // 弱演出時のベース信頼度（1/319.7 = 0.31...%）
+        res.trust = (mode === '通常' ? (1/SPECS.n)*100 : (1/SPECS.s)*100); 
+    }
     res.displayName = res.name.join("+") || "弱演出";
     return res;
 }
@@ -220,12 +226,15 @@ async function startProcess() {
     totalRot++; currentRot++; lcdCount++; 
     if (mode !== '通常') { rRem--; totalBall -= 0.05; } else { totalBall -= (250 / 18); }
     updateCharts();
-    if (eff.heavy || activeJob.isHit) {
-        addLog(`${mode} ${lcdCount}回転【${eff.displayName}】信頼度:${eff.trust.toFixed(1)}%`);
+    
+    // 履歴出力：小数点第2位まで表示するように変更
+    if (eff.heavy || activeJob.isHit || true) { // 弱演出も含め全履歴を出す場合
+        addLog(`${mode} ${lcdCount}回転【${eff.displayName}】信頼度:${eff.trust.toFixed(2)}%`);
         if (eff.vibe) document.getElementById('machine').classList.add('vibrate');
         if (eff.flash) document.getElementById('lamp').classList.add('lamp-active');
         if (eff.text) { const ov = document.getElementById('effect-overlay'); ov.innerText = eff.text; ov.style.display = 'block'; }
     }
+    
     let spinTime = (eff.heavy || hasHeavyInStock) ? 2000 : (autoSpeed === 'fast' ? 50 : 500);
     let spin = setInterval(() => { [1,2,3].forEach(i => { let n = Math.floor(Math.random()*9)+1; const el = document.getElementById('d'+i); el.innerText=n; el.className = getDigitClass(n); }); }, 40);
     await new Promise(r => setTimeout(r, spinTime));
@@ -233,12 +242,14 @@ async function startProcess() {
     document.getElementById('machine').classList.remove('vibrate');
     document.getElementById('lamp').classList.remove('lamp-active');
     document.getElementById('effect-overlay').style.display = 'none';
+    
     if (activeJob.isHit) {
         isAnim = true; hits++; 
         historyData.push(lcdCount); historyLabels.push(hits + "回目");
         if (mode === '通常' && currentRot > maxHamari) { maxHamari = currentRot; document.getElementById('max-hamari-box').innerText = `最大ハマリ: ${maxHamari}`; }
         currentRot = 0;
         let rand = Math.random() * 100, logDigit, isST = false, needsUpgrade = false, isZenkaiten = false;
+        
         if (mode === '通常') {
             rushCount = 1; 
             if (rand < 3) { logDigit = 7; isST = true; totalBall += 1400; isZenkaiten = true; }
@@ -248,6 +259,7 @@ async function startProcess() {
         } else { 
             logDigit = 7; isST = true; totalBall += 1400; rushCount++; 
         }
+        
         if (isZenkaiten) { 
             addLog(">> 全回転演出発生！！"); 
             document.getElementById('screen').classList.add('all-spin-bg');
@@ -275,6 +287,7 @@ async function startProcess() {
     isAnim = false; updateUI(); updateAutoBtns();
     if (isAuto) setTimeout(startProcess, (autoSpeed === 'fast' ? 10 : 200));
 }
+
 function toggleAuto(s) { if(isAuto && autoSpeed === s) { isAuto = false; } else { isAuto = true; autoSpeed = s; originalSpeedSetting = s; if(!isAnim) startProcess(); } updateAutoBtns(); }
 function updateAutoBtns() { document.getElementById('btn-slow').classList.toggle('btn-stop', isAuto && autoSpeed === 'slow'); document.getElementById('btn-fast').classList.toggle('btn-stop', isAuto && autoSpeed === 'fast'); }
 function toggleOpt(t) { if(t==='kokuchi') optKokuchi=!optKokuchi; document.getElementById('btn-'+t).classList.toggle('active'); }
