@@ -85,196 +85,210 @@
 
 <script>
     const SPECS = { n: 319.7, s: 99.4, st: 163, jt: 100 };
-    let hits = 0, rushCount = 0, currentRot = 0, totalRot = 0, totalBall = 0, currentRushHits = 0, maxHamari = 0;
-    let mode = '通常', rRem = 0, isAuto = false, autoSpeed = 'slow', isAnim = false;
-    let lcdCount = 0, optKokuchi = false, originalSpeedSetting = 'slow';
-    let reservedStock = [], activeJob = null;
-    let slumpData = [0], slumpLabels = ["0"], historyData = [], historyLabels = [];
-    let sChart, hChart;
+let hits = 0, rushCount = 0, currentRot = 0, totalRot = 0, totalBall = 0, currentRushHits = 0, maxHamari = 0;
+let mode = '通常', rRem = 0, isAuto = false, autoSpeed = 'slow', isAnim = false;
+let lcdCount = 0, optKokuchi = false, originalSpeedSetting = 'slow';
+let reservedStock = [], activeJob = null;
+let slumpData = [0], slumpLabels = ["0"], historyData = [], historyLabels = [];
+let sChart, hChart;
 
-    // --- 信頼度設定 ---
-    const TRUST_MAP_N = { 
-        "白レバ": 0.90, "赤レバ": 0.965, "虹レバ": 1.0, 
-        "赤保留": 0.90, "緑保留": 0.11, "青保留": 0.03, "点滅保留": 0.01,
-        "次回予告": 0.65, "レイ背景": 0.85, "金系": 0.50, "渚カヲル": 1.0 
-    };
-    const TRUST_MAP_S = { 
-        "白レバ": 0.95, "赤レバ": 0.99, "虹レバ": 1.0, 
-        "赤保留": 0.95, "緑保留": 0.20, "青保留": 0.05, "点滅保留": 0.01,
-        "次回予告": 1.0, "金系": 0.80, "インフラ": 1.0 
-    };
+// --- 信頼度設定 ---
+const TRUST_MAP_N = { 
+    "白レバ": 0.90, "赤レバ": 0.965, "虹レバ": 1.0, 
+    "赤保留": 0.90, "緑保留": 0.11, "青保留": 0.03, "点滅保留": 0.01,
+    "次回予告": 0.65, "レイ背景": 0.85, "金系": 0.50, "渚カヲル": 1.0 
+};
+const TRUST_MAP_S = { 
+    "白レバ": 0.95, "赤レバ": 0.99, "虹レバ": 1.0, 
+    "赤保留": 0.95, "緑保留": 0.20, "青保留": 0.05, "点滅保留": 0.01,
+    "次回予告": 1.0, "金系": 0.80, "インフラ": 1.0 
+};
 
-    window.onload = () => { initCharts(); updateUI(); };
+window.onload = () => { initCharts(); updateUI(); };
 
-    function getDigitClass(num) {
-        if (num === 7 && mode === 'ST') return 'digit gold';
-        return (num % 2 !== 0) ? 'digit odd' : 'digit even';
-    }
+function getDigitClass(num) {
+    if (num === 7 && mode === 'ST') return 'digit gold';
+    return (num % 2 !== 0) ? 'digit odd' : 'digit even';
+}
 
-    function refillStock() {
-        let maxHold = 4;
-        if (mode !== '通常') maxHold = Math.min(4, rRem - (activeJob ? 1 : 0));
-        while (reservedStock.length < maxHold) { reservedStock.push(createJob()); }
-        updateHesoUI();
-    }
+function refillStock() {
+    let maxHold = 4;
+    if (mode !== '通常') maxHold = Math.min(4, rRem - (activeJob ? 1 : 0));
+    while (reservedStock.length < maxHold) { reservedStock.push(createJob()); }
+    updateHesoUI();
+}
 
-    function createJob() {
-        let prob = (mode !== '通常' ? SPECS.s : SPECS.n);
-        let isHit = Math.random() < (1 / prob);
-        let res = { isHit, heavy: false, name: [], trust: 0, vibe: false, vibeColor: "none", flash: false, text: "", holdType: "none", isSure: false };
-        let r = Math.random() * 100;
+function createJob() {
+    let prob = (mode !== '通常' ? SPECS.s : SPECS.n);
+    let isHit = Math.random() < (1 / prob);
+    let res = { isHit, heavy: false, name: [], trust: 0, vibe: false, vibeColor: "none", flash: false, text: "", holdType: "none", isSure: false };
+    let r = Math.random() * 100;
 
-        if (isHit) {
-            res.heavy = true;
-            if (mode === '通常' || mode === '時短') {
-                if (r < 10) { res.name.push("次回予告"); res.text = "次回予告"; }
-                else if (r < 35) { res.name.push("金系"); }
-                else if (r < 60) { res.name.push("赤保留"); res.holdType = "red"; }
-                else if (r < 71) { res.name.push("緑保留"); res.holdType = "green"; }
-                else if (r < 74) { res.name.push("青保留"); res.holdType = "blue"; }
-                else if (r < 75) { res.name.push("点滅保留"); res.holdType = "blink"; }
-                else if (r < 95) { 
-                    let vr = Math.random() * 100; res.vibe = true;
-                    res.vibeColor = (vr < 60) ? "white" : (vr < 90 ? "red" : "rainbow");
-                    let vName = res.vibeColor === "white" ? "白レバ" : (res.vibeColor === "red" ? "赤レバ" : "虹レバ");
-                    res.name.push(vName); res.holdType = "vibe"; 
-                    if (res.vibeColor === "rainbow") res.isSure = true;
-                }
-                else if (r < 99) { res.name.push("レイ背景"); res.text = "レイ背景"; }
-                else { res.name.push("渚カヲル"); res.isSure = true; }
-            } else {
-                if (r < 10) { res.name.push("次回予告"); res.text = "次回予告"; res.isSure = true; }
-                else if (r < 43) { res.name.push("金系"); }
-                else if (r < 64) { res.name.push("赤保留"); res.holdType = "red"; }
-                else if (r < 84) { res.name.push("緑保留"); res.holdType = "green"; }
-                else if (r < 89) { res.name.push("青保留"); res.holdType = "blue"; }
-                else if (r < 90) { res.name.push("点滅保留"); res.holdType = "blink"; }
-                else if (r < 94) { 
-                    let vr = Math.random() * 100; res.vibe = true;
-                    res.vibeColor = (vr < 60) ? "white" : (vr < 90 ? "red" : "rainbow");
-                    let vName = res.vibeColor === "white" ? "白レバ" : (res.vibeColor === "red" ? "赤レバ" : "虹レバ");
-                    res.name.push(vName); res.holdType = "vibe";
-                    if (res.vibeColor === "rainbow") res.isSure = true;
-                }
-                else if (r < 99) { res.flash = true; res.isSure = true; res.name.push("インフラ"); }
-                else { res.name.push("弱演出"); res.heavy = false; }
+    if (isHit) {
+        res.heavy = true;
+        if (mode === '通常' || mode === '時短') {
+            if (r < 10) { res.name.push("次回予告"); res.text = "次回予告"; }
+            else if (r < 35) { res.name.push("金系"); }
+            else if (r < 60) { res.name.push("赤保留"); res.holdType = "red"; }
+            else if (r < 71) { res.name.push("緑保留"); res.holdType = "green"; }
+            else if (r < 74) { res.name.push("青保留"); res.holdType = "blue"; }
+            else if (r < 75) { res.name.push("点滅保留"); res.holdType = "blink"; }
+            else if (r < 95) { 
+                let vr = Math.random() * 100; res.vibe = true;
+                res.vibeColor = (vr < 60) ? "white" : (vr < 90 ? "red" : "rainbow");
+                let vName = res.vibeColor === "white" ? "白レバ" : (res.vibeColor === "red" ? "赤レバ" : "虹レバ");
+                res.name.push(vName); res.holdType = "vibe"; 
+                if (res.vibeColor === "rainbow") res.isSure = true;
             }
+            else if (r < 99) { res.name.push("レイ背景"); res.text = "レイ背景"; }
+            else { res.name.push("渚カヲル"); res.isSure = true; }
         } else {
-            let hr = Math.random() * 100;
-            let isN = (mode === '通常' || mode === '時短');
-            let redGase = isN ? 0.05 : 0.01;
-            let greenGase = isN ? 0.1 : 0.5;
-            let blueGase = isN ? 0.9 : 1.5;
-            let blinkGase = isN ? 1.5 : 3.0;
-            let whiteVibeGase = isN ? 0.02 : 0.005, redVibeGase = isN ? 0.005 : 0.001;
-
-            if (hr < redVibeGase) { res.name.push("赤レバ"); res.holdType = "vibe"; res.vibe = true; res.vibeColor = "red"; res.heavy = true; }
-            else if (hr < (redVibeGase + whiteVibeGase)) { res.name.push("白レバ"); res.holdType = "vibe"; res.vibe = true; res.vibeColor = "white"; res.heavy = true; }
-            else if (hr < (redVibeGase + whiteVibeGase + redGase)) { res.name.push("赤保留"); res.holdType = "red"; res.heavy = true; }
-            else if (hr < (redVibeGase + whiteVibeGase + redGase + greenGase)) { res.name.push("緑保留"); res.holdType = "green"; }
-            else if (hr < (redVibeGase + whiteVibeGase + redGase + greenGase + blueGase)) { res.name.push("青保留"); res.holdType = "blue"; }
-            else if (hr < (redVibeGase + whiteVibeGase + redGase + greenGase + blueGase + blinkGase)) { res.name.push("点滅保留"); res.holdType = "blink"; }
+            if (r < 10) { res.name.push("次回予告"); res.text = "次回予告"; res.isSure = true; }
+            else if (r < 43) { res.name.push("金系"); }
+            else if (r < 64) { res.name.push("赤保留"); res.holdType = "red"; }
+            else if (r < 84) { res.name.push("緑保留"); res.holdType = "green"; }
+            else if (r < 89) { res.name.push("青保留"); res.holdType = "blue"; }
+            else if (r < 90) { res.name.push("点滅保留"); res.holdType = "blink"; }
+            else if (r < 94) { 
+                let vr = Math.random() * 100; res.vibe = true;
+                res.vibeColor = (vr < 60) ? "white" : (vr < 90 ? "red" : "rainbow");
+                let vName = res.vibeColor === "white" ? "白レバ" : (res.vibeColor === "red" ? "赤レバ" : "虹レバ");
+                res.name.push(vName); res.holdType = "vibe";
+                if (res.vibeColor === "rainbow") res.isSure = true;
+            }
+            else if (r < 99) { res.flash = true; res.isSure = true; res.name.push("インフラ"); }
+            else { res.name.push("弱演出"); res.heavy = false; }
         }
+    } else {
+        let hr = Math.random() * 100;
+        let isN = (mode === '通常' || mode === '時短');
+        let redGase = isN ? 0.05 : 0.01;
+        let greenGase = isN ? 0.1 : 0.5;
+        let blueGase = isN ? 0.9 : 1.5;
+        let blinkGase = isN ? 1.5 : 3.0;
+        let whiteVibeGase = isN ? 0.02 : 0.005, redVibeGase = isN ? 0.005 : 0.001;
 
-        const map = (mode !== '通常') ? TRUST_MAP_S : TRUST_MAP_N;
-        if (res.isSure) res.trust = 100;
-        else if (res.name.length > 0) {
-            let fail = 1; 
-            res.name.forEach(n => { if(map[n]) fail *= (1 - map[n]); });
-            res.trust = (1 - fail) * 100;
-        } else { res.trust = (mode === '通常' ? 0.31 : 1.01); }
-        res.displayName = res.name.join("+") || "弱演出";
-        return res;
+        if (hr < redVibeGase) { res.name.push("赤レバ"); res.holdType = "vibe"; res.vibe = true; res.vibeColor = "red"; res.heavy = true; }
+        else if (hr < (redVibeGase + whiteVibeGase)) { res.name.push("白レバ"); res.holdType = "vibe"; res.vibe = true; res.vibeColor = "white"; res.heavy = true; }
+        else if (hr < (redVibeGase + whiteVibeGase + redGase)) { res.name.push("赤保留"); res.holdType = "red"; res.heavy = true; }
+        else if (hr < (redVibeGase + whiteVibeGase + redGase + greenGase)) { res.name.push("緑保留"); res.holdType = "green"; }
+        else if (hr < (redVibeGase + whiteVibeGase + redGase + greenGase + blueGase)) { res.name.push("青保留"); res.holdType = "blue"; }
+        else if (hr < (redVibeGase + whiteVibeGase + redGase + greenGase + blueGase + blinkGase)) { res.name.push("点滅保留"); res.holdType = "blink"; }
     }
 
-    async function startProcess() {
-        if (!isAuto || isAnim) return;
+    const map = (mode !== '通常') ? TRUST_MAP_S : TRUST_MAP_N;
+    if (res.isSure) res.trust = 100;
+    else if (res.name.length > 0) {
+        let fail = 1; 
+        res.name.forEach(n => { if(map[n]) fail *= (1 - map[n]); });
+        res.trust = (1 - fail) * 100;
+    } else { res.trust = (mode === '通常' ? 0.31 : 1.01); }
+    res.displayName = res.name.join("+") || "弱演出";
+    return res;
+}
+
+async function startProcess() {
+    if (!isAuto || isAnim) return;
+    if (mode !== '通常' && rRem <= 0 && reservedStock.length === 0 && !activeJob) {
+        let prev = mode; 
+        addLog(`【${prev}終了】 ${currentRushHits <= 1 ? (currentRushHits === 0 ? '0回' : '1回(' + prev + ')') : currentRushHits + '連'}`);
+        mode = '通常'; currentRushHits = 0; rushCount = 0; 
+        updateUI();
+        if (prev === '時短' && originalSpeedSetting === 'fast') { autoSpeed = 'fast'; } else { isAuto = false; updateAutoBtns(); return; }
+    }
+    refillStock();
+    if (reservedStock.length === 0 && !activeJob) { isAuto = false; updateAutoBtns(); return; }
+    activeJob = reservedStock.shift(); refillStock(); updateUI();
+
+    let eff = activeJob;
+    if (optKokuchi && activeJob.isHit) { eff.flash = true; eff.isSure = true; eff.trust = 100; eff.displayName = "インフラ告知"; }
+    totalRot++; currentRot++; lcdCount++; 
+    if (mode !== '通常') { rRem--; totalBall -= 0.05; } else { totalBall -= (250 / 18); }
+    updateCharts();
+
+    if (eff.heavy || activeJob.isHit) {
+        addLog(`${mode} ${lcdCount}回転【${eff.displayName}】信頼度:${eff.trust.toFixed(1)}%`);
+        if (eff.vibe) document.getElementById('machine').classList.add('vibrate');
+        if (eff.flash) document.getElementById('lamp').classList.add('lamp-active');
+        if (eff.text) { const ov = document.getElementById('effect-overlay'); ov.innerText = eff.text; ov.style.display = 'block'; }
+    }
+
+    let spinTime = (eff.heavy) ? 2000 : (autoSpeed === 'fast' ? 50 : 500);
+    let spin = setInterval(() => { [1,2,3].forEach(i => { let n = Math.floor(Math.random()*9)+1; const el = document.getElementById('d'+i); el.innerText=n; el.className = getDigitClass(n); }); }, 40);
+    await new Promise(r => setTimeout(r, spinTime));
+    clearInterval(spin);
+    document.getElementById('machine').classList.remove('vibrate');
+    document.getElementById('lamp').classList.remove('lamp-active');
+    document.getElementById('effect-overlay').style.display = 'none';
+    
+    if (activeJob.isHit) {
+        isAnim = true; hits++; 
+        historyData.push(lcdCount); historyLabels.push(hits + "回目");
+        if (mode === '通常' && currentRot > maxHamari) { maxHamari = currentRot; document.getElementById('max-hamari-box').innerText = `最大ハマリ: ${maxHamari}`; }
+        currentRot = 0;
         
-        // --- 連チャン終了時のリセット処理 ---
-        if (mode !== '通常' && rRem <= 0 && reservedStock.length === 0 && !activeJob) {
-            let prev = mode; 
-            addLog(`【${prev}終了】 ${currentRushHits <= 1 ? (currentRushHits === 0 ? '0回' : '1回(' + prev + ')') : currentRushHits + '連'}`);
-            
-            mode = '通常'; 
-            currentRushHits = 0; 
-            rushCount = 0; // ← ここで表示用の連チャン変数を0にリセット
-            
-            updateUI();
-            if (prev === '時短' && originalSpeedSetting === 'fast') { 
-                autoSpeed = 'fast'; 
+        let rand = Math.random()*100, logDigit, isST = false, oldMode = mode;
+        let displayDigit; // 液晶表示専用の図柄
+
+        if (mode !== '通常') { 
+            // 右打ち中はログ図柄(1 or 7)を決めたあと、見た目だけを「7」に固定
+            logDigit = (rand < 50) ? 7 : 1;
+            displayDigit = 7; 
+            isST = true; 
+            totalBall += 1400; 
+        } else { 
+            // 通常時はログと見た目を一致させる
+            if (rand < 60) { 
+                logDigit = (rand < 5 ? 7 : 3); 
+                displayDigit = logDigit; 
+                isST = true; 
+                totalBall += (logDigit === 7 ? 1400 : 420); 
             } else { 
-                isAuto = false; 
-                updateAutoBtns(); 
-                return; 
+                logDigit = 2; 
+                displayDigit = logDigit; 
+                isST = false; 
+                totalBall += 420; 
             }
         }
 
-        refillStock();
-        if (reservedStock.length === 0 && !activeJob) { isAuto = false; updateAutoBtns(); return; }
-        activeJob = reservedStock.shift(); refillStock(); updateUI();
-
-        let eff = activeJob;
-        if (optKokuchi && activeJob.isHit) { eff.flash = true; eff.isSure = true; eff.trust = 100; eff.displayName = "インフラ告知"; }
-        totalRot++; currentRot++; lcdCount++; 
-        if (mode !== '通常') { rRem--; totalBall -= 0.05; } else { totalBall -= (250 / 18); }
-        updateCharts();
-
-        if (eff.heavy || activeJob.isHit) {
-            addLog(`${mode} ${lcdCount}回転【${eff.displayName}】信頼度:${eff.trust.toFixed(1)}%`);
-            if (eff.vibe) document.getElementById('machine').classList.add('vibrate');
-            if (eff.flash) document.getElementById('lamp').classList.add('lamp-active');
-            if (eff.text) { const ov = document.getElementById('effect-overlay'); ov.innerText = eff.text; ov.style.display = 'block'; }
+        // 液晶表示（必ず displayDigit を使う）
+        [1,2,3].forEach(i => { const el = document.getElementById('d'+i); el.innerText = displayDigit; el.className = getDigitClass(displayDigit); });
+        await new Promise(r => setTimeout(r, 1200));
+        
+        if (isST) { mode = 'ST'; rRem = SPECS.st; } else { mode = '時短'; rRem = SPECS.jt; }
+        
+        rushCount++; currentRushHits++; 
+        
+        // 履歴ログ（必ず logDigit を使う）
+        if (oldMode === 'ST' || oldMode === '時短') { 
+            addLog(`>> 当たり！ 【${logDigit}】 ${lcdCount}回転`); 
+        } else { 
+            addLog(`>> ${mode}突入 【${logDigit}】 当たり!`); 
         }
-
-        let spinTime = (eff.heavy) ? 2000 : (autoSpeed === 'fast' ? 50 : 500);
-        let spin = setInterval(() => { [1,2,3].forEach(i => { let n = Math.floor(Math.random()*9)+1; const el = document.getElementById('d'+i); el.innerText=n; el.className = getDigitClass(n); }); }, 40);
-        await new Promise(r => setTimeout(r, spinTime));
-        clearInterval(spin);
-        document.getElementById('machine').classList.remove('vibrate');
-        document.getElementById('lamp').classList.remove('lamp-active');
-        document.getElementById('effect-overlay').style.display = 'none';
         
-        if (activeJob.isHit) {
-            isAnim = true; hits++; 
-            historyData.push(lcdCount); historyLabels.push(hits + "回目");
-            if (mode === '通常' && currentRot > maxHamari) { maxHamari = currentRot; document.getElementById('max-hamari-box').innerText = `最大ハマリ: ${maxHamari}`; }
-            currentRot = 0;
-            let rand = Math.random()*100, logDigit, isST = false, oldMode = mode;
-            if (mode !== '通常') { logDigit = (rand < 50) ? 7 : 1; isST = true; totalBall += 1400; }
-            else { if (rand < 60) { logDigit = (rand < 5 ? 7 : 3); isST = true; totalBall += (logDigit === 7 ? 1400 : 420); } else { logDigit = 2; isST = false; totalBall += 420; } }
-            [1,2,3].forEach(i => { const el = document.getElementById('d'+i); el.innerText = logDigit; el.className = getDigitClass(logDigit); });
-            await new Promise(r => setTimeout(r, 1200));
-            
-            if (isST) { mode = 'ST'; rRem = SPECS.st; } else { mode = '時短'; rRem = SPECS.jt; }
-            
-            rushCount++; // 連チャン数を加算
-            currentRushHits++; 
-            
-            if (oldMode === 'ST') { addLog(`>> 当たり！ 【${logDigit}】 ${lcdCount}回転`); }
-            else { addLog(`>> ${mode}突入 【${logDigit}】 当たり!`); }
-            
-            lcdCount = 0; activeJob = null; refillStock(); updateUI(); 
-            await new Promise(r => setTimeout(r, 1200)); 
-        } else { activeJob = null; }
-        
-        isAnim = false; updateUI(); updateAutoBtns();
-        if (isAuto) setTimeout(startProcess, (autoSpeed === 'fast' ? 10 : 200));
-    }
+        lcdCount = 0; activeJob = null; refillStock(); updateUI(); 
+        await new Promise(r => setTimeout(r, 1200)); 
+    } else { activeJob = null; }
+    
+    isAnim = false; updateUI(); updateAutoBtns();
+    if (isAuto) setTimeout(startProcess, (autoSpeed === 'fast' ? 10 : 200));
+}
 
-    function toggleAuto(s) { if(isAuto && autoSpeed === s) { isAuto = false; } else { isAuto = true; autoSpeed = s; originalSpeedSetting = s; if(!isAnim) startProcess(); } updateAutoBtns(); }
-    function updateAutoBtns() { document.getElementById('btn-slow').classList.toggle('btn-stop', isAuto && autoSpeed === 'slow'); document.getElementById('btn-fast').classList.toggle('btn-stop', isAuto && autoSpeed === 'fast'); }
-    function toggleOpt(t) { if(t==='kokuchi') optKokuchi=!optKokuchi; document.getElementById('btn-'+t).classList.toggle('active'); }
-    function updateHesoUI() { const hA = document.getElementById('heso-area'); mode !== '通常' ? hA.classList.add('right-mode') : hA.classList.remove('right-mode'); for(let i=0; i<=4; i++) { const el = document.getElementById('h'+i); const s = (i===0) ? activeJob : (reservedStock[i-1] || null); el.className = `heso-ball ${i===0?'heso-current':''}`; if(s) { if(s.holdType === 'red') el.classList.add('heso-red'); else if(s.holdType === 'green') el.classList.add('heso-green'); else if(s.holdType === 'blue') el.classList.add('heso-blue'); else if(s.holdType === 'blink') el.classList.add('heso-blink'); else if(s.holdType === 'vibe') el.classList.add('heso-vibe'); else if(s.holdType === 'rainbow') el.classList.add('heso-rainbow'); else el.classList.add('heso-on'); } } }
-    function updateUI() { document.getElementById('hits').innerText = hits; document.getElementById('rush-count').innerText = rushCount; document.getElementById('current-rot').innerText = currentRot; document.getElementById('total-rot').innerText = totalRot; document.getElementById('balance').innerText = Math.floor(totalBall).toLocaleString(); document.getElementById('sub-display').innerText = mode==='通常' ? `通常:${lcdCount}` : `${mode}:${rRem}`; updateHesoUI(); }
-    function addLog(m) { const l = document.getElementById('log'); l.innerHTML = `> ${m}<br>${l.innerHTML}`; }
-    function initCharts() { sChart = new Chart(document.getElementById('slumpChart').getContext('2d'), { type: 'line', data: { labels: slumpLabels, datasets: [{ label: '差玉推移', data: slumpData, borderColor: '#8a2be2', borderWidth: 2, fill: false, pointRadius: 0 }] }, options: { responsive: true, maintainAspectRatio: false } }); hChart = new Chart(document.getElementById('historyChart').getContext('2d'), { type: 'bar', data: { labels: historyLabels, datasets: [{ label: '当り間回転数', data: historyData, backgroundColor: '#ff4444' }] }, options: { responsive: true, maintainAspectRatio: false } }); }
-    function updateCharts() { slumpData.push(totalBall); slumpLabels.push(totalRot.toString()); sChart.update('none'); hChart.update(); }
-    function openModal() { document.getElementById('modal-overlay').style.display='flex'; }
-    function closeModal() { document.getElementById('modal-overlay').style.display='none'; }
-    function resetData() { if(confirm('データをリセットしますか？')) location.reload(); }
+function toggleAuto(s) { if(isAuto && autoSpeed === s) { isAuto = false; } else { isAuto = true; autoSpeed = s; originalSpeedSetting = s; if(!isAnim) startProcess(); } updateAutoBtns(); }
+function updateAutoBtns() { document.getElementById('btn-slow').classList.toggle('btn-stop', isAuto && autoSpeed === 'slow'); document.getElementById('btn-fast').classList.toggle('btn-stop', isAuto && autoSpeed === 'fast'); }
+function toggleOpt(t) { if(t==='kokuchi') optKokuchi=!optKokuchi; document.getElementById('btn-'+t).classList.toggle('active'); }
+function updateHesoUI() { const hA = document.getElementById('heso-area'); mode !== '通常' ? hA.classList.add('right-mode') : hA.classList.remove('right-mode'); for(let i=0; i<=4; i++) { const el = document.getElementById('h'+i); const s = (i===0) ? activeJob : (reservedStock[i-1] || null); el.className = `heso-ball ${i===0?'heso-current':''}`; if(s) { if(s.holdType === 'red') el.classList.add('heso-red'); else if(s.holdType === 'green') el.classList.add('heso-green'); else if(s.holdType === 'blue') el.classList.add('heso-blue'); else if(s.holdType === 'blink') el.classList.add('heso-blink'); else if(s.holdType === 'vibe') el.classList.add('heso-vibe'); else if(s.holdType === 'rainbow') el.classList.add('heso-rainbow'); else el.classList.add('heso-on'); } } }
+function updateUI() { document.getElementById('hits').innerText = hits; document.getElementById('rush-count').innerText = rushCount; document.getElementById('current-rot').innerText = currentRot; document.getElementById('total-rot').innerText = totalRot; document.getElementById('balance').innerText = Math.floor(totalBall).toLocaleString(); document.getElementById('sub-display').innerText = mode==='通常' ? `通常:${lcdCount}` : `${mode}:${rRem}`; updateHesoUI(); }
+function addLog(m) { const l = document.getElementById('log'); l.innerHTML = `> ${m}<br>${l.innerHTML}`; }
+function initCharts() { sChart = new Chart(document.getElementById('slumpChart').getContext('2d'), { type: 'line', data: { labels: slumpLabels, datasets: [{ label: '差玉推移', data: slumpData, borderColor: '#8a2be2', borderWidth: 2, fill: false, pointRadius: 0 }] }, options: { responsive: true, maintainAspectRatio: false } }); hChart = new Chart(document.getElementById('historyChart').getContext('2d'), { type: 'bar', data: { labels: historyLabels, datasets: [{ label: '当り間回転数', data: historyData, backgroundColor: '#ff4444' }] }, options: { responsive: true, maintainAspectRatio: false } }); }
+function updateCharts() { slumpData.push(totalBall); slumpLabels.push(totalRot.toString()); sChart.update('none'); hChart.update(); }
+function openModal() { document.getElementById('modal-overlay').style.display='flex'; }
+function closeModal() { document.getElementById('modal-overlay').style.display='none'; }
+function resetData() { if(confirm('データをリセットしますか？')) location.reload(); }
 </script>
 </body>
 </html>
+
 
 
 
