@@ -2,54 +2,62 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>P-Simulator 2025</title>
+    <title>P-Simulator 2025 Optimized</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --bg: #0a0a0c; --panel: #1a1a1f; --accent: #8a2be2; --text: #e0e0e0; }
-        body { background: var(--bg); color: var(--text); font-family: 'Hiragino Sans', sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; padding-bottom: 50px; }
+        body { background: var(--bg); color: var(--text); font-family: 'Hiragino Sans', sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; padding: 20px; }
         
-        #machine { background: #222; border: 8px solid #444; border-radius: 40px; padding: 20px; margin-top: 20px; position: relative; width: 450px; box-shadow: 0 0 50px rgba(0,0,0,1); }
+        /* 筐体部分 */
+        #machine { background: #222; border: 8px solid #444; border-radius: 40px; padding: 20px; position: relative; width: 450px; box-shadow: 0 0 50px rgba(0,0,0,1); }
         
-        /* 図柄表示部分（1.5倍サイズを維持） */
+        /* 図柄表示部分（1.5倍サイズ） */
         #lcd { background: #000; height: 220px; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; border: 3px solid #333; }
         #reels { display: flex; gap: 15px; }
-        .digit { font-size: 100px; font-weight: bold; transition: color 0.2s; }
+        .digit { font-size: 100px; font-weight: bold; }
         
-        /* 図柄の色ルール */
+        /* 図柄の色設定 */
         .digit.even { color: #3366ff; text-shadow: 0 0 15px #0033cc; } /* 偶数：青 */
         .digit.odd { color: #ff3333; text-shadow: 0 0 15px #cc0000; }  /* 奇数：赤 */
         .digit.gold { color: #ffd700; text-shadow: 0 0 20px #ffa500, 0 0 5px #fff; } /* ST中7：金 */
 
         #sub-display { position: absolute; top: 10px; right: 15px; color: #0f0; font-family: monospace; font-size: 18px; }
-        #effect-overlay { position: absolute; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; color: #fff; font-size: 40px; font-weight: bold; text-align: center; line-height: 220px; z-index: 10; text-shadow: 0 0 10px #f0f; }
+        #effect-overlay { position: absolute; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; color: #fff; font-size: 40px; font-weight: bold; text-align: center; line-height: 220px; z-index: 10; text-shadow: 0 0 15px #f0f; }
 
-        #lamp { width: 100px; height: 10px; background: #333; margin: 10px auto; border-radius: 5px; }
+        #lamp { width: 100px; height: 10px; background: #333; margin: 0 auto 10px; border-radius: 5px; }
         .lamp-active { background: #ff00ff !important; box-shadow: 0 0 20px #ff00ff; }
 
-        /* 履歴表示部分（1.5倍サイズを維持） */
+        /* 履歴表示部分（1.5倍サイズ） */
         #history-area { width: 450px; margin-top: 15px; background: var(--panel); border-radius: 15px; padding: 15px; box-sizing: border-box; }
         .history-title { font-size: 21px; margin-bottom: 10px; border-left: 5px solid var(--accent); padding-left: 10px; }
-        #log { height: 200px; overflow-y: auto; font-size: 16px; background: #000; padding: 10px; border-radius: 5px; color: #aaa; font-family: monospace; }
+        #log { height: 200px; overflow-y: auto; font-size: 16px; background: #000; padding: 10px; border-radius: 5px; color: #aaa; font-family: monospace; line-height: 1.5; }
 
+        /* ステータス表示 */
         .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 15px; width: 450px; }
-        .stat-box { background: var(--panel); padding: 15px; border-radius: 10px; text-align: center; }
+        .stat-box { background: var(--panel); padding: 12px; border-radius: 10px; text-align: center; border: 1px solid #333; }
         .stat-label { font-size: 12px; color: #888; margin-bottom: 5px; }
         .stat-val { font-size: 24px; font-weight: bold; color: var(--accent); }
 
+        /* 保留表示 */
         #heso-area { display: flex; justify-content: center; gap: 8px; margin-top: 15px; height: 30px; }
         .heso-ball { width: 22px; height: 22px; border-radius: 50%; background: #333; border: 2px solid #555; }
         .heso-on { background: #00ff00; box-shadow: 0 0 10px #00ff00; }
         .heso-red { background: #ff0000; box-shadow: 0 0 10px #ff0000; }
-        .heso-rainbow { background: linear-gradient(45deg, red, orange, yellow, green, blue, indigo, violet); }
+        .heso-rainbow { background: linear-gradient(45deg, red, orange, yellow, green, blue, indigo, violet); box-shadow: 0 0 10px #fff; }
         .heso-current { border-color: #fff; transform: scale(1.2); }
         .right-mode .heso-ball { border-color: #f0f; }
 
+        /* コントロール */
         .controls { margin-top: 20px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; width: 450px; }
-        button { background: #444; color: #fff; border: none; padding: 12px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        button { background: #444; color: #fff; border: none; padding: 12px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        button:hover { background: #555; }
         button.active { background: var(--accent); }
         button.btn-stop { background: #ff4444 !important; }
 
+        /* グラフ */
         .chart-container { width: 450px; height: 250px; background: var(--panel); margin-top: 15px; border-radius: 15px; padding: 10px; box-sizing: border-box; }
+
+        /* 演出用アニメーション */
         .vibrate { animation: shake 0.1s infinite; }
         @keyframes shake { 0% { transform: translate(2px, 2px); } 50% { transform: translate(-2px, -2px); } 100% { transform: translate(2px, -2px); } }
     </style>
@@ -80,86 +88,95 @@
         <div class="stat-box"><div class="stat-label">大当り</div><div id="hits" class="stat-val">0</div></div>
         <div class="stat-box"><div class="stat-label">RUSH回数</div><div id="rush-count" class="stat-val">0</div></div>
         <div class="stat-box"><div class="stat-label">回転数</div><div id="current-rot" class="stat-val">0</div></div>
-        <div class="stat-box"><div class="stat-label">トータル</div><div id="total-rot" class="stat-val">0</div></div>
-        <div class="stat-box" style="grid-column: span 2;"><div class="stat-label">差玉</div><div id="balance" class="stat-val">0</div></div>
+        <div class="stat-box"><div class="stat-label">トータル回転</div><div id="total-rot" class="stat-val">0</div></div>
+        <div class="stat-box" style="grid-column: span 2;"><div class="stat-label">差玉（250玉/18回転計算）</div><div id="balance" class="stat-val">0</div></div>
     </div>
 
     <div class="chart-container"><canvas id="slumpChart"></canvas></div>
     
     <div id="history-area">
-        <div class="history-title">大当り履歴</div>
+        <div class="history-title">履歴ログ</div>
         <div id="log">シミュレーション待機中...</div>
     </div>
 
     <div class="controls">
-        <button id="btn-slow" onclick="toggleAuto('slow')">自動(通常)</button>
-        <button id="btn-fast" onclick="toggleAuto('fast')">自動(高速)</button>
+        <button id="btn-slow" onclick="toggleAuto('slow')">自動(通常速度)</button>
+        <button id="btn-fast" onclick="toggleAuto('fast')">自動(高速消化)</button>
         <button id="btn-kokuchi" onclick="toggleOpt('kokuchi')">インフラ告知</button>
-        <button onclick="location.reload()">リセット</button>
+        <button onclick="location.reload()">データリセット</button>
     </div>
 
 <script>
-    // --- スペック・状態管理 ---
+    // --- スペック設定 ---
     const SPECS = { n: 319.7, s: 99.4, st: 163, jt: 100 };
+    
+    // --- 状態変数 ---
     let hits = 0, rushCount = 0, currentRot = 0, totalRot = 0, totalBall = 0, currentRushHits = 0;
     let mode = '通常', rRem = 0, isAuto = false, autoSpeed = 'slow', isAnim = false;
     let lcdCount = 0, optKokuchi = false, originalSpeedSetting = 'slow';
     let reservedStock = [], activeJob = null;
-    let slumpData = [0], slumpLabels = ["0"], historyData = [], historyLabels = [];
+    let slumpData = [0], slumpLabels = ["0"];
     let sChart;
 
+    // --- 信頼度テーブル ---
     const TRUST_MAP_N = { "白レバ": 0.90, "赤レバ": 0.965, "赤保留": 0.90, "次回予告": 0.65, "レイ背景": 0.85, "金系": 0.50, "カウントダウン": 0.88, "カヲル": 1.0, "レイ背景(さよなら)": 1.0 };
     const TRUST_MAP_S = { "白レバ": 0.95, "赤レバ": 0.99, "赤保留": 0.95, "次回予告": 1.0, "レイ背景": 0.92, "金系": 0.80, "カウントダウン": 0.88, "カヲル": 1.0 };
 
     window.onload = () => { initCharts(); updateUI(); };
 
+    // 図柄クラス判定（偶数青、奇数赤、ST中7金）
     function getDigitClass(num) {
         if (num === 7 && mode === 'ST') return 'digit gold';
         return (num % 2 !== 0) ? 'digit odd' : 'digit even';
     }
 
+    // 保留作成（入賞時のモードで当たり判定を行う）
     function createJob() {
-        let currentProb = (mode !== '通常' ? SPECS.s : SPECS.n);
-        let isHit = Math.random() < (1 / currentProb);
+        let prob = (mode !== '通常' ? SPECS.s : SPECS.n);
+        let isHit = Math.random() < (1 / prob);
         let holdType = "none", preVibe = "none", hasCountdown = false, isKaworu = false;
         
         if (isHit) {
             if (Math.random() < 0.05) hasCountdown = true;
             if (Math.random() < (mode === '通常' ? 0.02 : 0.05)) isKaworu = true;
             if (mode === '通常') {
-                let hRoll = Math.random() * 100;
-                if (hRoll < 33) holdType = "red";
-                else if (hRoll < 45) { 
+                let r = Math.random() * 100;
+                if (r < 33) holdType = "red";
+                else if (r < 45) { 
                     holdType = "vibe"; 
                     let vr = Math.random() * 100;
                     preVibe = (vr < 50) ? "white" : (vr < 90 ? "red" : "rainbow");
                 }
             } else {
-                let hRoll = Math.random() * 100;
-                if (hRoll < 25) holdType = "red";
-                else if (hRoll < 40) { 
+                let r = Math.random() * 100;
+                if (r < 25) holdType = "red";
+                else if (r < 40) { 
                     holdType = "vibe"; 
                     let vr = Math.random() * 100;
                     preVibe = (vr < 60) ? "white" : (vr < 90 ? "red" : "rainbow");
                 }
-                else if (hRoll < 51) holdType = "rainbow";
+                else if (r < 51) holdType = "rainbow";
             }
         } else {
+            // ハズレ時の先読み出現率（非常に低く設定）
             if (Math.random() < 0.0002) holdType = "red"; 
             if (Math.random() < 0.0001) hasCountdown = true; 
         }
         return { isHit, holdType, preVibe, hasCountdown, isKaworu };
     }
 
+    // 演出選択ロジック
     function selectEffect(job) {
         let res = { heavy: false, name: [], trust: 0, vibe: false, vibeColor: job.preVibe, flash: false, text: "", holdType: job.holdType, isSure: false, hasCountdown: job.hasCountdown, isKaworu: job.isKaworu };
         const map = (mode !== '通常') ? TRUST_MAP_S : TRUST_MAP_N;
 
+        // 確定系
         if (res.isKaworu) { res.name.push("カヲル"); res.isSure = true; res.text = "渚カヲル"; res.flash = true; }
         if (res.holdType === "rainbow") { res.name.push("虹保留"); res.isSure = true; }
         if (res.vibeColor === "rainbow") { res.name.push("虹レバ"); res.isSure = true; res.vibe = true; }
 
         if (job.isHit) {
+            // 当たり時の演出抽選
             if (mode === '通常') {
                 if (res.holdType === "red") res.name.push("赤保留");
                 if (res.hasCountdown) res.name.push("カウントダウン");
@@ -179,19 +196,23 @@
             }
             res.heavy = true;
         } else {
+            // ハズレ時の演出抽選（指示された確率に調整）
             if (mode === '通常') {
-                if (Math.random() < 0.002) { res.name.push("レイ背景"); res.text="レイ背景"; res.heavy = true; }
-                if (Math.random() < 0.01) res.name.push("金系");
-                if (Math.random() < 0.005) { res.name.push("次回予告"); res.text="次回予告"; }
+                if (Math.random() < 0.002) { res.name.push("レイ背景"); res.text="レイ背景"; res.heavy = true; } // 0.2%
+                if (Math.random() < 0.01) res.name.push("金系"); // 1%
+                if (Math.random() < 0.005) { res.name.push("次回予告"); res.text="次回予告"; res.heavy = true; } // 0.5%
                 if (res.holdType === "red") res.name.push("赤保留");
+                if (res.hasCountdown) res.name.push("カウントダウン");
             }
         }
+
         res.name = [...new Set(res.name)];
         if (res.isSure) res.trust = 100; 
         else if (res.name.length > 0) {
             let fail = 1; res.name.forEach(n => { let t = map[n] || 0.05; fail *= (1 - t); });
             res.trust = (1 - fail) * 100;
         } else { res.trust = (mode === '通常' ? 0.1 : 1.0); }
+        
         res.displayName = res.name.join("+") || (job.isHit ? "演出なし" : "弱予告");
         return res;
     }
@@ -199,6 +220,7 @@
     async function startProcess() {
         if (!isAuto || isAnim) return;
 
+        // モード終了判定：保留をすべて消化してから通常に戻る
         if (mode !== '通常' && rRem <= 0 && reservedStock.length === 0 && !activeJob) {
             let prev = mode;
             addLog(`【${prev}終了】 ${currentRushHits <= 1 ? (currentRushHits === 0 ? '0回' : '1回(' + prev + ')') : currentRushHits + '連'}`);
@@ -208,6 +230,7 @@
             else { isAuto = false; updateAutoBtns(); return; }
         }
 
+        // 保留補充
         while (reservedStock.length < 4 && (mode === '通常' || (mode !== '通常' && rRem > reservedStock.length))) {
             reservedStock.push(createJob());
         }
@@ -217,13 +240,18 @@
         activeJob = reservedStock.shift();
         updateHesoUI();
         let eff = selectEffect(activeJob);
+
+        // インフラ告知
         if (optKokuchi && activeJob.isHit) { eff.flash = true; eff.isSure = true; eff.trust = 100; eff.displayName = "インフラ告知"; }
 
         totalRot++; currentRot++; lcdCount++; 
         if (mode !== '通常') { rRem--; totalBall -= 0.05; } else { totalBall -= (250 / 18); }
         updateCharts();
 
-        if (eff.hasCountdown) { for(let i=3; i>=1; i--) { addLog(`●${i}...`); await new Promise(r => setTimeout(r, 400)); } }
+        // カウントダウン演出
+        if (eff.hasCountdown) { for(let i=3; i>=1; i--) { addLog(`<span style="color:#f44;">●${i}...</span>`); await new Promise(r => setTimeout(r, 400)); } }
+        
+        // ログ出力（激アツまたは当たり時）
         if (eff.trust >= 50 || activeJob.isHit) {
             addLog(`${mode} ${lcdCount}回転【${eff.displayName}】信頼度:${eff.trust.toFixed(1)}%`);
             if (eff.vibe) triggerVibeUI();
@@ -231,49 +259,59 @@
             if (eff.text) { const ov = document.getElementById('effect-overlay'); ov.innerText = eff.text; ov.style.display = 'block'; }
         }
 
+        // 変動アニメーション
         let spinTime = (eff.heavy) ? 2000 : (autoSpeed === 'fast' ? 50 : 500);
         let spin = setInterval(() => { 
             let n1 = Math.floor(Math.random()*9)+1, n2 = Math.floor(Math.random()*9)+1, n3 = Math.floor(Math.random()*9)+1;
-            document.getElementById('d1').innerText=n1; document.getElementById('d1').className = getDigitClass(n1);
-            document.getElementById('d2').innerText=n2; document.getElementById('d2').className = getDigitClass(n2);
-            document.getElementById('d3').innerText=n3; document.getElementById('d3').className = getDigitClass(n3);
+            const d1=document.getElementById('d1'), d2=document.getElementById('d2'), d3=document.getElementById('d3');
+            d1.innerText=n1; d1.className = getDigitClass(n1);
+            d2.innerText=n2; d2.className = getDigitClass(n2);
+            d3.innerText=n3; d3.className = getDigitClass(n3);
         }, 40);
         await new Promise(r => setTimeout(r, spinTime));
         clearInterval(spin);
+        
         document.getElementById('lamp').classList.remove('lamp-active');
         document.getElementById('effect-overlay').style.display = 'none';
 
         if (activeJob.isHit) {
             isAnim = true; hits++; 
-            if (mode === '通常') { historyData.push(currentRot); }
             currentRot = 0;
             let rand = Math.random()*100, logDigit, isST = false;
-            if (mode !== '通常') { logDigit = (rand < 50) ? 7 : 1; isST = true; totalBall += 1400; }
-            else {
+            
+            // 図柄決定
+            if (mode !== '通常') { 
+                logDigit = (rand < 50) ? 7 : 1; isST = true; totalBall += 1400; 
+            } else {
                 if (rand < 60) { logDigit = (rand < 5 ? 7 : 3); isST = true; totalBall += (logDigit === 7 ? 1400 : 420); }
                 else { logDigit = 2; isST = false; totalBall += 420; }
             }
+            
             [1,2,3].forEach(i => { const el = document.getElementById('d'+i); el.innerText = logDigit; el.className = getDigitClass(logDigit); });
             await new Promise(r => setTimeout(r, 1200));
+            
             if (isST) { mode = 'ST'; rRem = SPECS.st; rushCount++; } else { mode = '時短'; rRem = SPECS.jt; }
             addLog(`>> ${mode}突入 【${logDigit}】 当り!`);
             currentRushHits++; updateUI(); await new Promise(r => setTimeout(r, 1200)); 
             lcdCount = 0; activeJob = null;
-        } else { activeJob = null; }
+        } else {
+            activeJob = null;
+        }
 
         isAnim = false;
         updateUI(); updateAutoBtns();
         if (isAuto) setTimeout(startProcess, (autoSpeed === 'fast' ? 10 : 200));
     }
     
+    // --- UI操作関数 ---
     function toggleAuto(s) { if(isAuto && autoSpeed === s) { isAuto = false; } else { isAuto = true; autoSpeed = s; originalSpeedSetting = s; if(!isAnim) startProcess(); } updateAutoBtns(); }
     function updateAutoBtns() { document.getElementById('btn-slow').classList.remove('btn-stop'); document.getElementById('btn-fast').classList.remove('btn-stop'); if(isAuto) document.getElementById('btn-' + autoSpeed).classList.add('btn-stop'); }
     function toggleOpt(t) { optKokuchi=!optKokuchi; document.getElementById('btn-kokuchi').classList.toggle('active'); }
     function updateHesoUI() { const hA = document.getElementById('heso-area'); mode !== '通常' ? hA.classList.add('right-mode') : hA.classList.remove('right-mode'); for(let i=0; i<=4; i++) { const el = document.getElementById('h'+i); const s = (i===0) ? activeJob : reservedStock[i-1]; el.className = `heso-ball ${i===0?'heso-current':''}`; if(s) { if(s.holdType !== 'none') el.classList.add('heso-' + s.holdType); else el.classList.add('heso-on'); } } }
     function updateUI() { document.getElementById('hits').innerText = hits; document.getElementById('rush-count').innerText = rushCount; document.getElementById('current-rot').innerText = currentRot; document.getElementById('total-rot').innerText = totalRot; document.getElementById('balance').innerText = Math.floor(totalBall).toLocaleString(); document.getElementById('sub-display').innerText = mode==='通常' ? `通常:${lcdCount}` : `${mode}:${rRem}`; updateHesoUI(); }
-    function addLog(m) { const l = document.getElementById('log'); if(l.innerHTML.length > 5000) l.innerHTML = l.innerHTML.substring(0, 3000); l.innerHTML = `> ${m}<br>${l.innerHTML}`; }
+    function addLog(m) { const l = document.getElementById('log'); l.innerHTML = `> ${m}<br>${l.innerHTML}`; }
     function triggerVibeUI() { document.getElementById('machine').classList.add('vibrate'); setTimeout(()=>document.getElementById('machine').classList.remove('vibrate'), 500); }
-    function initCharts() { const ctxS = document.getElementById('slumpChart').getContext('2d'); sChart = new Chart(ctxS, { type: 'line', data: { labels: slumpLabels, datasets: [{ label: '差玉', data: slumpData, borderColor: '#8a2be2', borderWidth: 2, fill: false, pointRadius: 0 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { x: { display: true, title: { display: true, text: 'トータル回転数' } } } } }); }
+    function initCharts() { const ctxS = document.getElementById('slumpChart').getContext('2d'); sChart = new Chart(ctxS, { type: 'line', data: { labels: slumpLabels, datasets: [{ label: '差玉推移', data: slumpData, borderColor: '#8a2be2', borderWidth: 2, fill: false, pointRadius: 0 }] }, options: { responsive: true, maintainAspectRatio: false } }); }
     function updateCharts() { slumpData.push(totalBall); slumpLabels.push(totalRot.toString()); sChart.update('none'); }
 </script>
 </body>
