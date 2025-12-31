@@ -125,7 +125,12 @@
     let maxHamari = 0, mode = '通常', rRem = 0, isAuto = false, autoSpeed = 'slow', isAnim = false;
     let lcdCount = 0, optKokuchi = false, optAll = false, originalSpeedSetting = 'slow';
     let reservedStock = [], activeJob = null;
-    let slumpData = [0], slumpLabels = ["0"], historyData = [], historyLabels = [];
+    
+    // グラフ用データ（全履歴を保持するように修正）
+    let slumpData = [0]; 
+    let slumpLabels = ["0"]; 
+    let historyData = []; 
+    let historyLabels = [];
     let sChart, hChart;
 
     // --- 信頼度設定 ---
@@ -156,15 +161,14 @@
                     preVibe = vr < 50 ? "white" : (vr < 90 ? "red" : "rainbow");
                 }
             } else {
-                // ST中の当たり時振り分け（占有率調整）
                 let hRoll = Math.random() * 100;
-                if (hRoll < 25) holdType = "red"; // 25% 赤保留
-                else if (hRoll < 40) { // 15% レバブル系 (5%から引き上げ)
+                if (hRoll < 25) holdType = "red";
+                else if (hRoll < 40) { 
                     holdType = "vibe"; 
                     let vr = Math.random() * 100;
                     preVibe = vr < 60 ? "white" : (vr < 90 ? "red" : "rainbow");
                 }
-                else if (hRoll < 51) holdType = "rainbow"; // 11% 虹保留
+                else if (hRoll < 51) holdType = "rainbow";
             }
         } else {
             if (Math.random() < 0.0002) holdType = "red"; 
@@ -201,20 +205,12 @@
                     if (Math.random() < 0.60) res.name.push("金系");
                 }
             } else {
-                // ST中の当たり時演出：弱予告当りを1%に。残りは他演出へ
                 if (res.holdType === "red") res.name.push("赤保留");
                 if (res.vibeColor === "white") { res.vibe = true; res.name.push("白レバ"); }
                 if (res.vibeColor === "red") { res.vibe = true; res.name.push("赤レバ"); }
-                
-                // 金系占有33%
                 if (Math.random() < 0.33) res.name.push("金系"); 
-                // 次回予告占有10%
                 if (Math.random() < 0.10) { res.name.push("次回予告"); res.text="次回予告"; res.isSure = true; }
-                
-                // 演出が何も選ばれなかった場合、1%以外は無理やり金系などを割り当てて「生当たり」を防ぐ
-                if (res.name.length === 0 && Math.random() > 0.01) {
-                   res.name.push("金系");
-                }
+                if (res.name.length === 0 && Math.random() > 0.01) { res.name.push("金系"); }
             }
             res.heavy = true;
         } else {
@@ -254,8 +250,13 @@
         while(reservedStock.length < 4) preCheck();
         let eff = selectEffect(activeJob);
         if(optKokuchi && activeJob.isHit) { eff.flash=true; eff.isSure=true; eff.trust=100; eff.displayName="インフラ告知"; }
+        
         totalRot++; currentRot++; lcdCount++; 
         if(mode !== '通常') { rRem--; totalBall -= 0.05; } else { totalBall -= (250 / 18); }
+        
+        // 1回転ごとにグラフ更新
+        updateCharts();
+
         if (eff.hasCountdown) { for(let i=3; i>=1; i--) { addLog(`<span style="color:#f44; font-weight:bold;">●${i}...</span>`); await new Promise(r => setTimeout(r, 400)); } }
         if(eff.trust >= 50 || activeJob.isHit || eff.hasCountdown) {
             addLog(`${mode} ${lcdCount}回転【${eff.displayName}】信頼度:${eff.trust.toFixed(1)}%`);
@@ -303,17 +304,53 @@
     function updateAutoBtns() { document.getElementById('btn-slow').classList.remove('btn-stop'); document.getElementById('btn-fast').classList.remove('btn-stop'); if(isAuto) document.getElementById('btn-' + autoSpeed).classList.add('btn-stop'); }
     function toggleOpt(t) { if(t==='kokuchi') optKokuchi=!optKokuchi; if(t==='all') optAll=!optAll; document.getElementById('btn-'+t).classList.toggle('active'); }
     function updateHesoUI() { const hA = document.getElementById('heso-area'); if(mode !== '通常') hA.classList.add('right-mode'); else hA.classList.remove('right-mode'); for(let i=0; i<=4; i++) { const el = document.getElementById('h'+i); const s = (i===0) ? activeJob : reservedStock[i-1]; el.className = `heso-ball ${i===0?'heso-current':''}`; if(s) { if(s.isKaworu || s.preVibe === 'rainbow' || s.holdType === 'rainbow') el.classList.add('heso-rainbow'); else if(s.holdType !== 'none') el.classList.add('heso-' + s.holdType); else el.classList.add('heso-on'); } } }
-    function updateUI() { document.getElementById('hits').innerText = hits; document.getElementById('rush-count').innerText = rushCount; document.getElementById('current-rot').innerText = currentRot; document.getElementById('total-rot').innerText = totalRot; document.getElementById('balance').innerText = Math.floor(totalBall).toLocaleString(); document.getElementById('sub-display').innerText = mode==='通常' ? `通常:${lcdCount}` : `${mode}:${rRem}`; updateHesoUI(); updateCharts(); }
+    
+    function updateUI() { 
+        document.getElementById('hits').innerText = hits; 
+        document.getElementById('rush-count').innerText = rushCount; 
+        document.getElementById('current-rot').innerText = currentRot; 
+        document.getElementById('total-rot').innerText = totalRot; 
+        document.getElementById('balance').innerText = Math.floor(totalBall).toLocaleString(); 
+        document.getElementById('sub-display').innerText = mode==='通常' ? `通常:${lcdCount}` : `${mode}:${rRem}`; 
+        updateHesoUI(); 
+    }
+
     function addLog(m) { const l = document.getElementById('log'); l.innerHTML = `> ${m}<br>${l.innerHTML}`; }
     function triggerVibeUI(c) { const m = document.getElementById('machine'); m.classList.add('vibrate'); setTimeout(()=>{ m.classList.remove('vibrate'); }, 500); }
-    function initCharts() { const ctxS = document.getElementById('slumpChart').getContext('2d'); sChart = new Chart(ctxS, { type: 'line', data: { labels: slumpLabels, datasets: [{ label: '差玉', data: slumpData, borderColor: '#8a2be2', borderWidth: 2, fill: false, pointRadius: 0 }] }, options: { responsive: true, maintainAspectRatio: false } }); const ctxH = document.getElementById('historyChart').getContext('2d'); hChart = new Chart(ctxH, { type: 'bar', data: { labels: historyLabels, datasets: [{ label: 'ハマリ', data: historyData, backgroundColor: '#ff4444' }] }, options: { responsive: true, maintainAspectRatio: false } }); }
-    function updateCharts() { slumpData.push(totalBall); slumpLabels.push(totalRot.toString()); if(slumpData.length > 50) { slumpData.shift(); slumpLabels.shift(); } sChart.update(); hChart.update(); }
+
+    function initCharts() { 
+        const ctxS = document.getElementById('slumpChart').getContext('2d'); 
+        sChart = new Chart(ctxS, { 
+            type: 'line', 
+            data: { 
+                labels: slumpLabels, 
+                datasets: [{ label: '差玉', data: slumpData, borderColor: '#8a2be2', borderWidth: 2, fill: false, pointRadius: 0 }] 
+            }, 
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false,
+                scales: { x: { display: true, title: { display: true, text: 'トータル回転数' } } }
+            } 
+        }); 
+        const ctxH = document.getElementById('historyChart').getContext('2d'); 
+        hChart = new Chart(ctxH, { type: 'bar', data: { labels: historyLabels, datasets: [{ label: 'ハマリ', data: historyData, backgroundColor: '#ff4444' }] }, options: { responsive: true, maintainAspectRatio: false } }); 
+    }
+
+    function updateCharts() { 
+        slumpData.push(totalBall); 
+        slumpLabels.push(totalRot.toString()); 
+        // データの制限を撤廃し、開始時からの全推移を表示
+        sChart.update('none'); // アニメーションなしで更新（負荷軽減）
+        hChart.update(); 
+    }
+
     function openModal() { document.getElementById('modal-overlay').style.display='flex'; }
     function closeModal() { document.getElementById('modal-overlay').style.display='none'; }
     function resetData() { if(confirm('データをリセットしますか？')) location.reload(); }
 </script>
 </body>
 </html>
+
 
 
 
