@@ -260,7 +260,6 @@ async function startProcess() {
             document.getElementById('lamp').classList.remove('lamp-active');
         }
         if (isRightUpgrade) {
-            addLog(`>> 7図柄へ昇格！！`);
             machineEl.classList.add('vibe-rainbow');
             document.getElementById('lamp').classList.add('lamp-active');
             [1,2,3].forEach(i => { const el = document.getElementById('d'+i); el.innerText = 7; el.className = 'digit gold'; });
@@ -298,6 +297,7 @@ function resetData() { if(confirm('データをリセットしますか？')) lo
     </script>
 </body>
 </html>
+
 
 
 
