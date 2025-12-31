@@ -188,25 +188,30 @@
     async function startProcess() {
         if (!isAuto || isAnim) return;
 
-        // モード移行判定：右打ち終了時
+        // モード移行判定
         if (mode !== '通常' && rRem <= 0 && reservedStock.length === 0 && !activeJob) {
             let prev = mode; 
             addLog(`【${prev}終了】 ${currentRushHits <= 1 ? (currentRushHits === 0 ? '0回' : '1回(' + prev + ')') : currentRushHits + '連'}`);
             mode = '通常'; 
             currentRushHits = 0; 
-            // 移行してもlcdCount（回転数表示）はリセットせず、残保留消化で増えるようにする
             updateUI();
             if (prev === '時短' && originalSpeedSetting === 'fast') { autoSpeed = 'fast'; } else { isAuto = false; updateAutoBtns(); return; }
         }
 
-        while (reservedStock.length < 4 && (mode === '通常' || (mode !== '通常' && rRem > reservedStock.length))) { reservedStock.push(createJob()); }
-        if (reservedStock.length === 0) { isAuto = false; updateAutoBtns(); return; }
+        // ★保留の補充条件を修正：配列を最大4個まで貯める（消化中1+残4=5個）
+        // ST/時短中は rRem（残り回数）から現在貯まっている保留数を引いた分だけ補充可能
+        while (reservedStock.length < 4 && (mode === '通常' || (mode !== '通常' && rRem > reservedStock.length))) { 
+            reservedStock.push(createJob()); 
+        }
+        
+        if (reservedStock.length === 0 && !activeJob) { isAuto = false; updateAutoBtns(); return; }
 
-        activeJob = reservedStock.shift(); updateHesoUI();
+        activeJob = reservedStock.shift(); 
+        updateHesoUI(); // ここで画面表示を更新
+
         let eff = selectEffect(activeJob);
         if (optKokuchi && activeJob.isHit) { eff.flash = true; eff.isSure = true; eff.trust = 100; eff.displayName = "インフラ告知"; }
 
-        // 回転数の加算：どんな状態でも必ず増える
         totalRot++; currentRot++; lcdCount++; 
         if (mode !== '通常') { rRem--; totalBall -= 0.05; } else { totalBall -= (250 / 18); }
         updateCharts();
@@ -246,15 +251,10 @@
             
             if (isST) { mode = 'ST'; rRem = SPECS.st; rushCount++; } else { mode = '時短'; rRem = SPECS.jt; }
             
-            if (prevMode === '通常') {
-                addLog(`>> ${mode}突入 【${logDigit}】 当たり!`);
-            } else {
-                addLog(`>> ${hitRot}回転 【${logDigit}】 当たり!`);
-            }
+            if (prevMode === '通常') { addLog(`>> ${mode}突入 【${logDigit}】 当たり!`); }
+            else { addLog(`>> ${hitRot}回転 【${logDigit}】 当たり!`); }
             
-            currentRushHits++; 
-            // 当たり確定時のみ、次の回転のカウントを開始するために0にリセット
-            lcdCount = 0; 
+            currentRushHits++; lcdCount = 0; 
             updateUI(); await new Promise(r => setTimeout(r, 1200)); 
             activeJob = null;
         } else { activeJob = null; }
@@ -266,7 +266,24 @@
     function toggleAuto(s) { if(isAuto && autoSpeed === s) { isAuto = false; } else { isAuto = true; autoSpeed = s; originalSpeedSetting = s; if(!isAnim) startProcess(); } updateAutoBtns(); }
     function updateAutoBtns() { document.getElementById('btn-slow').classList.toggle('btn-stop', isAuto && autoSpeed === 'slow'); document.getElementById('btn-fast').classList.toggle('btn-stop', isAuto && autoSpeed === 'fast'); }
     function toggleOpt(t) { if(t==='kokuchi') optKokuchi=!optKokuchi; document.getElementById('btn-'+t).classList.toggle('active'); }
-    function updateHesoUI() { const hA = document.getElementById('heso-area'); mode !== '通常' ? hA.classList.add('right-mode') : hA.classList.remove('right-mode'); for(let i=0; i<=4; i++) { const el = document.getElementById('h'+i); const s = (i===0) ? activeJob : reservedStock[i-1]; el.className = `heso-ball ${i===0?'heso-current':''}`; if(s) { if(s.holdType === 'red') el.classList.add('heso-red'); else if(s.holdType === 'rainbow') el.classList.add('heso-rainbow'); else el.classList.add('heso-on'); } } }
+    
+    // ★保留表示ロジック
+    function updateHesoUI() { 
+        const hA = document.getElementById('heso-area'); 
+        mode !== '通常' ? hA.classList.add('right-mode') : hA.classList.remove('right-mode'); 
+        for(let i=0; i<=4; i++) { 
+            const el = document.getElementById('h'+i); 
+            // h0 = 当該保留, h1~h4 = 予約保留
+            const s = (i===0) ? activeJob : reservedStock[i-1]; 
+            el.className = `heso-ball ${i===0?'heso-current':''}`; 
+            if(s) { 
+                if(s.holdType === 'red') el.classList.add('heso-red'); 
+                else if(s.holdType === 'rainbow') el.classList.add('heso-rainbow'); 
+                else el.classList.add('heso-on'); 
+            } 
+        } 
+    }
+    
     function updateUI() { document.getElementById('hits').innerText = hits; document.getElementById('rush-count').innerText = rushCount; document.getElementById('current-rot').innerText = currentRot; document.getElementById('total-rot').innerText = totalRot; document.getElementById('balance').innerText = Math.floor(totalBall).toLocaleString(); document.getElementById('sub-display').innerText = mode==='通常' ? `通常:${lcdCount}` : `${mode}:${rRem}`; updateHesoUI(); }
     function addLog(m) { const l = document.getElementById('log'); l.innerHTML = `> ${m}<br>${l.innerHTML}`; }
     function initCharts() {
@@ -280,6 +297,7 @@
 </script>
 </body>
 </html>
+
 
 
 
