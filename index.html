@@ -6,64 +6,54 @@
     <title>EVANGELION Sim -Hybrid Final-</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&display=swap');
-        body { background: #000; color: white; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; overflow-x: hidden; }
-        header { width: 100%; height: 50px; background: #111; border-bottom: 2px solid #8a2be2; display: flex; align-items: center; padding: 0 10px; box-sizing: border-box; gap: 8px; position: sticky; top: 0; z-index: 100; }
-        .header-btn { background: #333; color: #ccc; border: 1px solid #555; padding: 5px 8px; font-size: 0.7rem; cursor: pointer; border-radius: 4px; white-space: nowrap; }
-        .btn-graph { background: #8a2be2; color: white; border-color: #a450ff; }
-        .max-hamari-display { background: #000; color: #ff4444; border: 1px solid #ff4444; padding: 4px 8px; font-size: 0.75rem; border-radius: 4px; cursor: pointer; font-weight: bold; overflow: hidden; text-overflow: ellipsis; }
-        .main-content { width: 100%; max-width: 440px; display: flex; flex-direction: column; align-items: center; padding: 10px; box-sizing: border-box; }
-        .machine { width: 100%; background: #111; border: 3px solid #8a2be2; border-radius: 15px; padding: 12px; position: relative; box-sizing: border-box; transition: border-color 0.2s, box-shadow 0.2s; }
-        .screen { background: #000; height: 300px; border-radius: 10px; border: 2px solid #444; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; width: 100%; }
-        .digit-container { display: flex; gap: 5px; }
-        .digit { font-size: 8.5rem; font-weight: 900; font-family: 'Shippori Mincho B1', serif; width: 110px; text-align: center; } 
-        .mode-display { position: absolute; bottom: 35px; right: 15px; color: #8a2be2; font-weight: bold; font-size: 0.9rem; text-shadow: 0 0 5px #000; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 3px; border-right: 3px solid #8a2be2; text-align: right; min-width: 90px; }
-        .gold { color: #ffeb3b; text-shadow: 0 0 30px #ffeb3b; }
-        .odd { color: #ff4444; text-shadow: 0 0 20px #ff4444; }
-        .even { color: #4444ff; text-shadow: 0 0 20px #4444ff; }
-        .hidden-lamp { position: absolute; top: 12px; right: 20px; width: 15px; height: 15px; background: #222; border-radius: 50%; border: 1px solid #444; z-index: 10; }
-        .lamp-active { animation: rainbow-bg 0.3s infinite; box-shadow: 0 0 20px #fff; }
-        @keyframes rainbow-bg { 0% { background: #f00; } 20% { background: #ff0; } 40% { background: #0f0; } 60% { background: #0ff; } 80% { background: #00f; } 100% { background: #f0f; } }
-        .vibrate { animation: vibration 0.05s infinite; }
-        @keyframes vibration { 0% { transform: translate(0,0); } 25% { transform: translate(-2px, 2px); } 50% { transform: translate(2px, -2px); } 75% { transform: translate(-2px, -2px); } 100% { transform: translate(0,0); } }
-        .flash-active { animation: flash-white 0.05s 20; }
-        @keyframes flash-white { 0%, 100% { background: #000; } 50% { background: #fff; } }
-        
-        /* 保留デザイン */
-        .heso-overlay { position: absolute; bottom: 10px; display: flex; align-items: center; gap: 8px; transition: all 0.3s; }
-        .heso-ball { width: 10px; height: 10px; background: #222; border-radius: 50%; border: 1px solid #555; transition: all 0.2s; }
-        /* 右打ち中（ST/時短）の形状変更 */
-        .heso-overlay.right-mode { bottom: 80px; right: 10px; flex-direction: column-reverse; gap: 4px; }
-        .heso-overlay.right-mode .heso-ball { width: 18px; height: 6px; border-radius: 2px; }
-        
-        .heso-current { border-width: 2px !important; border-color: #fff !important; }
-        .heso-on { background: #888; }
-        .heso-red { background: radial-gradient(circle, #ff4444, #880000); box-shadow: 0 0 8px #ff0000; border-color: #f00; }
-        .heso-green { background: radial-gradient(circle, #44ff44, #008800); box-shadow: 0 0 8px #00ff00; border-color: #0f0; }
-        .heso-blue { background: radial-gradient(circle, #4444ff, #000088); box-shadow: 0 0 8px #0000ff; border-color: #00f; }
-        .heso-rainbow { animation: rainbow-bg 0.5s infinite; box-shadow: 0 0 10px #fff; border-color: #fff; }
-        .heso-vibe { animation: vibration 0.1s infinite !important; background: radial-gradient(circle, #fff, #8a2be2) !important; box-shadow: 0 0 10px #8a2be2; border-color: #fff !important; }
-        
-        .effect-text { position: absolute; color: white; font-weight: bold; font-size: 2.2rem; z-index: 5; text-shadow: 0 0 10px #000; background: rgba(0,0,0,0.7); padding: 5px 15px; border-radius: 5px; display: none; text-align: center; }
-        .stat-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-top: 12px; }
-        .stat-item { background: #000; border: 1px solid #333; padding: 5px 0; text-align: center; border-radius: 4px; }
-        .stat-val { font-size: 1.2rem; font-weight: bold; font-family: monospace; } 
-        .val-white { color: #ffffff; }
-        .val-red { color: #ff4444; }
-        .val-blue { color: #4444ff; }
-        .stat-label { font-size: 0.55rem; color: #888; display: block; margin-bottom: 2px; }
-        .control-panel { margin-top: 12px; display: flex; gap: 8px; width: 100%; height: 65px; }
-        .side-btns { display: flex; flex-direction: column; gap: 4px; width: 55px; }
-        .side-btn { flex: 1; background: #222; color: #666; border: 1px solid #444; font-size: 0.7rem; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .side-btn.active { background: #8a2be2; color: #fff; border-color: #a450ff; }
-        .btn-auto { flex: 1; background: #8a2be2; color: white; border: 1px solid #a450ff; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 1rem; }
-        .btn-stop { background: #444 !important; border-color: #666 !important; }
-        .log { width: 100%; max-width: 440px; height: 350px; background: #000; margin-top: 10px; padding: 10px; font-size: 0.95rem; color: #ffffff; overflow-y: auto; border: 1px solid #333; font-family: monospace; box-sizing: border-box; line-height: 1.5; } 
-        #modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; justify-content: center; align-items: center; }
-        #modal-content { background: #111; border: 2px solid #8a2be2; width: 92%; max-width: 450px; padding: 15px; border-radius: 12px; overflow-y: auto; max-height: 90vh; }
-        .graph-area { background: #000; height: 200px; margin-bottom: 20px; border: 1px solid #333; }
-        @keyframes rainbow-border { 0% { border-color: #f00; box-shadow: 0 0 15px #f00; } 100% { border-color: #f0f; box-shadow: 0 0 15px #f0f; } }
-    </style>
+    :root { --bg: #0a0a0c; --panel: #1a1a1f; --accent: #8a2be2; --text: #e0e0e0; }
+    body { background: var(--bg); color: var(--text); font-family: 'Hiragino Sans', sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; }
+    #machine { background: #222; border: 8px solid #444; border-radius: 40px; padding: 20px; margin-top: 20px; position: relative; width: 450px; box-shadow: 0 0 50px rgba(0,0,0,1); }
+    
+    /* 図柄表示部分（1.5倍） */
+    #lcd { background: #000; height: 220px; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; border: 3px solid #333; }
+    #reels { display: flex; gap: 15px; }
+    .digit { font-size: 100px; font-weight: bold; }
+    
+    /* 図柄の色ルール */
+    .digit.even { color: #3366ff; text-shadow: 0 0 15px #0033cc; } /* 偶数：青 */
+    .digit.odd { color: #ff3333; text-shadow: 0 0 15px #cc0000; }  /* 奇数：赤 */
+    .digit.gold { color: #ffd700; text-shadow: 0 0 20px #ffa500, 0 0 5px #fff; } /* ST中7：金 */
+
+    #sub-display { position: absolute; top: 10px; right: 15px; color: #0f0; font-family: monospace; font-size: 18px; }
+    #effect-overlay { position: absolute; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; color: #fff; font-size: 40px; font-weight: bold; text-align: center; line-height: 220px; z-index: 10; text-shadow: 0 0 10px #f0f; }
+
+    /* 履歴表示部分（1.5倍） */
+    #history-area { width: 450px; margin-top: 15px; background: var(--panel); border-radius: 15px; padding: 15px; box-sizing: border-box; }
+    .history-title { font-size: 21px; margin-bottom: 10px; border-left: 5px solid var(--accent); padding-left: 10px; }
+    #log { height: 200px; overflow-y: auto; font-size: 16px; background: #000; padding: 10px; border-radius: 5px; color: #aaa; }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 15px; width: 450px; }
+    .stat-box { background: var(--panel); padding: 15px; border-radius: 10px; text-align: center; }
+    .stat-val { font-size: 24px; font-weight: bold; color: var(--accent); }
+
+    #heso-area { display: flex; justify-content: center; gap: 8px; margin-top: 15px; height: 30px; }
+    .heso-ball { width: 22px; height: 22px; border-radius: 50%; background: #333; border: 2px solid #555; transition: 0.3s; }
+    .heso-on { background: #00ff00; box-shadow: 0 0 10px #00ff00; }
+    .heso-red { background: #ff0000; box-shadow: 0 0 10px #ff0000; }
+    .heso-rainbow { background: linear-gradient(45deg, red, orange, yellow, green, blue, indigo, violet); box-shadow: 0 0 15px #fff; }
+    .heso-current { border-color: #fff; transform: scale(1.2); }
+    .right-mode .heso-ball { border-color: #f0f; }
+
+    .controls { margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; width: 450px; }
+    button { background: #444; color: #fff; border: none; padding: 12px 20px; border-radius: 5px; cursor: pointer; font-size: 14px; flex: 1; min-width: 100px; }
+    button:hover { background: #555; }
+    button.active { background: var(--accent); }
+    .btn-stop { background: #ff4444 !important; }
+
+    #lamp { width: 100px; height: 10px; background: #333; margin: 10px auto; border-radius: 5px; transition: 0.3s; }
+    .lamp-active { background: #ff00ff !important; box-shadow: 0 0 20px #ff00ff; }
+    
+    .vibrate { animation: shake 0.1s infinite; }
+    @keyframes shake { 0% { transform: translate(2px, 2px); } 50% { transform: translate(-2px, -2px); } 100% { transform: translate(2px, -2px); } }
+    
+    .chart-container { width: 450px; height: 250px; background: var(--panel); margin-top: 15px; border-radius: 15px; padding: 10px; box-sizing: border-box; }
+</style>
 </head>
 <body>
     <header>
@@ -134,12 +124,13 @@
 
     window.onload = () => { initCharts(); updateUI(); };
 
+    // 【修正】図柄の色判定
     function getDigitClass(num) {
-        if (num === 7) return mode === 'ST' ? 'digit gold' : 'digit odd';
-        return num % 2 === 0 ? 'digit even' : 'digit odd';
+        if (num === 7 && mode === 'ST') return 'digit gold'; // ST中の7は金
+        return (num % 2 !== 0) ? 'digit odd' : 'digit even'; // 奇数赤、偶数青
     }
 
-    // 保留作成（現在のモードの確率で抽選）
+    // 保留作成
     function createJob() {
         let currentProb = (mode !== '通常' ? SPECS.s : SPECS.n);
         let isHit = Math.random() < (1 / currentProb);
@@ -173,6 +164,7 @@
         return { isHit, holdType, preVibe, hasCountdown, isKaworu };
     }
 
+    // 演出抽選
     function selectEffect(job) {
         let res = { heavy: false, name: [], trust: 0, vibe: false, vibeColor: job.preVibe, flash: false, text: "", holdType: job.holdType, isSure: false, hasCountdown: job.hasCountdown, isKaworu: job.isKaworu };
         const map = (mode !== '通常') ? TRUST_MAP_S : TRUST_MAP_N;
@@ -198,16 +190,16 @@
                 if (res.vibeColor === "white" || res.vibeColor === "red") { res.vibe = true; res.name.push(res.vibeColor === "white" ? "白レバ" : "赤レバ"); }
                 if (Math.random() < 0.33) res.name.push("金系"); 
                 if (Math.random() < 0.10) { res.name.push("次回予告"); res.text="次回予告"; res.isSure = true; }
-                if (res.name.length === 0 && Math.random() > 0.01) res.name.push("金系");
+                if (res.name.length === 0 && Math.random() > 0.01) res.name.push("金系"); // 弱予告当たりを1%に制限
             }
             res.heavy = true;
         } else {
             if (res.holdType === "red") res.name.push("赤保留");
             if (res.hasCountdown) res.name.push("カウントダウン");
             if (mode === '通常') {
-                if (Math.random() < 0.002) { res.name.push("レイ背景"); res.text="レイ背景"; res.heavy = true; }
-                if (Math.random() < 0.01) res.name.push("金系");
-                if (Math.random() < 0.005) { res.name.push("次回予告"); res.text="次回予告"; }
+                if (Math.random() < 0.002) { res.name.push("レイ背景"); res.text="レイ背景"; res.heavy = true; } //指示通り0.2%
+                if (Math.random() < 0.01) res.name.push("金系"); //指示通り1%
+                if (Math.random() < 0.005) { res.name.push("次回予告"); res.text="次回予告"; } //指示通り0.5%
             } else {
                 if (Math.random() < 0.008) res.name.push("金系"); 
             }
@@ -225,8 +217,8 @@
     async function startProcess() {
         if (!isAuto || isAnim) return;
 
-        // モード終了判定
-        if (mode !== '通常' && rRem <= 0 && reservedStock.length === 0) {
+        // 【指示】残保留をすべて消化してから次へ
+        if (mode !== '通常' && rRem <= 0 && reservedStock.length === 0 && !activeJob) {
             let prev = mode;
             addLog(`【${prev}終了】 ${currentRushHits <= 1 ? (currentRushHits === 0 ? '0回' : '1回(' + prev + ')') : currentRushHits + '連'}`);
             mode = '通常'; currentRushHits = 0; lcdCount = 0;
@@ -235,7 +227,7 @@
             else { isAuto = false; updateAutoBtns(); return; }
         }
 
-        // 保留補充（4個まで）
+        // 保留の補充
         while (reservedStock.length < 4 && (mode === '通常' || (mode !== '通常' && rRem > reservedStock.length))) {
             reservedStock.push(createJob());
         }
@@ -251,7 +243,7 @@
         if (mode !== '通常') { rRem--; totalBall -= 0.05; } else { totalBall -= (250 / 18); }
         updateCharts();
 
-        if (eff.hasCountdown) { for(let i=3; i>=1; i--) { addLog(`●${i}...`); await new Promise(r => setTimeout(r, 400)); } }
+        if (eff.hasCountdown) { for(let i=3; i>=1; i--) { addLog(`<span style="color:#f44;">●${i}...</span>`); await new Promise(r => setTimeout(r, 400)); } }
         if (eff.trust >= 50 || activeJob.isHit) {
             addLog(`${mode} ${lcdCount}回転【${eff.displayName}】信頼度:${eff.trust.toFixed(1)}%`);
             if (eff.vibe) triggerVibeUI(activeJob.preVibe);
@@ -262,7 +254,10 @@
         let spinTime = (eff.heavy) ? 2000 : (autoSpeed === 'fast' ? 50 : 500);
         let spin = setInterval(() => { 
             let n1 = Math.floor(Math.random()*9)+1, n2 = Math.floor(Math.random()*9)+1, n3 = Math.floor(Math.random()*9)+1;
-            document.getElementById('d1').innerText=n1; document.getElementById('d2').innerText=n2; document.getElementById('d3').innerText=n3;
+            const d1=document.getElementById('d1'), d2=document.getElementById('d2'), d3=document.getElementById('d3');
+            d1.innerText=n1; d1.className = getDigitClass(n1);
+            d2.innerText=n2; d2.className = getDigitClass(n2);
+            d3.innerText=n3; d3.className = getDigitClass(n3);
         }, 40);
         await new Promise(r => setTimeout(r, spinTime));
         clearInterval(spin);
@@ -277,38 +272,41 @@
             }
             currentRot = 0;
             let rand = Math.random()*100, logDigit, isST = false;
-            if (mode !== '通常') { logDigit = (rand < 50) ? 7 : 1; isST = true; totalBall += 1400; }
-            else {
-                if (rand < 60) { logDigit = (rand < 5 ? 7 : 3); isST = true; totalBall += (logDigit === 7 ? 1400 : 420); }
-                else { logDigit = 2; isST = false; totalBall += 420; }
+            if (mode !== '通常') { 
+                logDigit = (rand < 50) ? 7 : [1,3,5,9][Math.floor(Math.random()*4)]; isST = true; totalBall += 1400; 
+            } else {
+                if (rand < 60) { logDigit = (rand < 5 ? 7 : [1,3,5,9][Math.floor(Math.random()*4)]); isST = true; totalBall += (logDigit === 7 ? 1400 : 420); }
+                else { logDigit = [2,4,6,8][Math.floor(Math.random()*4)]; isST = false; totalBall += 420; }
             }
             [1,2,3].forEach(i => { const el = document.getElementById('d'+i); el.innerText = logDigit; el.className = getDigitClass(logDigit); });
-            await new Promise(r => setTimeout(r, 1000));
+            await new Promise(r => setTimeout(r, 1200));
             if (isST) { mode = 'ST'; rRem = SPECS.st; rushCount++; } else { mode = '時短'; rRem = SPECS.jt; }
             addLog(`>> ${mode}突入 【${logDigit}】 当り!`);
-            currentRushHits++; updateUI(); await new Promise(r => setTimeout(r, 1000)); 
+            currentRushHits++; updateUI(); await new Promise(r => setTimeout(r, 1200)); 
             lcdCount = 0; activeJob = null;
         } else {
             activeJob = null;
         }
 
         isAnim = false;
-        updateUI(); updateAutoBtns();
-        if (isAuto) setTimeout(startProcess, 100);
+        if (isAuto) setTimeout(startProcess, (autoSpeed === 'fast' ? 10 : 200));
     }
     
     function toggleAuto(s) { if(isAuto && autoSpeed === s) { isAuto = false; } else { isAuto = true; autoSpeed = s; originalSpeedSetting = s; if(!isAnim) startProcess(); } updateAutoBtns(); }
     function updateAutoBtns() { document.getElementById('btn-slow').classList.remove('btn-stop'); document.getElementById('btn-fast').classList.remove('btn-stop'); if(isAuto) document.getElementById('btn-' + autoSpeed).classList.add('btn-stop'); }
+    function toggleOpt(t) { if(t==='kokuchi') optKokuchi=!optKokuchi; document.getElementById('btn-'+t).classList.toggle('active'); }
     function updateHesoUI() { const hA = document.getElementById('heso-area'); mode !== '通常' ? hA.classList.add('right-mode') : hA.classList.remove('right-mode'); for(let i=0; i<=4; i++) { const el = document.getElementById('h'+i); const s = (i===0) ? activeJob : reservedStock[i-1]; el.className = `heso-ball ${i===0?'heso-current':''}`; if(s) { if(s.holdType !== 'none') el.classList.add('heso-' + s.holdType); else el.classList.add('heso-on'); } } }
     function updateUI() { document.getElementById('hits').innerText = hits; document.getElementById('rush-count').innerText = rushCount; document.getElementById('current-rot').innerText = currentRot; document.getElementById('total-rot').innerText = totalRot; document.getElementById('balance').innerText = Math.floor(totalBall).toLocaleString(); document.getElementById('sub-display').innerText = mode==='通常' ? `通常:${lcdCount}` : `${mode}:${rRem}`; updateHesoUI(); }
     function addLog(m) { const l = document.getElementById('log'); l.innerHTML = `> ${m}<br>${l.innerHTML}`; }
     function triggerVibeUI(c) { document.getElementById('machine').classList.add('vibrate'); setTimeout(()=>document.getElementById('machine').classList.remove('vibrate'), 500); }
-    function initCharts() { const ctxS = document.getElementById('slumpChart').getContext('2d'); sChart = new Chart(ctxS, { type: 'line', data: { labels: slumpLabels, datasets: [{ label: '差玉', data: slumpData, borderColor: '#8a2be2', borderWidth: 2, fill: false, pointRadius: 0 }] }, options: { responsive: true, maintainAspectRatio: false } }); const ctxH = document.getElementById('historyChart').getContext('2d'); hChart = new Chart(ctxH, { type: 'bar', data: { labels: historyLabels, datasets: [{ label: 'ハマリ', data: historyData, backgroundColor: '#ff4444' }] }, options: { responsive: true, maintainAspectRatio: false } }); }
+    function initCharts() { const ctxS = document.getElementById('slumpChart').getContext('2d'); sChart = new Chart(ctxS, { type: 'line', data: { labels: slumpLabels, datasets: [{ label: '差玉', data: slumpData, borderColor: '#8a2be2', borderWidth: 2, fill: false, pointRadius: 0 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { x: { display: true, title: { display: true, text: 'トータル回転数' } } } } }); const ctxH = document.getElementById('historyChart').getContext('2d'); hChart = new Chart(ctxH, { type: 'bar', data: { labels: historyLabels, datasets: [{ label: 'ハマリ', data: historyData, backgroundColor: '#ff4444' }] }, options: { responsive: true, maintainAspectRatio: false } }); }
     function updateCharts() { slumpData.push(totalBall); slumpLabels.push(totalRot.toString()); sChart.update('none'); hChart.update(); }
     function openModal() { document.getElementById('modal-overlay').style.display='flex'; }
     function closeModal() { document.getElementById('modal-overlay').style.display='none'; }
+    function resetData() { if(confirm('データをリセットしますか？')) location.reload(); }
 </script>
 </html>
+
 
 
 
