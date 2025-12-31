@@ -125,6 +125,7 @@
         let r = Math.random() * 100;
 
         if (isHit) {
+            // --- 当たり時の処理 ---
             res.heavy = true;
             if (mode === '通常' || mode === '時短') {
                 if (r < 10) { res.name.push("次回予告"); res.text = "次回予告"; }
@@ -138,10 +139,12 @@
                     res.vibeColor = (vr < 60) ? "white" : (vr < 90 ? "red" : "rainbow");
                     let vName = res.vibeColor === "white" ? "白レバ" : (res.vibeColor === "red" ? "赤レバ" : "虹レバ");
                     res.name.push(vName); res.holdType = "vibe"; 
+                    if (res.vibeColor === "rainbow") res.isSure = true;
                 }
                 else if (r < 99) { res.name.push("レイ背景"); res.text = "レイ背景"; }
                 else { res.name.push("渚カヲル"); res.isSure = true; }
             } else {
+                // ST中の当たり
                 if (r < 10) { res.name.push("次回予告"); res.text = "次回予告"; res.isSure = true; }
                 else if (r < 43) { res.name.push("金系"); }
                 else if (r < 64) { res.name.push("赤保留"); res.holdType = "red"; }
@@ -153,19 +156,42 @@
                     res.vibeColor = (vr < 60) ? "white" : (vr < 90 ? "red" : "rainbow");
                     let vName = res.vibeColor === "white" ? "白レバ" : (res.vibeColor === "red" ? "赤レバ" : "虹レバ");
                     res.name.push(vName); res.holdType = "vibe";
+                    if (res.vibeColor === "rainbow") res.isSure = true;
                 }
                 else if (r < 99) { res.flash = true; res.isSure = true; res.name.push("インフラ"); }
                 else { res.name.push("弱演出"); res.heavy = false; }
             }
         } else {
+            // --- 外れ時の処理（ぷるぷる保留ガセ対応） ---
             let hr = Math.random() * 100;
-            let redGase = (mode === '通常' || mode === '時短' ? 0.05 : 0.01);
-            if (hr < redGase) { res.name.push("赤保留"); res.holdType = "red"; res.heavy = true; }
-            else if (hr < 5) { res.name.push("緑保留"); res.holdType = "green"; }
-            else if (hr < 15) { res.name.push("青保留"); res.holdType = "blue"; }
-            else if (hr < 25) { res.name.push("点滅保留"); res.holdType = "blink"; }
+            let isN = (mode === '通常' || mode === '時短');
+            
+            let redGase = isN ? 0.05 : 0.01;
+            let greenGase = isN ? 0.1 : 0.5;
+            let blueGase = isN ? 0.9 : 1.5;
+            let blinkGase = isN ? 1.5 : 3.0;
+            
+            // レバブル（ぷるぷる保留）のガセ確率：信頼度に合わせて調整
+            // 通常時: 白レバ(10%外れ)の極小確率 / 赤レバ(3.5%外れ)のさらに極小確率
+            let whiteVibeGase = isN ? 0.02 : 0.005; 
+            let redVibeGase = isN ? 0.005 : 0.001;
+
+            if (hr < redVibeGase) {
+                res.name.push("赤レバ"); res.holdType = "vibe"; res.vibe = true; res.vibeColor = "red"; res.heavy = true;
+            } else if (hr < (redVibeGase + whiteVibeGase)) {
+                res.name.push("白レバ"); res.holdType = "vibe"; res.vibe = true; res.vibeColor = "white"; res.heavy = true;
+            } else if (hr < (redVibeGase + whiteVibeGase + redGase)) { 
+                res.name.push("赤保留"); res.holdType = "red"; res.heavy = true; 
+            } else if (hr < (redVibeGase + whiteVibeGase + redGase + greenGase)) { 
+                res.name.push("緑保留"); res.holdType = "green"; 
+            } else if (hr < (redVibeGase + whiteVibeGase + redGase + greenGase + blueGase)) { 
+                res.name.push("青保留"); res.holdType = "blue"; 
+            } else if (hr < (redVibeGase + whiteVibeGase + redGase + greenGase + blueGase + blinkGase)) { 
+                res.name.push("点滅保留"); res.holdType = "blink"; 
+            }
         }
 
+        // 信頼度計算
         const map = (mode !== '通常') ? TRUST_MAP_S : TRUST_MAP_N;
         if (res.isSure) res.trust = 100;
         else if (res.name.length > 0) {
@@ -242,6 +268,7 @@
 </script>
 </body>
 </html>
+
 
 
 
