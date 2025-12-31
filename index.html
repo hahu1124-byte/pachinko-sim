@@ -92,15 +92,21 @@
     let slumpData = [0], slumpLabels = ["0"], historyData = [], historyLabels = [];
     let sChart, hChart;
 
-    // 占有率を信頼度にセットするルールへ変更
+    // --- 信頼度設定（戻し案反映版） ---
     const TRUST_MAP_N = { 
         "白レバ": 0.90, "赤レバ": 0.965, "虹レバ": 1.0, 
-        "赤保留": 0.25, "緑保留": 0.11, "青保留": 0.03, "点滅保留": 0.01, // 当たり占有率そのまま
+        "赤保留": 0.90,      // 90%に戻し
+        "緑保留": 0.11,      // 占有率維持
+        "青保留": 0.03,      // 占有率維持
+        "点滅保留": 0.01,     // 占有率維持
         "次回予告": 0.65, "レイ背景": 0.85, "金系": 0.50, "渚カヲル": 1.0 
     };
     const TRUST_MAP_S = { 
         "白レバ": 0.95, "赤レバ": 0.99, "虹レバ": 1.0, 
-        "赤保留": 0.21, "緑保留": 0.20, "青保留": 0.05, "点滅保留": 0.01, // 当たり占有率そのまま
+        "赤保留": 0.95,      // 95%に戻し
+        "緑保留": 0.20,      // 占有率維持
+        "青保留": 0.05,      // 占有率維持
+        "点滅保留": 0.01,     // 占有率維持
         "次回予告": 1.0, "金系": 0.80, "インフラ": 1.0 
     };
 
@@ -125,7 +131,6 @@
         let r = Math.random() * 100;
 
         if (isHit) {
-            // --- 当たり時の処理 ---
             res.heavy = true;
             if (mode === '通常' || mode === '時短') {
                 if (r < 10) { res.name.push("次回予告"); res.text = "次回予告"; }
@@ -144,7 +149,6 @@
                 else if (r < 99) { res.name.push("レイ背景"); res.text = "レイ背景"; }
                 else { res.name.push("渚カヲル"); res.isSure = true; }
             } else {
-                // ST中の当たり
                 if (r < 10) { res.name.push("次回予告"); res.text = "次回予告"; res.isSure = true; }
                 else if (r < 43) { res.name.push("金系"); }
                 else if (r < 64) { res.name.push("赤保留"); res.holdType = "red"; }
@@ -162,36 +166,22 @@
                 else { res.name.push("弱演出"); res.heavy = false; }
             }
         } else {
-            // --- 外れ時の処理（ぷるぷる保留ガセ対応） ---
             let hr = Math.random() * 100;
             let isN = (mode === '通常' || mode === '時短');
-            
             let redGase = isN ? 0.05 : 0.01;
             let greenGase = isN ? 0.1 : 0.5;
             let blueGase = isN ? 0.9 : 1.5;
             let blinkGase = isN ? 1.5 : 3.0;
-            
-            // レバブル（ぷるぷる保留）のガセ確率：信頼度に合わせて調整
-            // 通常時: 白レバ(10%外れ)の極小確率 / 赤レバ(3.5%外れ)のさらに極小確率
-            let whiteVibeGase = isN ? 0.02 : 0.005; 
-            let redVibeGase = isN ? 0.005 : 0.001;
+            let whiteVibeGase = isN ? 0.02 : 0.005, redVibeGase = isN ? 0.005 : 0.001;
 
-            if (hr < redVibeGase) {
-                res.name.push("赤レバ"); res.holdType = "vibe"; res.vibe = true; res.vibeColor = "red"; res.heavy = true;
-            } else if (hr < (redVibeGase + whiteVibeGase)) {
-                res.name.push("白レバ"); res.holdType = "vibe"; res.vibe = true; res.vibeColor = "white"; res.heavy = true;
-            } else if (hr < (redVibeGase + whiteVibeGase + redGase)) { 
-                res.name.push("赤保留"); res.holdType = "red"; res.heavy = true; 
-            } else if (hr < (redVibeGase + whiteVibeGase + redGase + greenGase)) { 
-                res.name.push("緑保留"); res.holdType = "green"; 
-            } else if (hr < (redVibeGase + whiteVibeGase + redGase + greenGase + blueGase)) { 
-                res.name.push("青保留"); res.holdType = "blue"; 
-            } else if (hr < (redVibeGase + whiteVibeGase + redGase + greenGase + blueGase + blinkGase)) { 
-                res.name.push("点滅保留"); res.holdType = "blink"; 
-            }
+            if (hr < redVibeGase) { res.name.push("赤レバ"); res.holdType = "vibe"; res.vibe = true; res.vibeColor = "red"; res.heavy = true; }
+            else if (hr < (redVibeGase + whiteVibeGase)) { res.name.push("白レバ"); res.holdType = "vibe"; res.vibe = true; res.vibeColor = "white"; res.heavy = true; }
+            else if (hr < (redVibeGase + whiteVibeGase + redGase)) { res.name.push("赤保留"); res.holdType = "red"; res.heavy = true; }
+            else if (hr < (redVibeGase + whiteVibeGase + redGase + greenGase)) { res.name.push("緑保留"); res.holdType = "green"; }
+            else if (hr < (redVibeGase + whiteVibeGase + redGase + greenGase + blueGase)) { res.name.push("青保留"); res.holdType = "blue"; }
+            else if (hr < (redVibeGase + whiteVibeGase + redGase + greenGase + blueGase + blinkGase)) { res.name.push("点滅保留"); res.holdType = "blink"; }
         }
 
-        // 信頼度計算
         const map = (mode !== '通常') ? TRUST_MAP_S : TRUST_MAP_N;
         if (res.isSure) res.trust = 100;
         else if (res.name.length > 0) {
@@ -268,6 +258,7 @@
 </script>
 </body>
 </html>
+
 
 
 
