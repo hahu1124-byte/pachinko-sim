@@ -6,64 +6,58 @@
     <title>EVANGELION Sim -Hybrid Final-</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&display=swap');
-        body { background: #000; color: white; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; overflow-x: hidden; }
-        header { width: 100%; height: 50px; background: #111; border-bottom: 2px solid #8a2be2; display: flex; align-items: center; padding: 0 10px; box-sizing: border-box; gap: 8px; position: sticky; top: 0; z-index: 100; }
-        .header-btn { background: #333; color: #ccc; border: 1px solid #555; padding: 5px 8px; font-size: 0.7rem; cursor: pointer; border-radius: 4px; white-space: nowrap; }
-        .btn-graph { background: #8a2be2; color: white; border-color: #a450ff; }
-        .max-hamari-display { background: #000; color: #ff4444; border: 1px solid #ff4444; padding: 4px 8px; font-size: 0.75rem; border-radius: 4px; cursor: pointer; font-weight: bold; overflow: hidden; text-overflow: ellipsis; }
-        .main-content { width: 100%; max-width: 440px; display: flex; flex-direction: column; align-items: center; padding: 10px; box-sizing: border-box; }
-        .machine { width: 100%; background: #111; border: 3px solid #8a2be2; border-radius: 15px; padding: 12px; position: relative; box-sizing: border-box; transition: border-color 0.2s, box-shadow 0.2s; }
-        
-        /* 図柄表示部分（指定の1.5倍サイズ相当） */
-        .screen { background: #000; height: 300px; border-radius: 10px; border: 2px solid #444; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; width: 100%; }
-        .digit-container { display: flex; gap: 5px; }
-        .digit { font-size: 8.5rem; font-weight: 900; font-family: 'Shippori Mincho B1', serif; width: 110px; text-align: center; } 
-        
-        /* 図柄の色ルール */
-        .gold { color: #ffeb3b; text-shadow: 0 0 30px #ffeb3b; }
-        .odd { color: #ff4444; text-shadow: 0 0 20px #ff4444; }
-        .even { color: #4444ff; text-shadow: 0 0 20px #4444ff; }
-
-        .mode-display { position: absolute; bottom: 35px; right: 15px; color: #8a2be2; font-weight: bold; font-size: 0.9rem; text-shadow: 0 0 5px #000; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 3px; border-right: 3px solid #8a2be2; text-align: right; min-width: 90px; }
-        .hidden-lamp { position: absolute; top: 12px; right: 20px; width: 15px; height: 15px; background: #222; border-radius: 50%; border: 1px solid #444; z-index: 10; }
-        .lamp-active { animation: rainbow-bg 0.3s infinite; box-shadow: 0 0 20px #fff; }
-        @keyframes rainbow-bg { 0% { background: #f00; } 20% { background: #ff0; } 40% { background: #0f0; } 60% { background: #0ff; } 80% { background: #00f; } 100% { background: #f0f; } }
-        
-        .vibrate { animation: vibration 0.05s infinite; }
-        @keyframes vibration { 0% { transform: translate(0,0); } 25% { transform: translate(-2px, 2px); } 50% { transform: translate(2px, -2px); } 75% { transform: translate(-2px, -2px); } 100% { transform: translate(0,0); } }
-        
-        .heso-overlay { position: absolute; bottom: 10px; display: flex; align-items: center; gap: 8px; transition: all 0.3s; }
-        .heso-ball { width: 10px; height: 10px; background: #222; border-radius: 50%; border: 1px solid #555; transition: all 0.2s; }
-        .heso-overlay.right-mode { bottom: 80px; right: 10px; flex-direction: column-reverse; gap: 4px; }
-        .heso-overlay.right-mode .heso-ball { width: 18px; height: 6px; border-radius: 2px; }
-        
-        .heso-current { border-width: 2px !important; border-color: #fff !important; }
-        .heso-on { background: #888; }
-        .heso-red { background: radial-gradient(circle, #ff4444, #880000); box-shadow: 0 0 8px #ff0000; border-color: #f00; }
-        .heso-rainbow { animation: rainbow-bg 0.5s infinite; box-shadow: 0 0 10px #fff; border-color: #fff; }
-        
-        .effect-text { position: absolute; color: white; font-weight: bold; font-size: 2.2rem; z-index: 5; text-shadow: 0 0 10px #000; background: rgba(0,0,0,0.7); padding: 5px 15px; border-radius: 5px; display: none; text-align: center; }
-        
-        .stat-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-top: 12px; }
-        .stat-item { background: #000; border: 1px solid #333; padding: 5px 0; text-align: center; border-radius: 4px; }
-        .stat-val { font-size: 1.1rem; font-weight: bold; font-family: monospace; } 
-        .stat-label { font-size: 0.55rem; color: #888; display: block; margin-bottom: 2px; }
-        
-        .control-panel { margin-top: 12px; display: flex; gap: 8px; width: 100%; height: 65px; }
-        .side-btns { display: flex; flex-direction: column; gap: 4px; width: 55px; }
-        .side-btn { flex: 1; background: #222; color: #666; border: 1px solid #444; font-size: 0.7rem; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .side-btn.active { background: #8a2be2; color: #fff; border-color: #a450ff; }
-        .btn-auto { flex: 1; background: #8a2be2; color: white; border: 1px solid #a450ff; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 1rem; }
-        .btn-stop { background: #444 !important; border-color: #666 !important; }
-        
-        /* 履歴表示部分（1.5倍基準） */
-        .log { width: 100%; max-width: 440px; height: 350px; background: #000; margin-top: 10px; padding: 10px; font-size: 0.95rem; color: #ffffff; overflow-y: auto; border: 1px solid #333; font-family: monospace; box-sizing: border-box; line-height: 1.5; } 
-        
-        #modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; justify-content: center; align-items: center; }
-        #modal-content { background: #111; border: 2px solid #8a2be2; width: 92%; max-width: 450px; padding: 15px; border-radius: 12px; overflow-y: auto; max-height: 90vh; }
-        .graph-area { background: #000; height: 200px; margin-bottom: 20px; border: 1px solid #333; }
-    </style>
+    @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&display=swap');
+    body { background: #000; color: white; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; overflow-x: hidden; }
+    header { width: 100%; height: 50px; background: #111; border-bottom: 2px solid #8a2be2; display: flex; align-items: center; padding: 0 10px; box-sizing: border-box; gap: 8px; position: sticky; top: 0; z-index: 100; }
+    .header-btn { background: #333; color: #ccc; border: 1px solid #555; padding: 5px 8px; font-size: 0.7rem; cursor: pointer; border-radius: 4px; white-space: nowrap; }
+    .btn-graph { background: #8a2be2; color: white; border-color: #a450ff; }
+    .max-hamari-display { background: #000; color: #ff4444; border: 1px solid #ff4444; padding: 4px 8px; font-size: 0.75rem; border-radius: 4px; cursor: pointer; font-weight: bold; overflow: hidden; text-overflow: ellipsis; }
+    .main-content { width: 100%; max-width: 440px; display: flex; flex-direction: column; align-items: center; padding: 10px; box-sizing: border-box; }
+    .machine { width: 100%; background: #111; border: 3px solid #8a2be2; border-radius: 15px; padding: 12px; position: relative; box-sizing: border-box; transition: border-color 0.2s, box-shadow 0.2s; }
+    .screen { background: #000; height: 300px; border-radius: 10px; border: 2px solid #444; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; width: 100%; }
+    /* 図柄サイズ 1.5倍調整 */
+    .digit-container { display: flex; gap: 5px; }
+    .digit { font-size: 8.5rem; font-weight: 900; font-family: 'Shippori Mincho B1', serif; width: 110px; text-align: center; } 
+    .mode-display { position: absolute; bottom: 35px; right: 15px; color: #8a2be2; font-weight: bold; font-size: 0.9rem; text-shadow: 0 0 5px #000; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 3px; border-right: 3px solid #8a2be2; text-align: right; min-width: 90px; }
+    .gold { color: #ffeb3b; text-shadow: 0 0 30px #ffeb3b; }
+    .odd { color: #ff4444; text-shadow: 0 0 20px #ff4444; }
+    .even { color: #4444ff; text-shadow: 0 0 20px #4444ff; }
+    .hidden-lamp { position: absolute; top: 12px; right: 20px; width: 15px; height: 15px; background: #222; border-radius: 50%; border: 1px solid #444; z-index: 10; }
+    .lamp-active { animation: rainbow-bg 0.3s infinite; box-shadow: 0 0 20px #fff; }
+    @keyframes rainbow-bg { 0% { background: #f00; } 20% { background: #ff0; } 40% { background: #0f0; } 60% { background: #0ff; } 80% { background: #00f; } 100% { background: #f0f; } }
+    .vibrate { animation: vibration 0.05s infinite; }
+    @keyframes vibration { 0% { transform: translate(0,0); } 25% { transform: translate(-2px, 2px); } 50% { transform: translate(2px, -2px); } 75% { transform: translate(-2px, -2px); } 100% { transform: translate(0,0); } }
+    /* 保留表示 1.5倍調整 */
+    .heso-overlay { position: absolute; bottom: 10px; display: flex; align-items: center; gap: 10px; transition: all 0.3s; }
+    .heso-ball { width: 18px; height: 18px; background: #222; border-radius: 50%; border: 1px solid #555; transition: all 0.1s; }
+    .heso-overlay.right-mode { bottom: 80px; right: 10px; flex-direction: column-reverse; gap: 6px; }
+    .heso-overlay.right-mode .heso-ball { width: 22px; height: 8px; border-radius: 2px; }
+    .heso-current { border-width: 2px !important; border-color: #fff !important; }
+    .heso-on { background: #888; }
+    .heso-red { background: radial-gradient(circle, #ff4444, #880000); box-shadow: 0 0 8px #ff0000; border-color: #f00; }
+    .heso-green { background: radial-gradient(circle, #44ff44, #008800); box-shadow: 0 0 8px #00ff00; border-color: #0f0; }
+    .heso-blue { background: radial-gradient(circle, #4444ff, #000088); box-shadow: 0 0 8px #0000ff; border-color: #00f; }
+    .heso-rainbow { animation: rainbow-bg 0.5s infinite; box-shadow: 0 0 10px #fff; border-color: #fff; }
+    .heso-vibe { animation: vibration 0.1s infinite !important; background: radial-gradient(circle, #fff, #8a2be2) !important; box-shadow: 0 0 10px #8a2be2; border-color: #fff !important; }
+    .heso-blink { animation: blink 0.3s infinite; }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+    .effect-text { position: absolute; color: white; font-weight: bold; font-size: 2.2rem; z-index: 5; text-shadow: 0 0 10px #000; background: rgba(0,0,0,0.7); padding: 5px 15px; border-radius: 5px; display: none; text-align: center; }
+    .stat-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-top: 12px; }
+    .stat-item { background: #000; border: 1px solid #333; padding: 5px 0; text-align: center; border-radius: 4px; }
+    .stat-val { font-size: 1.2rem; font-weight: bold; font-family: monospace; } 
+    .val-white { color: #ffffff; }
+    .stat-label { font-size: 0.55rem; color: #888; display: block; margin-bottom: 2px; }
+    .control-panel { margin-top: 12px; display: flex; gap: 8px; width: 100%; height: 65px; }
+    .side-btns { display: flex; flex-direction: column; gap: 4px; width: 55px; }
+    .side-btn { flex: 1; background: #222; color: #666; border: 1px solid #444; font-size: 0.7rem; border-radius: 4px; cursor: pointer; font-weight: bold; }
+    .side-btn.active { background: #8a2be2; color: #fff; border-color: #a450ff; }
+    .btn-auto { flex: 1; background: #8a2be2; color: white; border: 1px solid #a450ff; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 1rem; }
+    .btn-stop { background: #444 !important; border-color: #666 !important; }
+    .log { width: 100%; max-width: 440px; height: 350px; background: #000; margin-top: 10px; padding: 10px; font-size: 0.95rem; color: #ffffff; overflow-y: auto; border: 1px solid #333; font-family: monospace; box-sizing: border-box; line-height: 1.5; } 
+    #modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; justify-content: center; align-items: center; }
+    #modal-content { background: #111; border: 2px solid #8a2be2; width: 92%; max-width: 450px; padding: 15px; border-radius: 12px; overflow-y: auto; max-height: 90vh; }
+    .graph-area { background: #000; height: 200px; margin-bottom: 20px; border: 1px solid #333; }
+</style>
 </head>
 <body>
     <header>
@@ -138,17 +132,11 @@
         return (num % 2 !== 0) ? 'digit odd' : 'digit even';
     }
 
-    // ★保留を常に最大4個まで補充する関数
     function refillStock() {
         let maxHold = 4;
-        // 右打ち中は残り回数以上に貯まらないように制限
-        if (mode !== '通常') {
-            maxHold = Math.min(4, rRem - (activeJob ? 1 : 0));
-        }
-        while (reservedStock.length < maxHold) {
-            reservedStock.push(createJob());
-        }
-        updateHesoUI(); // 補充したら即座に表示に反映
+        if (mode !== '通常') maxHold = Math.min(4, rRem - (activeJob ? 1 : 0));
+        while (reservedStock.length < maxHold) { reservedStock.push(createJob()); }
+        updateHesoUI();
     }
 
     function createJob() {
@@ -190,7 +178,7 @@
             }
         } else {
             let hr = Math.random() * 100;
-            let redGase = (mode === '通常' ? 0.5 : 0.05);
+            let redGase = (mode === '通常' || mode === '時短' ? 0.05 : 0.01);
             if (hr < redGase) { res.name.push("赤保留"); res.holdType = "red"; res.heavy = true; }
             else if (hr < 5) { res.holdType = "green"; }
             else if (hr < 15) { res.holdType = "blue"; }
@@ -209,23 +197,14 @@
 
     async function startProcess() {
         if (!isAuto || isAnim) return;
-
-        // モード終了判定
         if (mode !== '通常' && rRem <= 0 && reservedStock.length === 0 && !activeJob) {
-            let prev = mode; 
-            addLog(`【${prev}終了】 ${currentRushHits <= 1 ? (currentRushHits === 0 ? '0回' : '1回(' + prev + ')') : currentRushHits + '連'}`);
+            let prev = mode; addLog(`【${prev}終了】 ${currentRushHits <= 1 ? (currentRushHits === 0 ? '0回' : '1回(' + prev + ')') : currentRushHits + '連'}`);
             mode = '通常'; currentRushHits = 0; updateUI();
             if (prev === '時短' && originalSpeedSetting === 'fast') { autoSpeed = 'fast'; } else { isAuto = false; updateAutoBtns(); return; }
         }
-
-        // 保留がない場合は補充を試みる
         refillStock();
         if (reservedStock.length === 0 && !activeJob) { isAuto = false; updateAutoBtns(); return; }
-
-        // 当該保留を取り出し、即座に補充（これで画面上は常に貯まっているように見える）
-        activeJob = reservedStock.shift(); 
-        refillStock(); 
-        updateUI();
+        activeJob = reservedStock.shift(); refillStock(); updateUI();
 
         let eff = activeJob;
         if (optKokuchi && activeJob.isHit) { eff.flash = true; eff.isSure = true; eff.trust = 100; eff.displayName = "インフラ告知"; }
@@ -242,12 +221,9 @@
         }
 
         let spinTime = (eff.heavy) ? 2000 : (autoSpeed === 'fast' ? 50 : 500);
-        let spin = setInterval(() => { 
-            [1,2,3].forEach(i => { let n = Math.floor(Math.random()*9)+1; const el = document.getElementById('d'+i); el.innerText=n; el.className = getDigitClass(n); });
-        }, 40);
+        let spin = setInterval(() => { [1,2,3].forEach(i => { let n = Math.floor(Math.random()*9)+1; const el = document.getElementById('d'+i); el.innerText=n; el.className = getDigitClass(n); }); }, 40);
         await new Promise(r => setTimeout(r, spinTime));
         clearInterval(spin);
-
         document.getElementById('machine').classList.remove('vibrate');
         document.getElementById('lamp').classList.remove('lamp-active');
         document.getElementById('effect-overlay').style.display = 'none';
@@ -264,11 +240,8 @@
             await new Promise(r => setTimeout(r, 1200));
             if (isST) { mode = 'ST'; rRem = SPECS.st; rushCount++; } else { mode = '時短'; rRem = SPECS.jt; }
             addLog(`>> ${mode}突入 【${logDigit}】 当たり!`);
-            currentRushHits++; lcdCount = 0; activeJob = null; 
-            refillStock(); // 当たり後のモード移行時にも補充
-            updateUI(); await new Promise(r => setTimeout(r, 1200)); 
+            currentRushHits++; lcdCount = 0; activeJob = null; refillStock(); updateUI(); await new Promise(r => setTimeout(r, 1200)); 
         } else { activeJob = null; }
-
         isAnim = false; updateUI(); updateAutoBtns();
         if (isAuto) setTimeout(startProcess, (autoSpeed === 'fast' ? 10 : 200));
     }
@@ -309,6 +282,7 @@
 </script>
 </body>
 </html>
+
 
 
 
