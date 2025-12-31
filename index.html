@@ -149,12 +149,12 @@ function getDigitClass(num, currentMode) {
 }
 
 function createJob() {
-    let res = { isHit: false, heavy: false, name: [], trust: 0, vibe: false, vibeColor: "none", flash: false, text: "", holdType: "none", currentView: "none", upgraded: false, isSure: false };
+    let res = { isHit: false, heavy: false, name: [], trust: 0, vibe: false, vibeColor: "none", flash: false, text: "", holdType: "none", currentView: "none", upgraded: false, isSure: false, isRushSure: false };
     let r = Math.random() * 100;
 
     if (mode === '通常' || mode === '時短') {
-        if (r < 0.05) { res.name.push("虹レバ"); res.vibe = true; res.vibeColor = "rainbow"; res.holdType = "vibe"; res.isSure = true; }
-        else if (r < 0.10) { res.name.push("渚カヲル"); res.isSure = true; }
+        if (r < 0.05) { res.name.push("虹レバ"); res.vibe = true; res.vibeColor = "rainbow"; res.holdType = "vibe"; res.isSure = true; res.isRushSure = true; }
+        else if (r < 0.10) { res.name.push("渚カヲル"); res.isSure = true; res.isRushSure = true; }
         else if (r < 0.20) { res.name.push("赤レバ"); res.vibe = true; res.vibeColor = "red"; res.holdType = "vibe"; }
         else if (r < 0.40) { res.name.push("白レバ"); res.vibe = true; res.vibeColor = "white"; res.holdType = "vibe"; }
         else if (r < 0.65) { res.name.push("赤保留"); res.holdType = "red"; }
@@ -219,12 +219,18 @@ async function startProcess() {
     clearInterval(spin);
     let finalNums, hitDigit;
     if (eff.isHit) {
-        let rand = Math.random() * 100;
-        if (mode === '通常' || mode === '時短') {
-            if (rand < 3) hitDigit = 7; 
-            else if (rand < 44) { hitDigit = [2,4,6,8][Math.floor(Math.random()*4)]; } 
-            else { hitDigit = [1,3,5,9][Math.floor(Math.random()*4)]; } 
-        } else { hitDigit = (Math.random() < 0.5) ? 3 : 1; }
+        if (eff.isRushSure && (mode === '通常' || mode === '時短')) { 
+            // プレミアム時は奇数図柄（1,3,5,9）から抽選
+            hitDigit = [1,3,5,9][Math.floor(Math.random()*4)];
+        } 
+        else {
+            let rand = Math.random() * 100;
+            if (mode === '通常' || mode === '時短') {
+                if (rand < 3) hitDigit = 7; 
+                else if (rand < 44) { hitDigit = [2,4,6,8][Math.floor(Math.random()*4)]; } 
+                else { hitDigit = [1,3,5,9][Math.floor(Math.random()*4)]; } 
+            } else { hitDigit = (Math.random() < 0.5) ? 3 : 1; }
+        }
         finalNums = [hitDigit, hitDigit, hitDigit];
     } else { finalNums = generateFinalDigits(); }
     [1,3,2].forEach(i => { const el = document.getElementById('d'+i); el.innerText = finalNums[i-1]; el.className = getDigitClass(finalNums[i-1], mode); });
@@ -241,7 +247,8 @@ async function startProcess() {
         let bonusBall, isST = false, needsUpgrade = false, isRightUpgrade = false, originalHit = hitDigit;
         if (mode === '通常') {
             rushCount = 1;
-            if (originalHit === 7) { isST = true; bonusBall = 1400; addLog(">> 全回転！！"); }
+            if (eff.isRushSure) { isST = true; bonusBall = 420; addLog(">> プレミアムプレミアム！！"); }
+            else if (originalHit === 7) { isST = true; bonusBall = 1400; addLog(">> 全回転！！"); }
             else if (originalHit % 2 !== 0) { isST = true; bonusBall = 420; }
             else { if (Math.random() < 0.20) { isST = true; needsUpgrade = true; bonusBall = 420; } else { isST = false; bonusBall = 420; } }
         } else if (mode === '時短') {
@@ -297,10 +304,3 @@ function resetData() { if(confirm('データをリセットしますか？')) lo
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
