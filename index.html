@@ -152,7 +152,6 @@ function createJob() {
     let res = { isHit: false, heavy: false, name: [], trust: 0, vibe: false, vibeColor: "none", flash: false, text: "", holdType: "none", currentView: "none", upgraded: false, isSure: false };
     let r = Math.random() * 100;
 
-    // --- 演出抽選ロジック (通常・時短・ST共通化とST拡張) ---
     if (mode === '通常' || mode === '時短') {
         if (r < 0.05) { res.name.push("虹レバ"); res.vibe = true; res.vibeColor = "rainbow"; res.holdType = "vibe"; res.isSure = true; }
         else if (r < 0.10) { res.name.push("渚カヲル"); res.isSure = true; }
@@ -168,9 +167,8 @@ function createJob() {
         if (res.name.length > 0) {
             let fail = 1; res.name.forEach(n => { if(TRUST_MAP[n]) fail *= (1 - TRUST_MAP[n]); });
             res.trust = (1 - fail) * 100;
-        } else { res.trust = 1.13; }
+        } else { res.trust = 0.10; } // 信頼度を1.13%から0.1%に変更
     } else {
-        // --- ST中の演出出現率を調整 ---
         if (r < 0.05) { res.name.push("虹レバ"); res.vibe = true; res.vibeColor = "rainbow"; res.holdType = "vibe"; res.isSure = true; }
         else if (r < 0.20) { res.name.push("ST赤レバ"); res.vibe = true; res.vibeColor = "red"; res.holdType = "vibe"; }
         else if (r < 0.40) { res.name.push("ST次回予告"); res.text = "次回予告"; }
@@ -184,7 +182,7 @@ function createJob() {
         if (res.name.length > 0) {
             let fail = 1; res.name.forEach(n => { if(TRUST_MAP[n]) fail *= (1 - TRUST_MAP[n]); });
             res.trust = (1 - fail) * 100;
-        } else { res.trust = 0.10; } // 謎当たり確率を下げて調整
+        } else { res.trust = 0.10; }
     }
 
     if (Math.random() < (res.trust / 100)) { res.isHit = true; res.heavy = (res.trust >= 50); }
@@ -262,6 +260,7 @@ async function startProcess() {
             document.getElementById('lamp').classList.remove('lamp-active');
         }
         if (isRightUpgrade) {
+            addLog(`>> 7図柄へ昇格！！`);
             machineEl.classList.add('vibe-rainbow');
             document.getElementById('lamp').classList.add('lamp-active');
             [1,2,3].forEach(i => { const el = document.getElementById('d'+i); el.innerText = 7; el.className = 'digit gold'; });
@@ -299,6 +298,7 @@ function resetData() { if(confirm('データをリセットしますか？')) lo
     </script>
 </body>
 </html>
+
 
 
 
