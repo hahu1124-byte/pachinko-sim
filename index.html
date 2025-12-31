@@ -16,6 +16,7 @@
         .machine { width: 100%; background: #111; border: 3px solid #8a2be2; border-radius: 15px; padding: 12px; position: relative; box-sizing: border-box; transition: all 0.1s; }
         .screen { background: #000; height: 300px; border-radius: 10px; border: 2px solid #444; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; width: 100%; transition: all 0.1s; }
         
+        /* 図柄と履歴表示を1.5倍にする対応 */
         .digit-container { display: flex; gap: 5px; }
         .digit { font-size: 8.5rem; font-weight: 900; font-family: 'Shippori Mincho B1', serif; width: 110px; text-align: center; } 
         .mode-display { position: absolute; bottom: 35px; right: 15px; color: #8a2be2; font-weight: bold; font-size: 0.9rem; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 3px; border-right: 3px solid #8a2be2; text-align: right; min-width: 90px; }
@@ -41,6 +42,7 @@
         }
         @keyframes vibration { 0% { transform: translate(0,0); } 25% { transform: translate(-2px, 2px); } 50% { transform: translate(2px, -2px); } 75% { transform: translate(-2px, -2px); } 100% { transform: translate(0,0); } }
 
+        /* 保留エリアの設定 */
         .heso-overlay { position: absolute; bottom: 10px; display: flex; align-items: center; gap: 10px; transition: all 0.3s; }
         .heso-ball { width: 18px; height: 18px; background: #222; border-radius: 50%; border: 1px solid #555; transition: all 0.1s; }
         .heso-overlay.right-mode { bottom: 80px; right: 10px; flex-direction: column-reverse; gap: 6px; }
@@ -66,6 +68,7 @@
         .btn-auto { flex: 1; background: #8a2be2; color: white; border: 1px solid #a450ff; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 1rem; }
         .btn-stop { background: #444 !important; border-color: #666 !important; }
         
+        /* 履歴表示を1.5倍サイズにする対応 */
         .log { width: 100%; max-width: 440px; height: 350px; background: #000; margin-top: 10px; padding: 10px; font-size: 0.95rem; color: #ffffff; overflow-y: auto; border: 1px solid #333; font-family: monospace; box-sizing: border-box; line-height: 1.5; } 
         #modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; justify-content: center; align-items: center; }
         #modal-content { background: #111; border: 2px solid #8a2be2; width: 92%; max-width: 450px; padding: 15px; border-radius: 12px; overflow-y: auto; max-height: 90vh; }
@@ -136,6 +139,7 @@ let reservedStock = [], activeJob = null;
 let slumpData = [0], slumpLabels = ["0"], historyData = [], historyLabels = [];
 let sChart, hChart, firstHitRot = 0, rushSeriesCount = 0;
 
+// 信頼度マップ
 const TRUST_MAP_N = { "白レバ": 0.90, "赤レバ": 0.965, "虹レバ": 1.0, "赤保留": 0.90, "緑保留": 0.11, "青保留": 0.03, "点滅保留": 0.01, "次回予告": 0.65, "レイ背景": 0.85, "金系": 0.50, "渚カヲル": 1.0 };
 const TRUST_MAP_S = { "白レバ": 0.95, "赤レバ": 0.99, "虹レバ": 1.0, "赤保留": 0.95, "緑保留": 0.20, "青保留": 0.05, "点滅保留": 0.01, "次回予告": 1.0, "金系": 0.80, "インフラ": 1.0 };
 
@@ -230,7 +234,9 @@ function generateFinalDigits(isHit, hitNum) {
 async function startProcess() {
     if (!isAuto || isAnim) return;
     if (mode !== '通常' && rRem <= 0 && reservedStock.length === 0 && !activeJob) {
-        let prev = mode; addLog(`【${prev}終了】 ${currentRushHits <= 1 ? (currentRushHits === 0 ? '0回' : '1回(' + prev + ')') : currentRushHits + '連'}`);
+        let prev = mode; 
+        // 終了時のログ追加
+        addLog(`【${prev}終了】 ${currentRushHits <= 1 ? (currentRushHits === 0 ? '0回' : '1回(' + prev + ')') : currentRushHits + '連'}`);
         rushSeriesCount++; historyData.push(firstHitRot); historyLabels.push(`${rushSeriesCount}回目(${currentRushHits === 1 ? '単' : currentRushHits + '連'})`); hChart.update();
         mode = '通常'; currentRushHits = 0; firstHitRot = 0; updateUI();
         if (prev === '時短' && originalSpeedSetting === 'fast') autoSpeed = 'fast'; else { isAuto = false; updateAutoBtns(); return; }
@@ -265,10 +271,10 @@ async function startProcess() {
     if (activeJob.isHit) {
         let rand = Math.random() * 100;
         if (mode === '通常') {
-            if (rand < 3) hitDigit = 7; // 7図柄
-            else if (rand < 39) { let odds = [1,3,5,9]; hitDigit = odds[Math.floor(Math.random()*odds.length)]; } // 奇数直撃
-            else if (rand < 59) { let evens = [2,4,6,8]; hitDigit = evens[Math.floor(Math.random()*evens.length)]; } // 偶数昇格
-            else { let evens = [2,4,6,8]; hitDigit = evens[Math.floor(Math.random()*evens.length)]; } // 偶数通常
+            if (rand < 3) hitDigit = 7; 
+            else if (rand < 39) { let odds = [1,3,5,9]; hitDigit = odds[Math.floor(Math.random()*odds.length)]; } 
+            else if (rand < 59) { let evens = [2,4,6,8]; hitDigit = evens[Math.floor(Math.random()*evens.length)]; } 
+            else { let evens = [2,4,6,8]; hitDigit = evens[Math.floor(Math.random()*evens.length)]; } 
         } else {
             hitDigit = (Math.random() < 0.5) ? 3 : 2;
         }
@@ -302,23 +308,21 @@ async function startProcess() {
 
         if (mode === '通常') {
             rushCount = 1;
-            let prob = Math.random() * 100;
             if (originalHit === 7) { isST = true; bonusBall = 1400; addLog(">> 全回転！！"); }
             else if (originalHit % 2 !== 0) { isST = true; bonusBall = 420; }
             else {
-                // 通常時、初回が偶数だった場合の分岐
-                // 偶数昇格20% / (偶数昇格20% + 偶数通常41%) = 約32.7%
                 if (Math.random() < (20 / 61)) { 
                     isST = true; needsUpgrade = true; bonusBall = 420;
                 } else {
                     isST = false; bonusBall = 420;
                 }
             }
+            addLog(`>> 当たり！ 【${originalHit}】${lcdCount}回転`);
         } else {
             isST = true; bonusBall = 1400; rushCount++;
+            addLog(`>> 当たり！ 【${originalHit}】${lcdCount}回転`); // 右打ちは昇格ログを出さない
         }
 
-        addLog(`>> 当たり！ 【${originalHit}】${lcdCount}回転`);
         totalBall += bonusBall;
         currentRot = 0;
         await new Promise(r => setTimeout(r, 1000));
@@ -346,7 +350,27 @@ async function startProcess() {
 function toggleAuto(s) { if(isAuto && autoSpeed === s) { isAuto = false; } else { isAuto = true; autoSpeed = s; originalSpeedSetting = s; if(!isAnim) startProcess(); } updateAutoBtns(); }
 function updateAutoBtns() { document.getElementById('btn-slow').classList.toggle('btn-stop', isAuto && autoSpeed === 'slow'); document.getElementById('btn-fast').classList.toggle('btn-stop', isAuto && autoSpeed === 'fast'); }
 function toggleOpt(t) { if(t==='kokuchi') optKokuchi=!optKokuchi; document.getElementById('btn-'+t).classList.toggle('active'); }
-function updateHesoUI() { const hA = document.getElementById('heso-area'); mode !== '通常' ? hA.classList.add('right-mode') : hA.classList.remove('right-mode'); for(let i=0; i<=4; i++) { const el = document.getElementById('h'+i); const s = (i===0) ? activeJob : (reservedStock[i-1] || null); el.className = `heso-ball ${i===0?'heso-current':''}`; if(s) { if(s.holdType === 'red') el.classList.add('heso-red'); else if(s.holdType === 'green') el.classList.add('heso-green'); else if(s.holdType === 'blue') el.classList.add('heso-blue'); else if(s.holdType === 'blink') el.classList.add('heso-blink'); else if(s.holdType === 'vibe') el.classList.add('heso-vibe'); else if(s.holdType === 'rainbow') el.classList.add('heso-rainbow'); else el.classList.add('heso-on'); } } }
+
+/* 保留UIの更新処理（ST/時短中のレイアウト維持） */
+function updateHesoUI() { 
+    const hA = document.getElementById('heso-area'); 
+    mode !== '通常' ? hA.classList.add('right-mode') : hA.classList.remove('right-mode'); 
+    for(let i=0; i<=4; i++) { 
+        const el = document.getElementById('h'+i); 
+        const s = (i===0) ? activeJob : (reservedStock[i-1] || null); 
+        el.className = `heso-ball ${i===0?'heso-current':''}`; 
+        if(s) { 
+            if(s.holdType === 'red') el.classList.add('heso-red'); 
+            else if(s.holdType === 'green') el.classList.add('heso-green'); 
+            else if(s.holdType === 'blue') el.classList.add('heso-blue'); 
+            else if(s.holdType === 'blink') el.classList.add('heso-blink'); 
+            else if(s.holdType === 'vibe') el.classList.add('heso-vibe'); 
+            else if(s.holdType === 'rainbow') el.classList.add('heso-rainbow'); 
+            else el.classList.add('heso-on'); 
+        } 
+    } 
+}
+
 function updateUI() { document.getElementById('hits').innerText = hits; document.getElementById('rush-count').innerText = rushCount; document.getElementById('current-rot').innerText = currentRot; document.getElementById('total-rot').innerText = totalRot; document.getElementById('balance').innerText = Math.floor(totalBall).toLocaleString(); document.getElementById('sub-display').innerText = mode==='通常' ? `通常:${lcdCount}` : `${mode}:${rRem}`; updateHesoUI(); }
 function addLog(m) { const l = document.getElementById('log'); l.innerHTML = `> ${m}<br>${l.innerHTML}`; }
 function initCharts() { sChart = new Chart(document.getElementById('slumpChart').getContext('2d'), { type: 'line', data: { labels: slumpLabels, datasets: [{ label: '差玉', data: slumpData, borderColor: '#8a2be2', borderWidth: 2, fill: false, pointRadius: 0 }] }, options: { responsive: true, maintainAspectRatio: false } }); hChart = new Chart(document.getElementById('historyChart').getContext('2d'), { type: 'bar', data: { labels: historyLabels, datasets: [{ label: '初当り回転', data: historyData, backgroundColor: '#ff4444' }] }, options: { responsive: true, maintainAspectRatio: false } }); }
