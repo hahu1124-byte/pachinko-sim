@@ -190,7 +190,6 @@ function createJob() {
 async function startProcess() {
     if (!isAuto || isAnim) return;
     
-    // 連チャン終了時（通常に戻る際）：rushCountはリセットしない
     if (mode !== '通常' && rRem <= 0 && reservedStock.length === 0 && !activeJob) {
         let prev = mode; 
         addLog(`【${prev}終了】 ${currentRushHits <= 1 ? (currentRushHits === 0 ? '0回' : '1回(' + prev + ')') : currentRushHits + '連'}`);
@@ -236,45 +235,56 @@ async function startProcess() {
         currentRot = 0;
         
         let rand = Math.random()*100, logDigit, isST = false, oldMode = mode;
-        let displayDigit;
 
+        // 内部図柄（履歴用）の決定
         if (mode !== '通常') { 
             logDigit = (rand < 50) ? 7 : 1;
-            displayDigit = 7; 
             isST = true; 
             totalBall += 1400; 
-            rushCount++; // 右打ち中は加算のみ
+            rushCount++;
         } else { 
-            // 通常時からの当選：ここで初めて前回の連チャンをリセットして「1」にする
             rushCount = 1; 
             if (rand < 60) { 
                 logDigit = (rand < 5 ? 7 : 3); 
-                displayDigit = logDigit; 
                 isST = true; 
                 totalBall += (logDigit === 7 ? 1400 : 420); 
             } else { 
                 logDigit = 2; 
-                displayDigit = logDigit; 
                 isST = false; 
                 totalBall += 420; 
             }
         }
 
-        [1,2,3].forEach(i => { const el = document.getElementById('d'+i); el.innerText = displayDigit; el.className = getDigitClass(displayDigit); });
-        await new Promise(r => setTimeout(r, 1200));
+        // --- 図柄表示（一段階目：当たり図柄そのまま） ---
+        [1,2,3].forEach(i => { const el = document.getElementById('d'+i); el.innerText = logDigit; el.className = getDigitClass(logDigit); });
         
-        if (isST) { mode = 'ST'; rRem = SPECS.st; } else { mode = '時短'; rRem = SPECS.jt; }
-        
-        currentRushHits++; 
-        
+        // ログ出力
         if (oldMode === 'ST' || oldMode === '時短') { 
             addLog(`>> 当たり！ 【${logDigit}】 ${lcdCount}回転`); 
         } else { 
             addLog(`>> ${mode}突入 【${logDigit}】 当たり!`); 
         }
         
+        await new Promise(r => setTimeout(r, 1200));
+
+        // --- 図柄表示（二段階目：右打ち中なら7へ昇格） ---
+        if (oldMode !== '通常' && logDigit !== 7) {
+            // 昇格アクション
+            document.getElementById('lamp').classList.add('lamp-active'); // インフラ
+            [1,2,3].forEach(i => { 
+                const el = document.getElementById('d'+i); 
+                el.innerText = 7; 
+                el.className = 'digit gold'; // 強制的に金色の7に
+            });
+            await new Promise(r => setTimeout(r, 1000));
+            document.getElementById('lamp').classList.remove('lamp-active');
+        }
+        
+        if (isST) { mode = 'ST'; rRem = SPECS.st; } else { mode = '時短'; rRem = SPECS.jt; }
+        currentRushHits++; 
+        
         lcdCount = 0; activeJob = null; refillStock(); updateUI(); 
-        await new Promise(r => setTimeout(r, 1200)); 
+        await new Promise(r => setTimeout(r, 800)); 
     } else { activeJob = null; }
     
     isAnim = false; updateUI(); updateAutoBtns();
@@ -295,6 +305,7 @@ function resetData() { if(confirm('データをリセットしますか？')) lo
 </script>
 </body>
 </html>
+
 
 
 
