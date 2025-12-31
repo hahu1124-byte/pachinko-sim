@@ -15,12 +15,10 @@
         .machine { width: 100%; background: #111; border: 3px solid #8a2be2; border-radius: 15px; padding: 12px; position: relative; box-sizing: border-box; }
         .screen { background: #000; height: 300px; border-radius: 10px; border: 2px solid #444; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; width: 100%; }
         
-        /* 1.5倍サイズ図柄 */
         .digit-container { display: flex; gap: 5px; }
         .digit { font-size: 8.5rem; font-weight: 900; font-family: 'Shippori Mincho B1', serif; width: 110px; text-align: center; } 
         .mode-display { position: absolute; bottom: 35px; right: 15px; color: #8a2be2; font-weight: bold; font-size: 0.9rem; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 3px; border-right: 3px solid #8a2be2; text-align: right; min-width: 90px; }
         
-        /* 図柄色指定 */
         .gold { color: #ffeb3b; text-shadow: 0 0 30px #ffeb3b; }
         .odd { color: #ff4444; text-shadow: 0 0 20px #ff4444; }
         .even { color: #4444ff; text-shadow: 0 0 20px #4444ff; }
@@ -31,10 +29,8 @@
         .vibrate { animation: vibration 0.05s infinite; }
         @keyframes vibration { 0% { transform: translate(0,0); } 25% { transform: translate(-2px, 2px); } 50% { transform: translate(2px, -2px); } 75% { transform: translate(-2px, -2px); } 100% { transform: translate(0,0); } }
 
-        /* 全回転背景 */
         .all-spin-bg { animation: rainbow-bg 0.8s infinite; box-shadow: inset 0 0 100px rgba(255,255,255,0.5); }
 
-        /* 1.5倍サイズ保留 */
         .heso-overlay { position: absolute; bottom: 10px; display: flex; align-items: center; gap: 10px; transition: all 0.3s; }
         .heso-ball { width: 18px; height: 18px; background: #222; border-radius: 50%; border: 1px solid #555; transition: all 0.1s; }
         .heso-overlay.right-mode { bottom: 80px; right: 10px; flex-direction: column-reverse; gap: 6px; }
@@ -214,6 +210,10 @@ function createJob() {
 
 async function startProcess() {
     if (!isAuto || isAnim) return;
+
+    // 先読みの中に強演出があるかチェック
+    let hasHeavyInStock = reservedStock.some(job => job.heavy === true);
+
     if (mode !== '通常' && rRem <= 0 && reservedStock.length === 0 && !activeJob) {
         let prev = mode; 
         addLog(`【${prev}終了】 ${currentRushHits <= 1 ? (currentRushHits === 0 ? '0回' : '1回(' + prev + ')') : currentRushHits + '連'}`);
@@ -238,7 +238,9 @@ async function startProcess() {
         if (eff.text) { const ov = document.getElementById('effect-overlay'); ov.innerText = eff.text; ov.style.display = 'block'; }
     }
 
-    let spinTime = (eff.heavy) ? 2000 : (autoSpeed === 'fast' ? 50 : 500);
+    // 強演出がある場合、または先読みに強演出がある場合は2000ms。それ以外は設定速度。
+    let spinTime = (eff.heavy || hasHeavyInStock) ? 2000 : (autoSpeed === 'fast' ? 50 : 500);
+    
     let spin = setInterval(() => { [1,2,3].forEach(i => { let n = Math.floor(Math.random()*9)+1; const el = document.getElementById('d'+i); el.innerText=n; el.className = getDigitClass(n); }); }, 40);
     await new Promise(r => setTimeout(r, spinTime));
     clearInterval(spin);
@@ -286,7 +288,16 @@ async function startProcess() {
         if (isST) { mode = 'ST'; rRem = SPECS.st; } else { mode = '時短'; rRem = SPECS.jt; }
         currentRushHits++; lcdCount = 0; activeJob = null; refillStock(); updateUI(); 
         await new Promise(r => setTimeout(r, 800)); 
-    } else { activeJob = null; }
+    } else { 
+        // はずれた時の停止画面表示（1秒間）
+        [1,2,3].forEach(i => { 
+            const el = document.getElementById('d'+i);
+            // 現在表示されている数字を維持しつつ、ハズレ目として表示
+            el.className = getDigitClass(parseInt(el.innerText));
+        });
+        activeJob = null; 
+        await new Promise(r => setTimeout(r, 1000)); // ハズレ時の1秒保持
+    }
     
     isAnim = false; updateUI(); updateAutoBtns();
     if (isAuto) setTimeout(startProcess, (autoSpeed === 'fast' ? 10 : 200));
