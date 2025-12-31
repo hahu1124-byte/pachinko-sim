@@ -119,7 +119,6 @@
 
     
 <script>
-    // --- スペック・状態管理 ---
     const SPECS = { n: 319.7, s: 99.4, st: 163, jt: 100 };
     let hits = 0, rushCount = 0, currentRot = 0, totalRot = 0, totalBall = 0, currentRushHits = 0;
     let maxHamari = 0, mode = '通常', rRem = 0, isAuto = false, autoSpeed = 'slow', isAnim = false;
@@ -128,17 +127,11 @@
     let slumpData = [0], slumpLabels = ["0"], historyData = [], historyLabels = [];
     let sChart, hChart;
 
-    // --- 信頼度設定 ---
     const TRUST_MAP_N = { "白レバ": 0.90, "赤レバ": 0.965, "赤保留": 0.90, "次回予告": 0.65, "レイ背景": 0.85, "金系": 0.50, "カウントダウン": 0.88, "カヲル": 1.0 };
     const TRUST_MAP_S = { "白レバ": 0.95, "赤レバ": 0.99, "赤保留": 0.95, "次回予告": 1.0, "レイ背景": 0.92, "金系": 0.95, "カウントダウン": 0.88, "カヲル": 1.0 };
 
-    // --- 初期化 ---
-    window.onload = () => {
-        initCharts();
-        updateUI();
-    };
+    window.onload = () => { initCharts(); updateUI(); };
 
-    // --- 入賞時判定（先読み） ---
     function preCheck() {
         if (reservedStock.length >= 4) return;
         let isHit = Math.random() < (1 / (mode !== '通常' ? SPECS.s : SPECS.n));
@@ -162,16 +155,16 @@
                 else if (hRoll < 39) holdType = "rainbow"; 
             }
         } else {
+            // 【修正】ハズレ時の先読み出現率を大幅に下げてリアリティを向上
             if (Math.random() < 0.001) hasCountdown = true;
-            if (Math.random() < 0.1) holdType = "red";
+            if (Math.random() < 0.005) holdType = "red"; // 0.5%まで抑制
         }
         
-        // 【重要】先読み検知時のオート停止
+        // 【修正】低速切替時のログ出力を削除
         const isPreEffect = (holdType === "red" || holdType === "vibe" || holdType === "rainbow" || preVibe !== "none" || hasCountdown || isKaworu);
         if (isPreEffect && isAuto && autoSpeed === "fast") {
             autoSpeed = 'slow'; 
             updateAutoBtns();
-            addLog(`<span style="color:#ffa500;">[先読み演出検知：低速消化に切替]</span>`);
         }
 
         reservedStock.push({ isHit: isHit, holdType: holdType, preVibe: preVibe, hasCountdown: hasCountdown, isKaworu: isKaworu });
@@ -179,7 +172,6 @@
         updateHesoUI();
     }
 
-    // --- 演出抽選 ---
     function selectEffect(job) {
         let res = { heavy: false, name: [], trust: 0, vibe: false, vibeColor: job.preVibe, flash: false, text: "", holdType: job.holdType, isSure: false, hasCountdown: job.hasCountdown, isKaworu: job.isKaworu };
         const map = (mode !== '通常') ? TRUST_MAP_S : TRUST_MAP_N;
@@ -217,17 +209,16 @@
             res.trust = (1 - fail) * 100;
         } else { res.trust = (mode === '通常' ? 0.1 : 1.0); }
         
-        res.displayName = res.name.join("+") || (job.isHit ? "変化なし" : "弱予告");
+        res.displayName = res.name.join("+") || (job.isHit ? "演出なし" : "弱予告");
         return res;
     }
 
-    // --- メインループ ---
     async function startProcess() {
         if(!isAuto || isAnim) return;
         
         if(mode !== '通常' && rRem <= 0) {
             let prev = mode;
-            addLog(`【${prev}終了】 ${currentRushHits <= 1 ? '1回(' + prev + ')' : currentRushHits + '連'}`);
+            addLog(`【${prev}終了】 ${currentRushHits <= 1 ? (currentRushHits === 0 ? '0回' : '1回(' + prev + ')') : currentRushHits + '連'}`);
             mode = '通常'; currentRushHits = 0; lcdCount = 0;
             updateUI();
             if (prev === '時短' && originalSpeedSetting === 'fast') { autoSpeed = 'fast'; updateAutoBtns(); }
@@ -259,7 +250,7 @@
         let spinTime = (eff.heavy) ? 2500 : (autoSpeed === 'fast' ? 60 : 600);
         let spin = setInterval(() => { 
             let n1 = Math.floor(Math.random()*9)+1, n2 = Math.floor(Math.random()*9)+1, n3 = Math.floor(Math.random()*9)+1;
-            if (mode === '通常') { if(n1===7)n1=8; if(n2===7)n2=8; if(n3===7)n3=8; }
+            if (mode === '通常' && !activeJob.isHit) { if(n1===7)n1=8; if(n2===7)n2=8; if(n3===7)n3=8; }
             document.getElementById('d1').innerText=n1; document.getElementById('d2').innerText=n2; document.getElementById('d3').innerText=n3;
         }, 40);
         
@@ -303,12 +294,12 @@
             lcdCount = 0; reservedStock = []; activeJob = null;
         }
         isAnim = false;
+        // 【修正】変動が終わったら元の速度に戻す
         if(isAuto) autoSpeed = originalSpeedSetting;
         updateUI(); updateAutoBtns();
         if(isAuto) setTimeout(startProcess, (autoSpeed === 'fast' ? 5 : 300));
     }
     
-    // --- UI制御 ---
     function toggleAuto(s) {
         if(isAuto && autoSpeed === s) { isAuto = false; } 
         else { isAuto = true; autoSpeed = s; originalSpeedSetting = s; if(!isAnim) startProcess(); }
@@ -351,11 +342,8 @@
     function addLog(m) { const l = document.getElementById('log'); l.innerHTML = `> ${m}<br>${l.innerHTML}`; }
     function triggerVibeUI(c) { 
         const m = document.getElementById('machine'); m.classList.add('vibrate');
-        if(c==='red') m.style.borderColor = '#f00'; if(c==='rainbow') m.style.animation = 'vibration 0.05s infinite, rainbow-border 0.3s infinite';
-        setTimeout(()=>{ m.classList.remove('vibrate'); m.style.borderColor = ''; m.style.animation = ''; }, 500);
+        setTimeout(()=>{ m.classList.remove('vibrate'); }, 500);
     }
-
-    // --- グラフ・モーダル ---
     function initCharts() {
         const ctxS = document.getElementById('slumpChart').getContext('2d');
         sChart = new Chart(ctxS, { type: 'line', data: { labels: slumpLabels, datasets: [{ label: '差玉', data: slumpData, borderColor: '#8a2be2', borderWidth: 2, fill: false, pointRadius: 0 }] }, options: { responsive: true, maintainAspectRatio: false } });
@@ -373,6 +361,7 @@
 </script>
 </body>
 </html>
+
 
 
 
