@@ -1,116 +1,4 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>EVANGELION Sim -2025 Standard-</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&display=swap');
-        body { background: #000; color: white; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; overflow-x: hidden; }
-        header { width: 100%; height: 50px; background: #111; border-bottom: 2px solid #8a2be2; display: flex; align-items: center; padding: 0 10px; box-sizing: border-box; gap: 8px; position: sticky; top: 0; z-index: 100; }
-        .header-btn { background: #333; color: #ccc; border: 1px solid #555; padding: 5px 8px; font-size: 0.7rem; cursor: pointer; border-radius: 4px; white-space: nowrap; }
-        .btn-graph { background: #8a2be2; color: white; border-color: #a450ff; }
-        .max-hamari-display { background: #000; color: #ff4444; border: 1px solid #ff4444; padding: 4px 8px; font-size: 0.75rem; border-radius: 4px; font-weight: bold; }
-        .main-content { width: 100%; max-width: 440px; display: flex; flex-direction: column; align-items: center; padding: 10px; box-sizing: border-box; }
-        .machine { width: 100%; background: #111; border: 3px solid #8a2be2; border-radius: 15px; padding: 12px; position: relative; box-sizing: border-box; }
-        .screen { background: #000; height: 300px; border-radius: 10px; border: 2px solid #444; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; width: 100%; }
-        .digit-container { display: flex; gap: 5px; }
-        .digit { font-size: 8.5rem; font-weight: 900; font-family: 'Shippori Mincho B1', serif; width: 110px; text-align: center; } 
-        .mode-display { position: absolute; bottom: 35px; right: 15px; color: #8a2be2; font-weight: bold; font-size: 0.9rem; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 3px; border-right: 3px solid #8a2be2; text-align: right; min-width: 90px; }
-        .gold { color: #ffeb3b; text-shadow: 0 0 30px #ffeb3b; }
-        .odd { color: #ff4444; text-shadow: 0 0 20px #ff4444; }
-        .even { color: #4444ff; text-shadow: 0 0 20px #4444ff; }
-        .hidden-lamp { position: absolute; top: 12px; right: 20px; width: 15px; height: 15px; background: #222; border-radius: 50%; border: 1px solid #444; }
-        .lamp-active { animation: rainbow-bg 0.3s infinite; box-shadow: 0 0 20px #fff; }
-        @keyframes rainbow-bg { 0% { background: #f00; } 20% { background: #ff0; } 40% { background: #0f0; } 60% { background: #0ff; } 80% { background: #00f; } 100% { background: #f0f; } }
-        .vibrate { animation: vibration 0.05s infinite; }
-        @keyframes vibration { 0% { transform: translate(0,0); } 25% { transform: translate(-2px, 2px); } 50% { transform: translate(2px, -2px); } 75% { transform: translate(-2px, -2px); } 100% { transform: translate(0,0); } }
-        .all-spin-bg { animation: rainbow-bg 0.8s infinite; box-shadow: inset 0 0 100px rgba(255,255,255,0.5); }
-        .heso-overlay { position: absolute; bottom: 10px; display: flex; align-items: center; gap: 10px; transition: all 0.3s; }
-        .heso-ball { width: 18px; height: 18px; background: #222; border-radius: 50%; border: 1px solid #555; transition: all 0.1s; }
-        .heso-overlay.right-mode { bottom: 80px; right: 10px; flex-direction: column-reverse; gap: 6px; }
-        .heso-overlay.right-mode .heso-ball { width: 22px; height: 8px; border-radius: 2px; }
-        .heso-current { border-width: 2px !important; border-color: #fff !important; }
-        .heso-on { background: #888; }
-        .heso-red { background: radial-gradient(circle, #ff4444, #880000); box-shadow: 0 0 8px #ff0000; border-color: #f00; }
-        .heso-green { background: radial-gradient(circle, #44ff44, #008800); box-shadow: 0 0 8px #00ff00; border-color: #0f0; }
-        .heso-blue { background: radial-gradient(circle, #4444ff, #000088); box-shadow: 0 0 8px #0000ff; border-color: #00f; }
-        .heso-rainbow { animation: rainbow-bg 0.5s infinite; }
-        .heso-vibe { animation: vibration 0.1s infinite !important; background: radial-gradient(circle, #fff, #8a2be2) !important; box-shadow: 0 0 10px #8a2be2; border-color: #fff !important; }
-        .heso-blink { animation: blink 0.3s infinite; }
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-        .stat-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-top: 12px; }
-        .stat-item { background: #000; border: 1px solid #333; padding: 5px 0; text-align: center; border-radius: 4px; }
-        .stat-val { font-size: 1.2rem; font-weight: bold; font-family: monospace; color: #fff; }
-        .stat-label { font-size: 0.55rem; color: #888; display: block; }
-        .control-panel { margin-top: 12px; display: flex; gap: 8px; width: 100%; height: 65px; }
-        .side-btns { display: flex; flex-direction: column; gap: 4px; width: 55px; }
-        .side-btn { flex: 1; background: #222; color: #666; border: 1px solid #444; font-size: 0.7rem; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .side-btn.active { background: #8a2be2; color: #fff; border-color: #a450ff; }
-        .btn-auto { flex: 1; background: #8a2be2; color: white; border: 1px solid #a450ff; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 1rem; }
-        .btn-stop { background: #444 !important; border-color: #666 !important; }
-        .log { width: 100%; max-width: 440px; height: 350px; background: #000; margin-top: 10px; padding: 10px; font-size: 0.95rem; color: #ffffff; overflow-y: auto; border: 1px solid #333; font-family: monospace; box-sizing: border-box; line-height: 1.5; } 
-        #modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; justify-content: center; align-items: center; }
-        #modal-content { background: #111; border: 2px solid #8a2be2; width: 92%; max-width: 450px; padding: 15px; border-radius: 12px; overflow-y: auto; max-height: 90vh; }
-        .graph-area { background: #000; height: 200px; margin-bottom: 20px; border: 1px solid #333; }
-        .effect-text { position: absolute; color: white; font-weight: bold; font-size: 2.2rem; z-index: 5; text-shadow: 0 0 10px #000; background: rgba(0,0,0,0.7); padding: 5px 15px; border-radius: 5px; display: none; text-align: center; }
-    </style>
-</head>
-<body>
-    <header>
-        <button class="header-btn">機種選択</button>
-        <button class="header-btn btn-graph" onclick="openModal()">データグラフ</button>
-        <button class="header-btn" onclick="resetData()">リセット</button>
-        <div id="max-hamari-box" class="max-hamari-display">最大ハマリ: 0</div>
-    </header>
-    <div id="modal-overlay">
-        <div id="modal-content">
-            <span style="float:right; cursor:pointer; font-size:1.5rem;" onclick="closeModal()">×</span>
-            <h3 style="font-size: 0.9rem; margin: 0 0 10px 0; color: #8a2be2;">差玉スランプグラフ</h3>
-            <div class="graph-area"><canvas id="slumpChart"></canvas></div>
-            <h3 style="font-size: 0.9rem; margin: 0 0 10px 0; color: #8a2be2;">大当り履歴（回転数）</h3>
-            <div class="graph-area"><canvas id="historyChart"></canvas></div>
-        </div>
-    </div>
-    <div class="main-content">
-        <div class="machine" id="machine">
-            <div id="lamp" class="hidden-lamp"></div>
-            <div class="screen" id="screen">
-                <div id="effect-overlay" class="effect-text"></div>
-                <div class="digit-container">
-                    <div id="d1" class="digit odd">1</div>
-                    <div id="d2" class="digit odd">2</div>
-                    <div id="d3" class="digit odd">3</div>
-                </div>
-                <div id="sub-display" class="mode-display">通常:0</div>
-                <div id="heso-area" class="heso-overlay">
-                    <div id="h0" class="heso-ball heso-current"></div>
-                    <div id="h1" class="heso-ball"></div>
-                    <div id="h2" class="heso-ball"></div>
-                    <div id="h3" class="heso-ball"></div>
-                    <div id="h4" class="heso-ball"></div>
-                </div>
-            </div>
-            <div class="stat-grid">
-                <div class="stat-item"><span class="stat-label">大当り</span><span id="hits" class="stat-val">0</span></div>
-                <div class="stat-item"><span class="stat-label">連チャン</span><span id="rush-count" class="stat-val">0</span></div>
-                <div class="stat-item"><span class="stat-label">現在回転</span><span id="current-rot" class="stat-val">0</span></div>
-                <div class="stat-item"><span class="stat-label">累計回転</span><span id="total-rot" class="stat-val">0</span></div>
-                <div class="stat-item"><span class="stat-label">差玉数</span><span id="balance" class="stat-val">0</span></div>
-            </div>
-            <div class="control-panel">
-                <div class="side-btns">
-                    <button id="btn-all" class="side-btn" onclick="toggleOpt('all')">全</button>
-                    <button id="btn-kokuchi" class="side-btn" onclick="toggleOpt('kokuchi')">告知</button>
-                </div>
-                <button class="btn-auto" id="btn-slow" onclick="toggleAuto('slow')">低速オート</button>
-                <button class="btn-auto" id="btn-fast" onclick="toggleAuto('fast')">高速オート</button>
-            </div>
-        </div>
-        <div class="log" id="log">> システム起動完了</div>
-    </div>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
+<script>
 const SPECS = { n: 319.7, s: 99.4, st: 163, jt: 100 };
 let hits = 0, rushCount = 0, currentRot = 0, totalRot = 0, totalBall = 0, currentRushHits = 0, maxHamari = 0;
 let mode = '通常', rRem = 0, isAuto = false, autoSpeed = 'slow', isAnim = false;
@@ -185,15 +73,13 @@ function createJob() {
         let isN = (mode === '通常' || mode === '時短');
         let redGase = isN ? 0.05 : 0.01;
         let redVibeGase = isN ? 0.005 : 0.001; 
-        let whiteVibeGase = isN ? 0.01 : 0.005; 
+        let whiteVibeGase = isN ? 0.01 : 0.005; // 通常時 0.01%
         if (hr < redVibeGase) { res.name.push("赤レバ"); res.holdType = "vibe"; res.vibe = true; res.vibeColor = "red"; res.heavy = true; }
         else if (hr < (redVibeGase + whiteVibeGase)) { res.name.push("白レバ"); res.holdType = "vibe"; res.vibe = true; res.vibeColor = "white"; res.heavy = true; }
         else if (hr < (redVibeGase + whiteVibeGase + redGase)) { res.name.push("赤保留"); res.holdType = "red"; res.heavy = true; }
         else if (hr < (redVibeGase + whiteVibeGase + redGase + 0.1)) { res.name.push("緑保留"); res.holdType = "green"; }
         else if (hr < (redVibeGase + whiteVibeGase + redGase + 1.0)) { res.name.push("青保留"); res.holdType = "blue"; }
     }
-    
-    // 信頼度算出（修正版）
     const map = (mode !== '通常') ? TRUST_MAP_S : TRUST_MAP_N;
     if (res.isSure) {
         res.trust = 100.00;
@@ -201,7 +87,6 @@ function createJob() {
         let fail = 1; res.name.forEach(n => { if(map[n]) fail *= (1 - map[n]); });
         res.trust = (1 - fail) * 100;
     } else { 
-        // 弱演出時のベース信頼度（1/319.7 = 0.31...%）
         res.trust = (mode === '通常' ? (1/SPECS.n)*100 : (1/SPECS.s)*100); 
     }
     res.displayName = res.name.join("+") || "弱演出";
@@ -226,23 +111,32 @@ async function startProcess() {
     totalRot++; currentRot++; lcdCount++; 
     if (mode !== '通常') { rRem--; totalBall -= 0.05; } else { totalBall -= (250 / 18); }
     updateCharts();
-    
-    // 履歴出力：小数点第2位まで表示するように変更
-    if (eff.heavy || activeJob.isHit || true) { // 弱演出も含め全履歴を出す場合
-        addLog(`${mode} ${lcdCount}回転【${eff.displayName}】信頼度:${eff.trust.toFixed(2)}%`);
-        if (eff.vibe) document.getElementById('machine').classList.add('vibrate');
-        if (eff.flash) document.getElementById('lamp').classList.add('lamp-active');
-        if (eff.text) { const ov = document.getElementById('effect-overlay'); ov.innerText = eff.text; ov.style.display = 'block'; }
-    }
-    
-    let spinTime = (eff.heavy || hasHeavyInStock) ? 2000 : (autoSpeed === 'fast' ? 50 : 500);
-    let spin = setInterval(() => { [1,2,3].forEach(i => { let n = Math.floor(Math.random()*9)+1; const el = document.getElementById('d'+i); el.innerText=n; el.className = getDigitClass(n); }); }, 40);
+
+    // 履歴出力
+    addLog(`${mode} ${lcdCount}回転【${eff.displayName}】信頼度:${eff.trust.toFixed(2)}%`);
+    if (eff.vibe) document.getElementById('machine').classList.add('vibrate');
+    if (eff.flash) document.getElementById('lamp').classList.add('lamp-active');
+    if (eff.text) { const ov = document.getElementById('effect-overlay'); ov.innerText = eff.text; ov.style.display = 'block'; }
+
+    // 【高速オート対応】アニメーション時間と更新間隔の調整
+    let spinTime = (eff.heavy || hasHeavyInStock) ? 2000 : (autoSpeed === 'fast' ? 300 : 500);
+    let intervalTime = (autoSpeed === 'fast') ? 20 : 40; // 高速時は20ms間隔で図柄更新
+
+    let spin = setInterval(() => { 
+        [1,2,3].forEach(i => { 
+            let n = Math.floor(Math.random()*9)+1; 
+            const el = document.getElementById('d'+i); 
+            el.innerText = n; 
+            el.className = getDigitClass(n); 
+        }); 
+    }, intervalTime);
+
     await new Promise(r => setTimeout(r, spinTime));
     clearInterval(spin);
     document.getElementById('machine').classList.remove('vibrate');
     document.getElementById('lamp').classList.remove('lamp-active');
     document.getElementById('effect-overlay').style.display = 'none';
-    
+
     if (activeJob.isHit) {
         isAnim = true; hits++; 
         historyData.push(lcdCount); historyLabels.push(hits + "回目");
@@ -282,7 +176,9 @@ async function startProcess() {
     } else { 
         [1,2,3].forEach(i => { const el = document.getElementById('d'+i); el.className = getDigitClass(parseInt(el.innerText)); });
         activeJob = null; 
-        await new Promise(r => setTimeout(r, 1000)); 
+        // 【高速オート対応】停止後のウェイトを短縮
+        let waitAfterStop = (autoSpeed === 'fast') ? 100 : 1000;
+        await new Promise(r => setTimeout(r, waitAfterStop)); 
     }
     isAnim = false; updateUI(); updateAutoBtns();
     if (isAuto) setTimeout(startProcess, (autoSpeed === 'fast' ? 10 : 200));
