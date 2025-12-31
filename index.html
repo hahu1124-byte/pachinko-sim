@@ -92,21 +92,15 @@
     let slumpData = [0], slumpLabels = ["0"], historyData = [], historyLabels = [];
     let sChart, hChart;
 
-    // --- 信頼度設定（戻し案反映版） ---
+    // --- 信頼度設定 ---
     const TRUST_MAP_N = { 
         "白レバ": 0.90, "赤レバ": 0.965, "虹レバ": 1.0, 
-        "赤保留": 0.90,      // 90%に戻し
-        "緑保留": 0.11,      // 占有率維持
-        "青保留": 0.03,      // 占有率維持
-        "点滅保留": 0.01,     // 占有率維持
+        "赤保留": 0.90, "緑保留": 0.11, "青保留": 0.03, "点滅保留": 0.01,
         "次回予告": 0.65, "レイ背景": 0.85, "金系": 0.50, "渚カヲル": 1.0 
     };
     const TRUST_MAP_S = { 
         "白レバ": 0.95, "赤レバ": 0.99, "虹レバ": 1.0, 
-        "赤保留": 0.95,      // 95%に戻し
-        "緑保留": 0.20,      // 占有率維持
-        "青保留": 0.05,      // 占有率維持
-        "点滅保留": 0.01,     // 占有率維持
+        "赤保留": 0.95, "緑保留": 0.20, "青保留": 0.05, "点滅保留": 0.01,
         "次回予告": 1.0, "金系": 0.80, "インフラ": 1.0 
     };
 
@@ -195,11 +189,26 @@
 
     async function startProcess() {
         if (!isAuto || isAnim) return;
+        
+        // --- 連チャン終了時のリセット処理 ---
         if (mode !== '通常' && rRem <= 0 && reservedStock.length === 0 && !activeJob) {
-            let prev = mode; addLog(`【${prev}終了】 ${currentRushHits <= 1 ? (currentRushHits === 0 ? '0回' : '1回(' + prev + ')') : currentRushHits + '連'}`);
-            mode = '通常'; currentRushHits = 0; updateUI();
-            if (prev === '時短' && originalSpeedSetting === 'fast') { autoSpeed = 'fast'; } else { isAuto = false; updateAutoBtns(); return; }
+            let prev = mode; 
+            addLog(`【${prev}終了】 ${currentRushHits <= 1 ? (currentRushHits === 0 ? '0回' : '1回(' + prev + ')') : currentRushHits + '連'}`);
+            
+            mode = '通常'; 
+            currentRushHits = 0; 
+            rushCount = 0; // ← ここで表示用の連チャン変数を0にリセット
+            
+            updateUI();
+            if (prev === '時短' && originalSpeedSetting === 'fast') { 
+                autoSpeed = 'fast'; 
+            } else { 
+                isAuto = false; 
+                updateAutoBtns(); 
+                return; 
+            }
         }
+
         refillStock();
         if (reservedStock.length === 0 && !activeJob) { isAuto = false; updateAutoBtns(); return; }
         activeJob = reservedStock.shift(); refillStock(); updateUI();
@@ -235,11 +244,19 @@
             else { if (rand < 60) { logDigit = (rand < 5 ? 7 : 3); isST = true; totalBall += (logDigit === 7 ? 1400 : 420); } else { logDigit = 2; isST = false; totalBall += 420; } }
             [1,2,3].forEach(i => { const el = document.getElementById('d'+i); el.innerText = logDigit; el.className = getDigitClass(logDigit); });
             await new Promise(r => setTimeout(r, 1200));
-            if (isST) { mode = 'ST'; rRem = SPECS.st; rushCount++; } else { mode = '時短'; rRem = SPECS.jt; }
+            
+            if (isST) { mode = 'ST'; rRem = SPECS.st; } else { mode = '時短'; rRem = SPECS.jt; }
+            
+            rushCount++; // 連チャン数を加算
+            currentRushHits++; 
+            
             if (oldMode === 'ST') { addLog(`>> 当たり！ 【${logDigit}】 ${lcdCount}回転`); }
             else { addLog(`>> ${mode}突入 【${logDigit}】 当たり!`); }
-            currentRushHits++; lcdCount = 0; activeJob = null; refillStock(); updateUI(); await new Promise(r => setTimeout(r, 1200)); 
+            
+            lcdCount = 0; activeJob = null; refillStock(); updateUI(); 
+            await new Promise(r => setTimeout(r, 1200)); 
         } else { activeJob = null; }
+        
         isAnim = false; updateUI(); updateAutoBtns();
         if (isAuto) setTimeout(startProcess, (autoSpeed === 'fast' ? 10 : 200));
     }
@@ -258,6 +275,7 @@
 </script>
 </body>
 </html>
+
 
 
 
