@@ -456,7 +456,7 @@ body.light-mode .btn-stop {
 .log {
     width: 100%;
     max-width: 480px;
-    height: 525px;
+    height: 440px;
     background: #000;
     margin-top: 10px;
     padding: 10px;
@@ -490,32 +490,22 @@ body.light-mode .log {
 }
 
 #modal-content {
-    background: #111;
-    border: 2px solid #8a2be2;
+    background: #eee;
+    border: 2px solid #6b1fad;
     width: 92%;
     max-width: 450px;
     padding: 15px;
     border-radius: 12px;
     overflow-y: auto;
     max-height: 90vh;
-}
-
-body.light-mode #modal-content {
-    background: #eee;
-    border-color: #6b1fad;
     color: #111;
 }
 
 .graph-area {
-    background: #000;
+    background: #fff;
     height: 200px;
     margin-bottom: 20px;
-    border: 1px solid #333;
-}
-
-body.light-mode .graph-area {
-    background: #fff;
-    border-color: #ccc;
+    border: 1px solid #ccc;
 }
 
 .effect-text {
@@ -530,4 +520,19 @@ body.light-mode .graph-area {
     border-radius: 5px;
     display: none;
     text-align: center;
+}
+
+/* PC向けレイアウト（横並び） */
+@media (min-width: 768px) {
+    .main-content {
+        max-width: 1000px;
+        flex-direction: row-reverse;
+        align-items: flex-start;
+        justify-content: center;
+        gap: 20px;
+    }
+
+    .log {
+        margin-top: 0;
+    }
 }
