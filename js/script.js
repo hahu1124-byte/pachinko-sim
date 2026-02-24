@@ -126,7 +126,7 @@ async function startProcess() {
     // 先読み演出（保留変化等）か、信頼度50%以上の演出が保留内にあるかチェック
     let hasSakiyomiOrIkiatsu = false;
     for (let j of [eff, ...reservedStock]) {
-        if (j && ((j.holdType !== 'none' || j.name.some(n => n.includes("カウントダウン"))) || j.trust >= 50.0)) {
+        if (j && j.trust >= 50.0) {
             hasSakiyomiOrIkiatsu = true;
             break;
         }
