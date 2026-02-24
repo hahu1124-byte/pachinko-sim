@@ -123,9 +123,9 @@ async function startProcess() {
     if (eff.text) { const ov = document.getElementById('effect-overlay'); ov.innerText = eff.text; ov.style.display = 'block'; }
     let currentSpeed = autoSpeed;
 
-    // 先読み演出（保留変化等）か、信頼度50%以上の演出が保留内にあるかチェック
+    // 消化中(eff) または その次(reservedStock[0]) の変動が信頼度50%以上かチェック
     let hasSakiyomiOrIkiatsu = false;
-    for (let j of [eff, ...reservedStock]) {
+    for (let j of [eff, reservedStock[0]]) {
         if (j && j.trust >= 50.0) {
             hasSakiyomiOrIkiatsu = true;
             break;
