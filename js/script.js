@@ -29,18 +29,25 @@ function createJob() {
     if (isHit) {
         // 【当たり時の演出振り分け】
         if (mode === '通常' || mode === '時短') {
-            if (r < 5) { res.name.push("虹レバ"); res.vibe = true; res.vibeColor = "rainbow"; res.isRushSure = true; res.trust = 100; }
+            if (r < 1) { res.name.push("全回転リーチ"); res.isRushSure = true; res.text = "祝"; res.trust = 100; }
+            else if (r < 3) { res.name.push("突発当り"); res.isRushSure = true; res.vibe = true; res.vibeColor = "rainbow"; res.trust = 100; }
+            else if (r < 6) { res.name.push("虹レバ"); res.vibe = true; res.vibeColor = "rainbow"; res.isRushSure = true; res.trust = 100; }
             else if (r < 10) { res.name.push("渚カヲル"); res.isRushSure = true; res.trust = 100; }
-            else if (r < 30) { res.name.push("赤レバ"); res.vibe = true; res.vibeColor = "red"; res.trust = 96.5; }
-            else if (r < 50) { res.name.push("白レバ"); res.vibe = true; res.vibeColor = "white"; res.trust = 90.0; }
-            else if (r < 65) { res.name.push("レイ背景"); res.text = "レイ背景"; res.trust = 85.0; }
-            else if (r < 80) { res.name.push("赤保留"); res.holdType = "red"; res.trust = 90.0; }
+            else if (r < 15) { res.name.push("最終号機リーチ"); res.text = "最終号機\n画ブレ金"; res.vibe = true; res.vibeColor = "red"; res.trust = 98.0; }
+            else if (r < 25) { res.name.push("赤レバ"); res.vibe = true; res.vibeColor = "red"; res.trust = 96.5; }
+            else if (r < 35) { res.name.push("ロンギヌスの槍保留"); res.holdType = "vibe"; res.trust = 95.0; }
+            else if (r < 45) { res.name.push("カウントダウン"); res.text = "３・２・１\n・０"; res.trust = 92.0; }
+            else if (r < 60) { res.name.push("白レバ"); res.vibe = true; res.vibeColor = "white"; res.trust = 90.0; }
+            else if (r < 75) { res.name.push("レイ背景"); res.text = "レイ背景"; res.trust = 85.0; }
+            else if (r < 85) { res.name.push("赤保留"); res.holdType = "red"; res.trust = 90.0; }
+            else if (r < 90) { res.name.push("震える保留"); res.holdType = "vibe"; res.trust = 80.0; }
             else { res.name.push("通常"); res.trust = 0.1; }
         } else {
             // ST中当たり演出
-            if (r < 10) { res.name.push("ST次回予告"); res.text = "次回予告"; res.trust = 100; }
-            else if (r < 20) { res.name.push("STレイ背景"); res.text = "レイ背景"; res.trust = 100; }
-            else if (r < 40) { res.name.push("ST赤レバ"); res.vibe = true; res.vibeColor = "red"; res.trust = 99.0; }
+            if (r < 5) { res.name.push("突発当り"); res.vibe = true; res.vibeColor = "rainbow"; res.trust = 100; }
+            else if (r < 15) { res.name.push("ST次回予告"); res.text = "次回予告"; res.trust = 100; }
+            else if (r < 25) { res.name.push("STレイ背景"); res.text = "レイ背景"; res.trust = 100; }
+            else if (r < 45) { res.name.push("ST赤レバ"); res.vibe = true; res.vibeColor = "red"; res.trust = 99.0; }
             else { res.name.push("ST赤保留"); res.holdType = "red"; res.trust = 95.0; }
         }
     } else {
@@ -50,14 +57,17 @@ function createJob() {
         // 当たり時の確率の「318分の1以下」にしなければ、本来の信頼度にはならない（分母の罠の解消）。
         // 目標信頼度 = 当たり時の振り分け / (当たり時振り分け + ハズレ時振り分け比率*318)
         if (mode === '通常' || mode === '時短') {
-            // 白レバ(信頼度90.0%目標): (20 / (20 + X*318)) = 0.9 -> 約 0.007%
-            if (r < 0.007) { res.name.push("白レバ"); res.vibe = true; res.vibeColor = "white"; res.trust = 90.0; }
-            // レイ背景(信頼度85.0%目標): (15 / (15 + X*318)) = 0.85 -> 約 0.0083% (累計 0.0153)
-            else if (r < 0.0153) { res.name.push("レイ背景"); res.text = "レイ背景"; res.trust = 85.0; }
-            // 緑保留(信頼度11.0%目標): (0 / 当たり時0% -> 信頼度崩壊だがチャンス演出としてハズレ時 約0.8% に設定)
-            else if (r < 0.8153) { res.name.push("緑保留"); res.holdType = "green"; res.trust = 11.0; }
-            // 青保留(信頼度3.0%目標): 同様に 約4.0% に設定
-            else if (r < 4.8153) { res.name.push("青保留"); res.holdType = "blue"; res.trust = 3.0; }
+            // 当たりとの比率計算に基づく信頼度設定（318倍の分母を考慮）
+            if (r < 0.001) { res.name.push("最終号機リーチ"); res.text = "最終号機\n画ブレ銀"; res.trust = 98.0; }
+            else if (r < 0.0015) { res.name.push("ロンギヌスの槍保留"); res.holdType = "vibe"; res.trust = 95.0; }
+            else if (r < 0.005) { res.name.push("赤レバ"); res.vibe = true; res.vibeColor = "red"; res.trust = 96.5; }
+            else if (r < 0.007) { res.name.push("カウントダウン"); res.text = "３・２・１\n・・"; res.trust = 92.0; }
+            else if (r < 0.012) { res.name.push("白レバ"); res.vibe = true; res.vibeColor = "white"; res.trust = 90.0; }
+            else if (r < 0.017) { res.name.push("赤保留"); res.holdType = "red"; res.trust = 90.0; }
+            else if (r < 0.025) { res.name.push("震える保留"); res.holdType = "vibe"; res.trust = 80.0; }
+            else if (r < 0.035) { res.name.push("レイ背景"); res.text = "レイ背景"; res.trust = 85.0; }
+            else if (r < 0.835) { res.name.push("緑保留"); res.holdType = "green"; res.trust = 11.0; }
+            else if (r < 4.835) { res.name.push("青保留"); res.holdType = "blue"; res.trust = 3.0; }
             else { res.trust = 0.1; }
         } else {
             // ST中外れ演出 (ST中はハズレが約98回/1回当たり となるため比率は約98倍)
@@ -73,6 +83,8 @@ function createJob() {
     if (res.holdType === "red" || (res.vibe && !res.isRushSure)) {
         let rr = Math.random();
         res.currentView = rr < 0.4 ? "blue" : (rr < 0.8 ? "green" : "red");
+    } else if (res.holdType === "vibe") {
+        res.currentView = "vibe";
     } else { res.currentView = res.holdType; }
 
     res.heavy = (res.trust >= 50);
