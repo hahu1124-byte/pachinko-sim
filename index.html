@@ -597,7 +597,8 @@
             totalRot++; currentRot++; lcdCount++;
             if (mode !== '通常') { rRem--; totalBall -= 0.05; } else { totalBall -= 13.8; }
             updateCharts();
-            if (eff.trust >= 50 || eff.isHit) { addLog(`${mode} ${lcdCount}回転【${eff.displayName}】信頼度:${eff.trust.toFixed(1)}%`); }
+            // trustが10以上（チャンスアップ以上）、または当落が確定している場合のみログに出力
+            if (eff.trust >= 10.0 || eff.isHit) { addLog(`${mode} ${lcdCount}回転【${eff.displayName}】信頼度:${eff.trust.toFixed(1)}%`); }
             const machineEl = document.getElementById('machine'), screenEl = document.getElementById('screen');
             if (eff.vibe) { machineEl.classList.add('vibrate', 'vibe-' + eff.vibeColor); screenEl.classList.add('vibrate', 'vibe-' + eff.vibeColor); }
             if (eff.flash) document.getElementById('lamp').classList.add('lamp-active');
@@ -606,7 +607,6 @@
             // 高速オート中、期待度が高い演出（信頼度10%以上、緑保留などチャンスアップ以上）が来た場合は低速にする
             if (autoSpeed === 'fast' && eff.trust >= 10.0) {
                 currentSpeed = 'slow';
-                addLog(`>> チャンス発生！演出確認のため減速します`);
             }
 
             // スピード調整。高速オート(fast)時は20ms、低速オート・チャンス時(slow)は600ms、激熱(heavy)は1800ms
