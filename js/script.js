@@ -262,7 +262,7 @@ function updateHesoUI() {
 
     const countDisplay = document.getElementById('stock-count-display');
     if (countDisplay) {
-        countDisplay.innerText = `ヘソ: ${leftStock.length} / 電チュー: ${rightStock.length}`;
+        countDisplay.innerText = `${leftStock.length} / ${rightStock.length}`;
     }
 
     let displayStock = mode !== '通常' ? rightStock : leftStock;
