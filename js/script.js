@@ -3,15 +3,17 @@ const SPECS = { n: 319.7, s: 99.4, st: 163, jt: 100 };
 let hits = 0, rushCount = 0, currentRot = 0, totalRot = 0, totalBall = 0, currentRushHits = 0, maxHamari = 0;
 let mode = '通常', rRem = 0, isAuto = false, autoSpeed = 'slow', isAnim = false;
 let lcdCount = 0, optKokuchi = false;
-let reservedStock = [], activeJob = null;
+let leftStock = [], rightStock = [];
+let activeJob = null;
 let slumpData = [0], slumpLabels = ["0"], historyData = [], historyLabels = [];
 let sChart, hChart, firstHitRot = 0, rushSeriesCount = 0;
 
 // 正しい抽選フロー：先に当たり外れを決め、それに合わせて演出を抽選する
-function createJob() {
+function createJob(isRight = false) {
     const isHit = Math.random() < (1 / (mode === '通常' || mode === '時短' ? SPECS.n : SPECS.s));
     let res = {
         isHit: isHit,
+        isRight: isRight,
         heavy: false,
         name: [],
         trust: 0,
@@ -108,12 +110,23 @@ async function startProcess() {
         rushSeriesCount++; historyData.push(firstHitRot); historyLabels.push(`${rushSeriesCount}回目(${currentRushHits}連)`); hChart.update();
         mode = '通常'; currentRushHits = 0; firstHitRot = 0; updateUI();
     }
-    activeJob = reservedStock.shift(); if (activeJob) activeJob.currentView = activeJob.holdType;
+
+    if (rightStock.length > 0) {
+        activeJob = rightStock.shift();
+    } else if (leftStock.length > 0) {
+        activeJob = leftStock.shift();
+    } else {
+        refillStock();
+        activeJob = (mode === '通常') ? leftStock.shift() : rightStock.shift();
+    }
+
+    if (activeJob) activeJob.currentView = activeJob.holdType;
     refillStock(); updateUI();
     let eff = activeJob;
     if (optKokuchi && eff.isHit) { eff.flash = true; eff.trust = 100; eff.displayName = "インフラ告知"; }
     totalRot++; currentRot++; lcdCount++;
-    if (mode !== '通常') { rRem--; totalBall -= 0.05; } else { totalBall -= 13.8; }
+    if (mode !== '通常') { rRem--; }
+    if (eff.isRight) { totalBall -= 0.05; } else { totalBall -= 13.8; }
     updateCharts();
     // trustが50以上（激熱以上）、または当落が確定している場合のみログに出力
     if (eff.trust >= 50.0 || eff.isHit) { addLog(`${mode} ${lcdCount}回転【${eff.displayName}】信頼度:${eff.trust.toFixed(1)}%`); }
@@ -123,9 +136,10 @@ async function startProcess() {
     if (eff.text) { const ov = document.getElementById('effect-overlay'); ov.innerText = eff.text; ov.style.display = 'block'; }
     let currentSpeed = autoSpeed;
 
-    // 消化中(eff) または その次(reservedStock[0]) の変動が信頼度50%以上かチェック
+    // 消化中(eff) または その次 の変動が信頼度50%以上かチェック
     let hasSakiyomiOrIkiatsu = false;
-    for (let j of [eff, reservedStock[0]]) {
+    let nextJob = rightStock.length > 0 ? rightStock[0] : (leftStock.length > 0 ? leftStock[0] : null);
+    for (let j of [eff, nextJob]) {
         if (j && j.trust >= 50.0) {
             hasSakiyomiOrIkiatsu = true;
             break;
@@ -168,16 +182,23 @@ async function startProcess() {
             if (currentRot > maxHamari) { maxHamari = currentRot; document.getElementById('max-hamari-box').innerText = `最大ハマリ: ${maxHamari}`; }
         }
         let bonusBall, isST = false, needsUpgrade = false, isRightUpgrade = false, originalHit = hitDigit;
-        if (mode === '通常') {
+        if (!eff.isRight) {
             rushCount = 1;
             if (eff.isRushSure) { isST = true; bonusBall = 420; addLog(">> プレミアム演出！！"); }
             else if (originalHit === 7) { isST = true; bonusBall = 1400; addLog(">> 全回転！！"); }
             else if (originalHit % 2 !== 0) { isST = true; bonusBall = 420; }
             else { if (Math.random() < 0.20) { isST = true; needsUpgrade = true; bonusBall = 420; } else { isST = false; bonusBall = 420; } }
-        } else if (mode === '時短') {
+        } else {
             isST = true; bonusBall = 1400; isRightUpgrade = true;
-            addLog(`>> 時短引き戻し成功！ 【${originalHit}】`);
-        } else { isST = true; bonusBall = 1400; rushCount++; isRightUpgrade = true; }
+            if (mode === '通常') {
+                rushCount = 1;
+                addLog(`>> 右打ち残保留（特図2）で引き戻し！！ 【${originalHit}】`);
+            } else if (mode === '時短') {
+                addLog(`>> 時短引き戻し成功！ 【${originalHit}】`);
+            } else {
+                rushCount++;
+            }
+        }
         addLog(`>> 当たり！ 【${originalHit}】${lcdCount}回転`);
         totalBall += bonusBall; currentRot = 0;
         await new Promise(r => setTimeout(r, 1000));
@@ -227,8 +248,10 @@ function generateFinalDigits() {
 }
 
 function refillStock() {
-    while (reservedStock.length < 4) {
-        reservedStock.push(createJob());
+    if (mode === '通常') {
+        while (leftStock.length < 4) leftStock.push(createJob(false));
+    } else {
+        while (rightStock.length < 4) rightStock.push(createJob(true));
     }
     updateHesoUI();
 }
@@ -236,9 +259,21 @@ function refillStock() {
 function updateHesoUI() {
     const hA = document.getElementById('heso-area');
     mode !== '通常' ? hA.classList.add('right-mode') : hA.classList.remove('right-mode');
+
+    const countDisplay = document.getElementById('stock-count-display');
+    if (countDisplay) {
+        countDisplay.innerText = `ヘソ: ${leftStock.length} / 電チュー: ${rightStock.length}`;
+    }
+
+    let displayStock = mode !== '通常' ? rightStock : leftStock;
     for (let i = 0; i <= 4; i++) {
         const el = document.getElementById('h' + i);
-        const s = (i === 0) ? activeJob : (reservedStock[i - 1] || null);
+        let s = null;
+        if (i === 0) {
+            s = activeJob;
+        } else {
+            s = displayStock[i - 1] || null;
+        }
         el.className = `heso-ball ${i === 0 ? 'heso-current' : ''}`;
         if (s) {
             el.classList.add('heso-' + s.currentView);
