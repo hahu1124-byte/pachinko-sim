@@ -132,6 +132,8 @@ async function startProcess() {
     if (eff.trust >= 50.0 || eff.isHit) { addLog(`${mode} ${lcdCount}回転【${eff.displayName}】信頼度:${eff.trust.toFixed(1)}%`); }
     const machineEl = document.getElementById('machine'), screenEl = document.getElementById('screen');
     if (eff.vibe) { machineEl.classList.add('vibrate', 'vibe-' + eff.vibeColor); screenEl.classList.add('vibrate', 'vibe-' + eff.vibeColor); }
+    const vStockEl = document.getElementById('v-stock');
+    if (vStockEl) vStockEl.style.display = 'none';
     if (eff.flash) document.getElementById('lamp').classList.add('lamp-active');
     if (eff.text) { const ov = document.getElementById('effect-overlay'); ov.innerText = eff.text; ov.style.display = 'block'; }
     let currentSpeed = autoSpeed;
@@ -151,9 +153,10 @@ async function startProcess() {
         currentSpeed = 'slow';
     }
 
-    // スピード調整。高速オート(fast)時は20ms、低速オート・チャンス時(slow)は600ms、激熱(heavy)は1800ms
-    let spinTime = (eff.heavy) ? 1800 : (currentSpeed === 'fast' ? 20 : 600);
-    let spin = setInterval(() => { [1, 2, 3].forEach(i => { let n = Math.floor(Math.random() * 9) + 1; const el = document.getElementById('d' + i); el.innerText = n; el.className = getDigitClass(n, mode); }); }, 40);
+    // スピード調整。高速オート(fast)時は5ms、低速オート・チャンス時(slow)は600ms、激熱(heavy)は1800ms
+    let spinTime = (eff.heavy) ? 1800 : (currentSpeed === 'fast' ? 5 : 600);
+    let spinInterval = currentSpeed === 'fast' ? 5 : 40;
+    let spin = setInterval(() => { [1, 2, 3].forEach(i => { let n = Math.floor(Math.random() * 9) + 1; const el = document.getElementById('d' + i); el.innerText = n; el.className = getDigitClass(n, mode); }); }, spinInterval);
     await new Promise(r => setTimeout(r, spinTime));
     clearInterval(spin);
     let finalNums, hitDigit;
@@ -201,6 +204,15 @@ async function startProcess() {
         }
         addLog(`>> 当たり！ 【${originalHit}】${lcdCount}回転`);
         totalBall += bonusBall; currentRot = 0;
+
+        if (mode !== '通常') {
+            const hasStockHit = rightStock.some(job => job.isHit);
+            if (hasStockHit && vStockEl) {
+                vStockEl.style.display = 'block';
+                addLog(">> Vストック獲得！！（保留連確定）");
+            }
+        }
+
         await new Promise(r => setTimeout(r, 1000));
         if (mode === '通常' && needsUpgrade) {
             let nextOdd = [1, 3, 5, 9][Math.floor(Math.random() * 4)];
@@ -223,8 +235,8 @@ async function startProcess() {
         await new Promise(r => setTimeout(r, 600));
     }
     isAnim = false; updateUI(); updateAutoBtns();
-    // 次回転への待機時間も調整（高速時は20ms、低速時は150ms）
-    let nextDelay = (currentSpeed === 'fast') ? 20 : 150;
+    // 次回転への待機時間も調整（高速時は5ms、低速時は150ms）
+    let nextDelay = (currentSpeed === 'fast') ? 5 : 150;
     if (isAuto) setTimeout(startProcess, nextDelay);
 }
 

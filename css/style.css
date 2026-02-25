@@ -258,7 +258,6 @@ body.light-mode .machine {
     display: flex;
     align-items: center;
     gap: 10px;
-    transition: all 0.3s;
 }
 
 .heso-ball {
@@ -267,7 +266,7 @@ body.light-mode .machine {
     background: #222;
     border-radius: 50%;
     border: 1px solid #555;
-    transition: all 0.3s ease;
+    transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
     box-sizing: border-box;
 }
 
@@ -335,6 +334,61 @@ body.light-mode .machine {
 
 .upgrade-anim {
     animation: upgrade-flash 0.4s ease-out;
+}
+
+/* Vストックのアニメーション */
+.v-stock-anim {
+    position: absolute;
+    bottom: 60px;
+    font-size: 4rem;
+    font-weight: 900;
+    font-family: 'Shippori Mincho B1', monospace;
+    color: #fff;
+    text-shadow: 0 0 10px #fff;
+    animation: rainbow-color 1.5s infinite, v-pulse 0.5s infinite alternate;
+    z-index: 10;
+}
+
+@keyframes rainbow-color {
+    0% {
+        color: #f00;
+        text-shadow: 0 0 20px #f00;
+    }
+
+    20% {
+        color: #ff0;
+        text-shadow: 0 0 20px #ff0;
+    }
+
+    40% {
+        color: #0f0;
+        text-shadow: 0 0 20px #0f0;
+    }
+
+    60% {
+        color: #0ff;
+        text-shadow: 0 0 20px #0ff;
+    }
+
+    80% {
+        color: #00f;
+        text-shadow: 0 0 20px #00f;
+    }
+
+    100% {
+        color: #f0f;
+        text-shadow: 0 0 20px #f0f;
+    }
+}
+
+@keyframes v-pulse {
+    from {
+        transform: scale(1);
+    }
+
+    to {
+        transform: scale(1.1);
+    }
 }
 
 .stat-grid {
