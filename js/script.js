@@ -269,22 +269,48 @@ function refillStock() {
 }
 
 function updateHesoUI() {
-    const hA = document.getElementById('heso-area');
-    mode !== '通常' ? hA.classList.add('right-mode') : hA.classList.remove('right-mode');
+    const isRightMode = mode !== '通常';
+    const hesoArea = document.getElementById('heso-area');
+    const denchuArea = document.getElementById('denchu-area');
+
+    if (isRightMode) {
+        if (hesoArea) hesoArea.style.display = 'none';
+        if (denchuArea) denchuArea.style.display = 'flex';
+    } else {
+        if (hesoArea) hesoArea.style.display = 'flex';
+        if (denchuArea) denchuArea.style.display = 'none';
+    }
 
     const countDisplay = document.getElementById('stock-count-display');
     if (countDisplay) {
         countDisplay.innerText = `${leftStock.length} / ${rightStock.length}`;
     }
 
-    let displayStock = mode !== '通常' ? rightStock : leftStock;
+    // 左保留(ヘソ)の描画
     for (let i = 0; i <= 4; i++) {
         const el = document.getElementById('h' + i);
+        if (!el) continue;
         let s = null;
         if (i === 0) {
-            s = activeJob;
+            s = (activeJob && !activeJob.isRight) ? activeJob : null;
         } else {
-            s = displayStock[i - 1] || null;
+            s = leftStock[i - 1] || null;
+        }
+        el.className = `heso-ball ${i === 0 ? 'heso-current' : ''}`;
+        if (s) {
+            el.classList.add('heso-' + s.currentView);
+        }
+    }
+
+    // 右保留(電チュー)の描画
+    for (let i = 0; i <= 4; i++) {
+        const el = document.getElementById('d_h' + i);
+        if (!el) continue;
+        let s = null;
+        if (i === 0) {
+            s = (activeJob && activeJob.isRight) ? activeJob : null;
+        } else {
+            s = rightStock[i - 1] || null;
         }
         el.className = `heso-ball ${i === 0 ? 'heso-current' : ''}`;
         if (s) {
